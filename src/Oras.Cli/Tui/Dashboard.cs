@@ -27,6 +27,7 @@ internal class Dashboard
     private const string ArtifactsAction = "Artifacts";
     private const string BackAction = "Back";
     private const string QuitAction = "Quit";
+    private const string MenuSeparator = "───";
 
     public Dashboard(IServiceProvider serviceProvider)
     {
@@ -135,9 +136,14 @@ internal class Dashboard
             .WrapAround()
             .PageSize(12)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-            .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction, QuitAction);
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
+            .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction, MenuSeparator, QuitAction);
 
         var action = AnsiConsole.Prompt(prompt);
+        if (action == MenuSeparator)
+        {
+            return true;
+        }
 
         return await HandleActionAsync(action, registries, cancellationToken).ConfigureAwait(false);
     }
@@ -185,6 +191,7 @@ internal class Dashboard
             .Title("[green]Select an artifact action:[/]")
             .WrapAround()
             .PageSize(10)
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
             .AddChoices(
                 PushArtifactAction,
                 PullArtifactAction,
@@ -192,11 +199,12 @@ internal class Dashboard
                 TagArtifactAction,
                 BackupArtifactAction,
                 RestoreArtifactAction,
+                MenuSeparator,
                 BackAction);
 
         var artifactAction = AnsiConsole.Prompt(artifactPrompt);
 
-        if (artifactAction == BackAction)
+        if (artifactAction is BackAction or MenuSeparator)
         {
             return true;
         }

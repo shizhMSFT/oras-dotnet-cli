@@ -526,12 +526,19 @@ internal class RegistryBrowser
             "Backup to local",
             "Tag with...",
             "Delete",
+            "───",
             "Back"
         };
 
         var action = PromptHelper.PromptSelection(
             $"[green]Actions for {Markup.Escape(reference)}:[/]",
-            actions);
+            actions,
+            converter: x => x == "───" ? "[dim]───[/]" : x);
+
+        if (action == "───")
+        {
+            return;
+        }
 
         switch (action)
         {
