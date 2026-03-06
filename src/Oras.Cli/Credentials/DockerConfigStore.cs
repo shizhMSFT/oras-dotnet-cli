@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 
@@ -10,11 +9,6 @@ namespace Oras.Credentials;
 internal class DockerConfigStore
 {
     private readonly string _configPath;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
 
     public DockerConfigStore(string? configPath = null)
     {
@@ -27,8 +21,6 @@ internal class DockerConfigStore
         return Path.Combine(home, ".docker", "config.json");
     }
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
     public async Task<DockerConfig> LoadAsync(CancellationToken cancellationToken = default)
     {
         if (!File.Exists(_configPath))
@@ -39,7 +31,7 @@ internal class DockerConfigStore
         try
         {
             var json = await File.ReadAllTextAsync(_configPath, cancellationToken).ConfigureAwait(false);
-            return JsonSerializer.Deserialize<DockerConfig>(json, JsonOptions) ?? new DockerConfig();
+            return JsonSerializer.Deserialize(json, CredentialJsonContext.Default.DockerConfig) ?? new DockerConfig();
         }
         catch
         {
@@ -47,8 +39,6 @@ internal class DockerConfigStore
         }
     }
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public async Task SaveAsync(DockerConfig config, CancellationToken cancellationToken = default)
     {
         var directory = Path.GetDirectoryName(_configPath);
@@ -57,7 +47,7 @@ internal class DockerConfigStore
             Directory.CreateDirectory(directory);
         }
 
-        var json = JsonSerializer.Serialize(config, JsonOptions);
+        var json = JsonSerializer.Serialize(config, CredentialJsonContext.Default.DockerConfig);
         await File.WriteAllTextAsync(_configPath, json, cancellationToken).ConfigureAwait(false);
     }
 
@@ -70,8 +60,6 @@ internal class DockerConfigStore
     /// </list>
     /// Returns a deduplicated list of registry server addresses.
     /// </summary>
-    [RequiresDynamicCode("Calls NativeCredentialHelper.ListAsync which uses JSON deserialization")]
-    [RequiresUnreferencedCode("Calls NativeCredentialHelper.ListAsync which uses JSON deserialization")]
     public async Task<IReadOnlyList<string>> ListRegistriesAsync(
         CancellationToken cancellationToken = default)
     {

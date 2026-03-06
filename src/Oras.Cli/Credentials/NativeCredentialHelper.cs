@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 
@@ -20,8 +19,6 @@ internal class NativeCredentialHelper
             : $"docker-credential-{helperName}";
     }
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
     public async Task<(string Username, string Password)?> GetAsync(
         string serverAddress,
         CancellationToken cancellationToken = default)
@@ -34,7 +31,7 @@ internal class NativeCredentialHelper
                 return null;
             }
 
-            var response = JsonSerializer.Deserialize<CredentialHelperResponse>(output);
+            var response = JsonSerializer.Deserialize(output, CredentialJsonContext.Default.CredentialHelperResponse);
             if (response?.Username != null)
             {
                 return (response.Username, response.Secret ?? string.Empty);
@@ -48,8 +45,6 @@ internal class NativeCredentialHelper
         return null;
     }
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public async Task StoreAsync(
         string serverAddress,
         string username,
@@ -61,7 +56,7 @@ internal class NativeCredentialHelper
             ServerURL = serverAddress,
             Username = username,
             Secret = password
-        });
+        }, CredentialJsonContext.Default.CredentialHelperInput);
 
         await RunHelperAsync("store", input, cancellationToken).ConfigureAwait(false);
     }
@@ -75,8 +70,6 @@ internal class NativeCredentialHelper
     /// Not all credential helpers support the <c>list</c> action.
     /// Callers should handle failure gracefully.
     /// </remarks>
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
     public async Task<Dictionary<string, string>> ListAsync(
         CancellationToken cancellationToken = default)
     {
@@ -88,7 +81,7 @@ internal class NativeCredentialHelper
                 return new Dictionary<string, string>();
             }
 
-            return JsonSerializer.Deserialize<Dictionary<string, string>>(output)
+            return JsonSerializer.Deserialize(output, CredentialJsonContext.Default.DictionaryStringString)
                 ?? new Dictionary<string, string>();
         }
         catch
@@ -170,26 +163,5 @@ internal class NativeCredentialHelper
         }
 
         return outputBuilder.ToString().Trim();
-    }
-
-    private class CredentialHelperInput
-    {
-        [System.Text.Json.Serialization.JsonPropertyName("ServerURL")]
-        public string ServerURL { get; set; } = string.Empty;
-
-        [System.Text.Json.Serialization.JsonPropertyName("Username")]
-        public string Username { get; set; } = string.Empty;
-
-        [System.Text.Json.Serialization.JsonPropertyName("Secret")]
-        public string Secret { get; set; } = string.Empty;
-    }
-
-    private class CredentialHelperResponse
-    {
-        [System.Text.Json.Serialization.JsonPropertyName("Username")]
-        public string? Username { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("Secret")]
-        public string? Secret { get; set; }
     }
 }
