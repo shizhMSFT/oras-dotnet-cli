@@ -28,7 +28,6 @@ internal class Dashboard
     private const string BackAction = "Back";
     private const string QuitAction = "Quit";
     private const string MenuSeparator = "───";
-    private const string MenuHeader = " ";
 
     public Dashboard(IServiceProvider serviceProvider)
     {
@@ -136,8 +135,8 @@ internal class Dashboard
             .WrapAround()
             .PageSize(12)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x == MenuHeader ? " " : x)
-            .AddChoiceGroup(MenuHeader, BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction)
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
+            .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction)
             .AddChoiceGroup(MenuSeparator, QuitAction);
 
         var action = AnsiConsole.Prompt(prompt);
@@ -187,8 +186,8 @@ internal class Dashboard
             .Title("[green]Select an artifact action:[/]")
             .WrapAround()
             .PageSize(10)
-            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x == MenuHeader ? " " : x)
-            .AddChoiceGroup(MenuHeader,
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
+            .AddChoices(
                 PushArtifactAction,
                 PullArtifactAction,
                 CopyArtifactAction,

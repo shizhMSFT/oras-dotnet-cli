@@ -16,7 +16,6 @@ internal class RegistryBrowser
     private readonly DockerConfigStore _configStore;
     private readonly TuiCache _cache;
     private const string MenuSeparator = "───";
-    private const string MenuHeader = " ";
 
     public RegistryBrowser(IServiceProvider serviceProvider)
     {
@@ -75,8 +74,8 @@ internal class RegistryBrowser
             .WrapAround()
             .PageSize(10)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x == MenuHeader ? " " : x)
-            .AddChoiceGroup(MenuHeader, registries.Concat(new[] { enterNew }).ToArray())
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
+            .AddChoices(registries.Concat(new[] { enterNew }).ToArray())
             .AddChoiceGroup(MenuSeparator, back);
 
         var selection = AnsiConsole.Prompt(prompt);
@@ -529,8 +528,8 @@ internal class RegistryBrowser
             .Title($"[green]Actions for {Markup.Escape(reference)}:[/]")
             .WrapAround()
             .PageSize(10)
-            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x == MenuHeader ? " " : x)
-            .AddChoiceGroup(MenuHeader, "Inspect Manifest", "Pull to directory", "Copy to...", "Backup to local", "Tag with...", "Delete")
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
+            .AddChoices("Inspect Manifest", "Pull to directory", "Copy to...", "Backup to local", "Tag with...", "Delete")
             .AddChoiceGroup(MenuSeparator, "Back");
 
         var action = AnsiConsole.Prompt(prompt);
