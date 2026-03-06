@@ -27,7 +27,7 @@ The .NET `oras` CLI is a ground-up reimagining of the [Go-based oras CLI](https:
 ### Alpha preview
 
 {: .warning }
-> The .NET CLI is currently at **v0.1.0-alpha**. It is not recommended for production use. Some commands have stubbed implementations pending full library integration. See [Known Limitations](#known-limitations-alpha) below.
+> The .NET CLI is currently at **v0.1.0**. Some commands have stubbed implementations pending full library integration. See [Known Limitations](#known-limitations) below.
 
 ---
 
@@ -54,7 +54,7 @@ sudo mv oras /usr/local/bin/
 dotnet tool install -g oras
 
 # Or download a self-contained binary
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.1.0-alpha.1/oras-linux-x64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.1.0/oras-linux-x64.tar.gz
 tar -xzf oras-linux-x64.tar.gz
 chmod +x oras-linux-x64
 sudo mv oras-linux-x64 /usr/local/bin/oras
@@ -193,9 +193,9 @@ Built-in tab completion for bash, zsh, PowerShell, and fish. See [Shell Completi
 
 ---
 
-## Known Limitations (Alpha)
+## Known Limitations
 
-The v0.1.0-alpha has the following limitations compared to the Go CLI:
+The v0.1.0 release has the following limitations compared to the Go CLI:
 
 ### Stubbed commands
 
