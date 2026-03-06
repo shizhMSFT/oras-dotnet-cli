@@ -50,7 +50,7 @@ A cross-platform .NET 10 CLI for managing OCI artifacts in container registries 
 
 ```bash
 # Option 1: Download pre-built binary (Linux x64 example)
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.1.2/oras-linux-x64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.1.3/oras-linux-x64.tar.gz
 tar -xzf oras-linux-x64.tar.gz && chmod +x oras-linux-x64
 sudo mv oras-linux-x64 /usr/local/bin/oras
 
@@ -93,6 +93,16 @@ oras attach ghcr.io/myorg/myartifact:v1.0 \
 
 # Discover related artifacts
 oras discover ghcr.io/myorg/myartifact:v1.0
+```
+
+### Backup & Restore
+
+```bash
+# Backup an artifact locally
+oras backup ghcr.io/myorg/myartifact:v1.0 --output ./backup
+
+# Restore from backup
+oras restore ./backup ghcr.io/myorg/myartifact-restored:v1.0
 ```
 
 ### Launch the TUI

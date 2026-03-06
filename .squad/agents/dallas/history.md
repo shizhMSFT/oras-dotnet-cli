@@ -277,4 +277,19 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 
 **Cross-references:** Updated `docs/index.md` documentation table to include migration guide link.
 
+### Copy Enhancement + Backup/Restore Commands — 2026-03-06
+
+**Completed Tasks:**
+- Enhanced `oras copy` — replaced `NotImplementedException` with simulation flow, added `--from-username`/`--from-password` source auth options, Spectre.Console `AnsiConsole.Status` progress, reference validation, JSON/text output via formatter, and clear TODO markers for `ReadOnlyTargetExtensions.CopyAsync()` integration
+- Created `oras backup <reference> --output <path>` — backs up OCI artifact to local OCI layout directory or tar archive, with `--recursive`, `--platform`, `--concurrency`, RemoteOptions, FormatOptions
+- Created `oras restore <path> <reference>` — restores OCI artifact from local backup to registry, with `--recursive`, `--concurrency`, RemoteOptions, FormatOptions
+- Registered both new commands in Program.cs
+
+**Patterns Applied:**
+- `CopyCommand.ValidateReference()` made `internal static` and reused by BackupCommand and RestoreCommand (DRY)
+- `BackupCommand.IsArchivePath()` made `internal static` and reused by RestoreCommand for archive detection
+- All commands follow established pattern: argument parsing → validation → service injection → Spectre.Console status → formatter output
+- Simulation delays via `Task.Delay` instead of `NotImplementedException` — commands return exit code 0 with "simulated" status
+
+**Build Status:** ✅ 0 errors, 238 warnings (all pre-existing CA1707 naming warnings in tests); 69 tests pass, 27 skipped
 

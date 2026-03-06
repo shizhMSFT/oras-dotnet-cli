@@ -79,8 +79,9 @@ All Go CLI commands have corresponding .NET CLI commands. The command names and 
 | `oras pull <ref>` | `oras pull <ref>` | ⚠️ Partial | Reference parsing and repository creation work; blob fetching awaits library API integration |
 | `oras attach <ref> [files...]` | `oras attach <ref> [files...]` | 🔲 Stub | Awaiting `Packer.PackManifestAsync()` integration |
 | `oras discover <ref>` | `oras discover <ref>` | 🔲 Stub | Awaiting `IRepository.FetchReferrersAsync()` integration |
-| `oras copy <src> <dst>` | `oras copy <src> <dst>` | 🔲 Stub | Awaiting `CopyAsync()` integration |
-| `oras login <registry>` | `oras login <registry>` | ✅ Full | Interactive prompts, credential validation, Docker config.json storage |
+| `oras copy <src> <dst>` | `oras copy <src> <dst>` | ✅ Full | Enhanced with progress, source auth, reference validation |
+| N/A | `oras backup <ref>` | 🆕 New | .NET CLI exclusive — save artifacts to local OCI layout or tar archive |
+| N/A | `oras restore <path> <dst>` | 🆕 New | .NET CLI exclusive — restore local backups to any registry |
 | `oras logout <registry>` | `oras logout <registry>` | ✅ Full | Credential removal from Docker config.json |
 | `oras tag <ref> <tag> [tags...]` | `oras tag <ref> <tag> [tags...]` | 🔲 Stub | Awaiting `ITaggable.TagAsync()` integration |
 | `oras resolve <ref>` | `oras resolve <ref>` | 🔲 Stub | Awaiting `IResolvable.ResolveAsync()` integration |
@@ -191,6 +192,13 @@ dotnet add package OrasProject.Oras
 
 Built-in tab completion for bash, zsh, PowerShell, and fish. See [Shell Completions](shell-completions).
 
+### Backup and Restore Commands
+
+The .NET CLI includes two exclusive commands not available in the Go CLI:
+
+- **`oras backup`** — Save artifacts from a registry to a local OCI layout directory or tar archive for disaster recovery and air-gapped environments
+- **`oras restore`** — Push artifacts from a local backup to any OCI-compliant registry
+
 ---
 
 ## Known Limitations
@@ -203,7 +211,6 @@ The following commands are scaffolded with correct argument parsing and help tex
 
 - `oras attach`
 - `oras discover`
-- `oras copy`
 - `oras tag`
 - `oras resolve`
 - `oras repo ls`

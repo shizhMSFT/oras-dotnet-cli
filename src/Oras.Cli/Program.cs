@@ -41,6 +41,10 @@ internal static class Program
             AttachCommand.Create(serviceProvider),
             DiscoverCommand.Create(serviceProvider),
             
+            // Backup/restore commands
+            BackupCommand.Create(serviceProvider),
+            RestoreCommand.Create(serviceProvider),
+            
             // Subcommand groups
             CreateRepoCommand(serviceProvider),
             CreateBlobCommand(serviceProvider),

@@ -24,7 +24,7 @@ The main entry point when you run `oras` with no arguments in an interactive ter
 ```text
 ╔══════════════════════════════════════════════════════════════╗
 ║  oras — OCI Registry As Storage                             ║
-║  Version 0.1.0                                              ║
+║  Version 0.1.3                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 
 ╭──────────────────────────────────────────────────────────────╮
@@ -39,9 +39,11 @@ The main entry point when you run `oras` with no arguments in an interactive ter
   ❯ Browse Registry
     Browse Repository Tags
     Login
+    Copy Artifact
+    Backup Artifact
+    Restore Artifact
     Push Artifact
     Pull Artifact
-    Copy Artifact
     Tag Artifact
     Quit
 
@@ -161,7 +163,128 @@ oras --registry ghcr.io --repository oras-project/oras
 
 ---
 
-## Push / Pull Progress
+## Copy, Backup & Restore
+{: .text-yellow-300 }
+
+Three powerful workflows for managing artifacts across local and remote storage.
+
+### Copy Artifact
+
+Copy OCI artifacts between registries with live progress tracking.
+
+**Copy Workflow:**
+
+```text
+  Enter source reference:
+  ghcr.io/myorg/webapp:v2.1.0
+```
+
+After entering the source:
+
+```text
+  ℹ Source: ghcr.io/myorg/webapp:v2.1.0
+  Enter destination reference:
+  docker.io/myorg/webapp:v2.1.0
+```
+
+During copy:
+
+```text
+  Copying ghcr.io/myorg/webapp:v2.1.0 → docker.io/myorg/webapp:v2.1.0
+
+  ✓ sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
+  ✓ sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
+    sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━░░░░░   78%  12.3 MB   24.5 MB/s  0:03
+  Copying                                     ━━━━━━━━━━━━━━░░░░░░   66%           2/3 blobs
+
+  Include referrers (signatures, SBOMs)? [y/N] y
+  ✓ Copied with 1 referrer
+```
+
+### Backup Artifact
+
+Save registry artifacts to a local OCI layout directory or tar archive.
+
+**Backup Workflow:**
+
+```text
+  Enter reference to backup:
+  ghcr.io/myorg/webapp:v2.1.0
+```
+
+After entering the reference:
+
+```text
+  Backing up ghcr.io/myorg/webapp:v2.1.0
+
+  ✓ sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
+  ✓ sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
+  ✓ sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━━━━━━  100%  15.8 MB   --
+  Backup                                      ━━━━━━━━━━━━━━━━━━━━  100%           3/3 blobs
+```
+
+After completion:
+
+```text
+  ╭─ Backup Summary ──────────────────────────────────────────────╮
+  │                                                               │
+  │  ✓ Backup completed successfully                             │
+  │                                                               │
+  │  Reference: ghcr.io/myorg/webapp:v2.1.0                     │
+  │  Blobs:     3                                                │
+  │  Size:      62.9 MB                                          │
+  │  Location:  ./oras-backup                                    │
+  │  Format:    OCI Layout                                       │
+  │                                                               │
+  ╰───────────────────────────────────────────────────────────────╯
+```
+
+### Restore Artifact
+
+Push artifacts from a local backup to a registry.
+
+**Restore Workflow:**
+
+```text
+  Enter path to backup (directory or .tar.gz):
+  ./oras-backup
+```
+
+After entering the path:
+
+```text
+  Enter destination reference:
+  ghcr.io/myorg/webapp-restored:v2.1.0
+```
+
+During restore:
+
+```text
+  Restoring ./oras-backup → ghcr.io/myorg/webapp-restored:v2.1.0
+
+  ✓ sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
+  ✓ sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
+  ✓ sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━━━━━━  100%  15.8 MB   --
+  Restoring                                   ━━━━━━━━━━━━━━━━━━━━  100%           3/3 blobs
+
+  ✓ Restored to ghcr.io/myorg/webapp-restored:v2.1.0
+  Digest: sha256:7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b
+```
+
+**How to launch:**
+
+```bash
+# From the TUI dashboard
+oras
+# → Select "Copy Artifact", "Backup Artifact", or "Restore Artifact"
+
+# Or use CLI commands directly
+oras copy ghcr.io/source/artifact:v1 ghcr.io/dest/artifact:v1
+oras backup ghcr.io/myorg/artifact:v1.0 --output ./backup
+oras restore ./backup ghcr.io/myorg/artifact-restored:v1.0
+```
+
+---
 {: .text-yellow-300 }
 
 Real-time per-layer progress bars with transfer speed, percentage, and ETA. Uses a custom `TransferSpeedColumn` for human-readable bandwidth display.

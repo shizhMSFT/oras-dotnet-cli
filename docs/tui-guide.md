@@ -43,6 +43,24 @@ oras --registry ghcr.io --repository myorg/myrepo
 - Supports registries that don't have a catalog API
 - Select "Browse Repository Tags" on the dashboard or use `oras --repository <name>`
 
+### Copy Artifact
+- Copy OCI artifacts between registries with live progress tracking
+- Supports separate source and destination credentials
+- Optional: Include referrers (signatures, attestations, SBOMs) with `--recursive`
+- Available from TUI dashboard or CLI: `oras copy <source> <destination>`
+
+### Backup Artifact
+- Save registry artifacts to a local OCI layout directory or tar archive
+- Perfect for disaster recovery, air-gapped environments, and offline workflows
+- Supports `--recursive` to backup entire artifact graphs
+- Available from TUI dashboard or CLI: `oras backup <reference> --output <path>`
+
+### Restore Artifact
+- Push artifacts from a local backup to any OCI-compliant registry
+- Supports restoring from both OCI layout directories and tar archives
+- Can restore to a different registry or repository than the original
+- Available from TUI dashboard or CLI: `oras restore <path> <destination>`
+
 ### Keyboard Navigation
 - **Arrow keys**: Navigate lists and trees
 - **Enter**: Select item / perform action

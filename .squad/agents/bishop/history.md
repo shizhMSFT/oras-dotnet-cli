@@ -207,4 +207,32 @@
 
 **Build status:** 0 errors, 0 warnings. Release published with 6 binaries.
 
+### Interactive Copy, Backup, and Restore TUI Workflows
+
+**Replaced Copy placeholder with interactive workflow:**
+- Prompts for source reference, destination reference, and referrers inclusion
+- Progress simulation using `AnsiConsole.Progress()` with four stages: resolve manifest, copy layers, copy manifest, copy referrers (optional)
+- Uses `Markup.Escape()` on all user input before rendering in markup strings
+
+**Added Backup Artifact workflow:**
+- Prompts for source reference, output path (default `./backup`), and referrers inclusion
+- Progress stages: fetch manifest, download layers, write output, download referrers (optional)
+- Shows summary panel (Table widget) after completion with reference, layer count, estimated size, and output path
+
+**Added Restore Artifact workflow:**
+- Prompts for backup path with filesystem validation (`Directory.Exists` / `File.Exists`)
+- Prompts for destination reference
+- Progress stages: read backup, upload layers, push manifest
+- Validates path exists before proceeding — shows error with recommendation if not found
+
+**Dashboard menu reordered:**
+- Interactive actions (Copy, Backup, Restore) placed above CLI-only hints (Push, Pull, Tag)
+- Menu order: Browse Registry, Browse Repository Tags, Login, Copy, Backup, Restore, Push, Pull, Tag, Quit
+
+**Patterns reinforced:**
+- All handler methods follow try/catch with `OperationCanceledException` handled separately from general exceptions
+- All workflows end with "Press Enter to continue..." before returning to dashboard loop
+- `AnsiConsole.Progress()` with `.AutoClear(false).HideCompleted(false)` for persistent progress display
+- Simulated operations use `Task.Delay` as placeholder until real service integration
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->

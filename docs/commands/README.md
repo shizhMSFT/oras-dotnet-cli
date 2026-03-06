@@ -27,6 +27,8 @@ Complete reference documentation for all `oras` CLI commands.
 | [tag](tag.md) | Tag a manifest in a remote registry |
 | [resolve](resolve.md) | Resolve a reference to a digest |
 | [copy](copy.md) | Copy artifacts between registries |
+| [backup](backup.md) | Backup artifacts from a registry to local storage *(New — .NET CLI exclusive)* |
+| [restore](restore.md) | Restore artifacts from local backup to a registry *(New — .NET CLI exclusive)* |
 | [attach](attach.md) | Attach files to an existing artifact |
 | [discover](discover.md) | Discover referrers of a manifest |
 
