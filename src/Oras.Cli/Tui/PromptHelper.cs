@@ -41,6 +41,7 @@ internal static class PromptHelper
     {
         var prompt = new SelectionPrompt<T>()
             .Title(title)
+            .WrapAround()
             .PageSize(enableSearch ? 15 : 10)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
             .AddChoices(choices);
@@ -62,6 +63,7 @@ internal static class PromptHelper
     {
         var prompt = new MultiSelectionPrompt<T>()
             .Title(title)
+            .WrapAround()
             .PageSize(15)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
             .InstructionsText("[grey](Press [blue]<space>[/] to select, [green]<enter>[/] to accept)[/]")

@@ -132,6 +132,7 @@ internal class Dashboard
         // Quick actions menu
         var prompt = new SelectionPrompt<string>()
             .Title("[green]Select an action:[/]")
+            .WrapAround()
             .PageSize(12)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
             .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction, QuitAction);
@@ -182,6 +183,7 @@ internal class Dashboard
     {
         var artifactPrompt = new SelectionPrompt<string>()
             .Title("[green]Select an artifact action:[/]")
+            .WrapAround()
             .PageSize(10)
             .AddChoices(
                 PushArtifactAction,
