@@ -58,3 +58,133 @@
 - Phase 1 scope (ADR-009): 10/12 commands have direct library equivalents per your mapping. Service layer will wrap these.
 - Credential Storage (ADR-003): Library only has ICredentialProvider interface; you identified this gap. CLI will implement Docker config.json store + credential helper protocol.
 - Auth Model Alignment: Your ICache extension will feed into structured error handling (ADR-008).
+
+### 2026-03-06 — Sprint 1 Core Foundation Implementation
+
+**Completed Tasks:**
+- **S1-01**: Project restructured from `src/oras` → `src/Oras.Cli` with organized directory structure (Commands/, Options/, Services/, Credentials/, Output/)
+- **S1-02**: Implemented composable option infrastructure (CommonOptions, RemoteOptions, TargetOptions, PackerOptions, FormatOptions, PlatformOptions) with `ApplyTo()` pattern
+- **S1-04**: Service layer scaffold with DI registration (IRegistryService, IPushService, IPullService, ICredentialService)
+- **S1-05**: Docker credential store implementation (DockerConfigStore, NativeCredentialHelper following docker-credential-helpers protocol)
+- **S1-08**: Version command with assembly info, library version, .NET runtime, platform display
+- **S1-11**: Error handling middleware with OrasException hierarchy (OrasAuthenticationException, OrasNetworkException, OrasUsageException) and global error handler
+- **S1-06**: Login command with interactive prompts, credential validation, and storage
+- **S1-07**: Logout command with credential removal
+- **S1-09**: Push command scaffold (awaiting OrasProject.Oras v0.5.0 API integration)
+- **S1-10**: Pull command scaffold (awaiting OrasProject.Oras v0.5.0 API integration)
+
+**System.CommandLine 2.x Beta Compatibility:**
+- Created CommandExtensions with SetAction() and GetValue() shims for beta API differences
+- Option configuration uses explicit AddAlias() and SetDefaultValue() methods
+- Command.Add() pattern instead of Options.Add()/Arguments.Add()
+
+**OrasProject.Oras v0.5.0 Integration Challenges:**
+The actual OrasProject.Oras v0.5.0 API surface differs significantly from the documented/expected API:
+1. Registry constructor signature doesn't match expected pattern
+2. SingleRegistryCredentialProvider constructor differs
+3. Packer.PackManifestAsync signature incompatible
+4. Manifests.FetchAsync and Blobs.FetchAsync parameters differ
+
+**Action Items for Next Sprint:**
+1. **CRITICAL**: Document actual OrasProject.Oras v0.5.0 API by inspecting the DLL with reflection or consulting library maintainers
+2. Implement proper Registry/Repository creation in RegistryService
+3. Complete PushService with correct Packer.PackManifestAsync integration
+4. Complete PullService with correct manifest/blob fetching
+5. Fix test helper compatibility issues with Spectre.Console.Testing
+
+**Build Status:** ✅ CLI project builds successfully, version command functional
+
+### 2026-03-06 — System.CommandLine 2.0.3 Stable API Migration
+
+**Migration Context:**
+- Project initially built against System.CommandLine 2.0.0-beta4 (incompatible API)
+- Package upgraded to stable 2.0.3 release
+- Complete codebase migration required across all option classes, commands, and test infrastructure
+
+**API Changes Applied (Beta4 → 2.0.3):**
+
+1. **Option Creation Pattern:**
+   ```csharp
+   // OLD (beta4): Named parameters + AddAlias()
+   new Option<bool>(name: "--debug", description: "Enable debug") 
+   option.AddAlias("-d");
+   
+   // NEW (2.0.3): Constructor aliases + object initializer
+   new Option<bool>("--debug", "-d") { Description = "Enable debug" }
+   ```
+
+2. **Default Values:**
+   ```csharp
+   // OLD: SetDefaultValue() method
+   option.SetDefaultValue(3);
+   
+   // NEW: DefaultValueFactory in initializer
+   { DefaultValueFactory = _ => 3 }
+   ```
+
+3. **Restricted Values:**
+   ```csharp
+   // OLD: FromAmong()
+   option.FromAmong("text", "json");
+   
+   // NEW: AcceptOnlyFromAmong()
+   option.AcceptOnlyFromAmong("text", "json");
+   ```
+
+4. **Argument Creation:**
+   ```csharp
+   // OLD: Named parameters + separate Arity
+   var arg = new Argument<string[]>(name: "files", description: "Files");
+   arg.Arity = ArgumentArity.ZeroOrMore;
+   
+   // NEW: Object initializer pattern
+   new Argument<string[]>("files") { 
+       Description = "Files",
+       Arity = ArgumentArity.ZeroOrMore 
+   }
+   ```
+
+5. **Command Handlers:**
+   ```csharp
+   // OLD: SetHandler with InvocationContext
+   command.SetHandler(async (InvocationContext ctx) => { ... });
+   
+   // NEW: SetAction with ParseResult
+   command.SetAction(async (parseResult, cancellationToken) => { ... });
+   ```
+
+6. **Value Retrieval:**
+   ```csharp
+   // OLD: Separate methods
+   parseResult.GetValueForOption(opt);
+   parseResult.GetValueForArgument(arg);
+   
+   // NEW: Unified method
+   parseResult.GetValue(opt);
+   parseResult.GetValue(arg);
+   ```
+
+7. **Command Invocation:**
+   ```csharp
+   // OLD: Direct InvokeAsync
+   await rootCommand.InvokeAsync(args);
+   
+   // NEW: Parse then invoke
+   await rootCommand.Parse(args).InvokeAsync();
+   ```
+
+**Files Updated:**
+- All 6 option classes (CommonOptions, RemoteOptions, TargetOptions, PackerOptions, FormatOptions, PlatformOptions)
+- All 5 command classes (LoginCommand, LogoutCommand, PushCommand, PullCommand, VersionCommand)
+- CommandExtensions.cs (removed InvocationContext dependency)
+- Program.cs (updated invocation pattern)
+- CommandTestHelper.cs (replaced System.CommandLine.IO.TestConsole with StringWriter-based capture)
+
+**Test Results:**
+- ✅ Build succeeded with 0 compilation errors (138 analyzer warnings only)
+- ✅ All 15 unit tests passing
+- Test infrastructure updated to use Console redirection instead of removed TestConsole API
+
+**Key Insight:**
+System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole. Test helpers now capture output using Console.SetOut/SetError with StringWriter. This approach is more portable and doesn't depend on internal testing APIs.
+
