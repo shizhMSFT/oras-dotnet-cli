@@ -99,7 +99,7 @@ oras discover ghcr.io/myorg/myartifact:v1.0
 
 ```bash
 # Open the interactive terminal dashboard
-oras tui
+oras
 ```
 
 ---

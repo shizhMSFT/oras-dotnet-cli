@@ -14,14 +14,14 @@ The ORAS .NET CLI includes a powerful terminal user interface (TUI) for explorin
 ## Launching the TUI
 
 ```bash
-# Launch TUI to main dashboard
-oras tui
+# Launch TUI to main dashboard (just run oras with no arguments)
+oras
 
 # Launch directly to registry browser
-oras tui --registry ghcr.io
+oras --registry ghcr.io
 
 # Browse a specific repository
-oras tui --registry ghcr.io --repository myorg/myrepo
+oras --registry ghcr.io --repository myorg/myrepo
 ```
 
 ## Features
@@ -46,7 +46,7 @@ oras tui --registry ghcr.io --repository myorg/myrepo
 
 ## Tips
 
-- Use `--debug` flag for verbose logging: `oras tui --debug`
+- Use `--debug` flag for verbose logging: `oras --debug`
 - Use `--no-tty` to force non-interactive mode
 - The TUI respects your Docker credentials automatically
 

@@ -158,17 +158,17 @@ These features have no equivalent in the Go CLI.
 
 ### Interactive TUI dashboard
 
-Run `oras tui` (or just `oras` with no arguments) to launch an interactive terminal dashboard:
+Run `oras` with no arguments to launch an interactive terminal dashboard:
 
 ```bash
 # Launch the TUI
-oras tui
+oras
 
 # Open directly to a registry
-oras tui --registry ghcr.io
+oras --registry ghcr.io
 
 # Browse a specific repository
-oras tui --registry ghcr.io --repository myorg/myrepo
+oras --registry ghcr.io --repository myorg/myrepo
 ```
 
 The TUI provides:
@@ -242,7 +242,7 @@ Use this checklist when switching from the Go CLI to the .NET CLI:
 - [ ] **Update scripts** — replace `--format go-template='{{.digest}}'` with `--format json` piped through `jq`
 - [ ] **Test core workflows** — `login`, `logout`, and `version` are fully functional today
 - [ ] **Check command status** — review the [Command Comparison Table](#command-comparison-table) for your specific commands
-- [ ] **Try the TUI** — run `oras tui` to explore the interactive dashboard
+- [ ] **Try the TUI** — run `oras` to explore the interactive dashboard
 - [ ] **Report issues** — file bugs at [GitHub Issues](https://github.com/shizhMSFT/oras-dotnet-cli/issues)
 
 ---

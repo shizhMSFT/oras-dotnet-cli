@@ -11,7 +11,7 @@ description: "Visual showcase of the interactive Terminal UI features powered by
 A visual tour of the ORAS .NET CLI's interactive terminal interface — powered by [Spectre.Console](https://spectreconsole.net/).
 {: .fs-5 .fw-300 }
 
-Every screen below is a faithful reproduction of real TUI output. Launch it yourself with `oras tui`.
+Every screen below is a faithful reproduction of real TUI output. Launch it yourself with `oras` (no arguments).
 {: .text-grey-dk-000 }
 
 ---
@@ -52,9 +52,6 @@ The main entry point when you run `oras` with no arguments in an interactive ter
 ```bash
 # Auto-launches when stdin is a TTY and no arguments are provided
 oras
-
-# Or explicitly
-oras tui
 ```
 
 ---
@@ -102,11 +99,11 @@ After selecting a repository:
 
 ```bash
 # Browse from the dashboard
-oras tui
+oras
 # → Select "Browse Registry"
 
 # Or jump directly to a registry
-oras tui --registry ghcr.io
+oras --registry ghcr.io
 ```
 
 ---
@@ -239,7 +236,7 @@ Drill into any manifest with a menu-driven inspector. View the raw JSON, a struc
 
 ```bash
 # From the TUI browser — select a tag to open the inspector
-oras tui --registry ghcr.io --repository myorg/webapp
+oras --registry ghcr.io --repository myorg/webapp
 
 # Or inspect a manifest directly from CLI
 oras manifest fetch ghcr.io/myorg/webapp:v2.1.0
@@ -297,7 +294,7 @@ oras repo tags ghcr.io/myorg/webapp
 oras tag ghcr.io/myorg/webapp:v2.1.0 stable production
 
 # Or manage tags interactively from the TUI inspector
-oras tui --registry ghcr.io --repository myorg/webapp
+oras --registry ghcr.io --repository myorg/webapp
 ```
 
 ---
@@ -352,7 +349,7 @@ Multi-select prompts powered by `MultiSelectionPrompt` for batch operations — 
 
 ```bash
 # Multi-select is available throughout the TUI
-oras tui
+oras
 
 # Batch operations from the CLI
 oras tag ghcr.io/myorg/webapp:v2.1.0 stable production release-candidate
@@ -395,4 +392,4 @@ oras pull ghcr.io/myorg/webapp:v2.1.0 --no-tty
 ---
 
 {: .text-center .fs-3 }
-Ready to try it? [Install the CLI](installation) and run `oras tui` to explore.
+Ready to try it? [Install the CLI](installation) and run `oras` to explore.
