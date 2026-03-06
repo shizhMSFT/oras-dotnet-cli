@@ -9,7 +9,7 @@ description: "Using the interactive Terminal UI for registry exploration"
 
 > Using the interactive Terminal UI for registry exploration and artifact management
 
-The ORAS .NET CLI v0.2.1 includes a powerful terminal user interface (TUI) with elegant visual design, context menus, in-memory caching, and fully interactive workflows for exploring container registries and managing artifacts.
+The ORAS .NET CLI v0.3.0 includes a powerful terminal user interface (TUI) with elegant visual design, context menus, in-memory caching, and fully interactive workflows for exploring container registries and managing artifacts.
 
 ## Launching the TUI
 
@@ -27,9 +27,10 @@ oras --registry ghcr.io --repository myorg/myrepo
 ## Features
 
 ### Dashboard View
-- FigletText ASCII art "ORAS" header, left-aligned for consistent terminal rendering
-- Credential store status and statistics with ASCII-safe indicators (`[+]` logged in, `[ ]` not authenticated) — properly escaped for Spectre.Console
-- Quick actions for all artifact operations
+- Hand-crafted Unicode block art "ORAS" banner with brand colors (O=#D04485 pink, R=#5EBAB4 teal, A=#FCFCFD white, S=#CCF575 lime)
+- Subtitle: "OCI Registry As Storage | v{version} • Interactive Terminal UI"
+- Credential store status with Unicode indicators (`●` Authenticated, `○` No credentials) for all registries (auths, credHelpers, and credsStore)
+- Artifact operations accessible via a dedicated "Artifacts" sub-menu
 - In-memory caching with "(cached)" indicators for fast repeat operations
 - UTF-8 output encoding ensures correct rendering on all platforms
 
@@ -51,6 +52,8 @@ oras --registry ghcr.io --repository myorg/myrepo
   - Backup to local
   - Tag with...
   - Delete
+  - ─── (non-selectable separator)
+  - Back
 
 ### Direct Repository Browse
 - Jump straight to a repository's tags without browsing the catalog
@@ -84,21 +87,36 @@ oras --registry ghcr.io --repository myorg/myrepo
 - "Refresh" options available in context menus to invalidate cache
 - Dramatically faster navigation on repeat visits
 
+### Artifacts Sub-Menu
+- Artifact operations are grouped under a dedicated "Artifacts" menu entry:
+  - Push Artifact
+  - Pull Artifact
+  - Copy Artifact
+  - Tag Artifact
+  - Backup Artifact
+  - Restore Artifact
+  - ─── (non-selectable separator)
+  - Back
+
+### Cyclic Navigation
+- All menus wrap around: pressing ↓ from the last item moves to the first item, and ↑ from the first item moves to the last
+- Non-selectable separators (`───`) visually group menu items (e.g., before Quit or Back) using `AddChoiceGroup`
+
 ### Keyboard Navigation
-- **Arrow keys**: Navigate lists and trees
+- **Arrow keys**: Navigate lists and trees (with cyclic wrapping)
 - **Enter**: Select item / perform action
 - **Esc**: Go back / cancel
 - **Ctrl+C**: Exit application
 - **F5**: Refresh current view
 
-## ASCII-Safe Indicators
+## Unicode Indicators
 
-All status symbols are ASCII-safe for universal terminal compatibility — no Unicode symbols. Since v0.2.1 these indicators are properly escaped (`[[+]]`, `[[i]]`, etc.) so Spectre.Console never misinterprets them as markup tags:
+Status symbols use Unicode characters for rich terminal rendering:
 
-- `[+]` — Success, logged-in status
-- `[i]` — Informational messages
-- `[!]` — Warnings, destructive actions
-- `[X]` — Errors
+- `✔` (green) — Success, completed operations
+- `✗` (red) — Errors, failed operations
+- `ℹ` (cyan) — Informational messages
+- `⚠` (yellow) — Warnings, destructive actions
 
 ## Tips
 

@@ -22,42 +22,43 @@ Every screen below is a faithful reproduction of real TUI output. Launch it your
 The main entry point when you run `oras` with no arguments in an interactive terminal. Shows connected registries, auth status, and a quick-actions menu.
 
 ```text
-      _____   ______  ___    _____
-     / _ | | / / __ \/   |  / ___/
-    / /_/ |/ / /_/ / /| | (__ )
-   / __  / / _, _/ / ___ |/ __/
-  / / / / / / / / / / / / / /_
- /_/ /_/_/_/ /_/_/_/_/ /_/\__/
+  ██████╗ ██████╗  █████╗ ███████╗
+ ██╔═══██╗██╔══██╗██╔══██╗██╔════╝
+ ██║   ██║██████╔╝███████║███████╗
+ ██║   ██║██╔══██╗██╔══██║╚════██║
+ ╚██████╔╝██║  ██║██║  ██║███████║
+  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
+ OCI Registry As Storage  │  v0.3.0 • Interactive Terminal UI
+ ─────────────────────────────────────────────
 
-╭──────────────────────────────────────────────────────────────╮
-│              Connected Registries                            │
-├──────────────────────────────────────────────────────────────┤
-│  ghcr.io                          [+] logged in              │
-│  localhost:5000                    [+] logged in              │
-│  myregistry.azurecr.io            [ ] not authenticated       │
+╭── Connected Registries ──────────────────────────────────────╮
+│                                                              │
+│  Registry                         Status                     │
+│  ────────────────────────────────────────────                │
+│  ghcr.io                          ● Authenticated            │
+│  localhost:5000                    ● Authenticated            │
+│  myregistry.azurecr.io            ○ No credentials           │
+│                                                              │
 ╰──────────────────────────────────────────────────────────────╯
 
-  Select an action:
-  ❯ Browse Registry
-    Browse Repository Tags
-    Login
-    Copy Artifact
-    Backup Artifact
-    Restore Artifact
-    Push Artifact
-    Pull Artifact
-    Tag Artifact
-    Quit
-
-  (Move up and down to reveal more options)
+Select an action:
+❯ Browse Registry
+  Browse Repository Tags
+  Login
+  Artifacts
+  ───
+  Quit
 ```
 
-**Version 0.2.1 Bug-Fix Update:**
-- **FigletText Header** — Left-aligned ASCII art ORAS logo (changed from centered for consistent terminal rendering)
+**Version 0.3.0 highlights:**
+- **Unicode Block Art Banner** — Hand-crafted ORAS logo with brand colors (O=#D04485 pink, R=#5EBAB4 teal, A=#FCFCFD white, S=#CCF575 lime)
 - **Rich Color Scheme** — Cyan headers, green success indicators, yellow warnings
-- **ASCII-Safe Status Indicators** — `[+]`, `[i]`, `[!]`, `[X]` are properly escaped so Spectre.Console never parses them as markup style tags
+- **Unicode Status Symbols** — `✔` (success), `✗` (error), `ℹ` (info), `⚠` (warning) for rich terminal rendering
+- **Registry Status** — `● Authenticated` (green) / `○ No credentials` (grey) for all registries (auths, credHelpers, and credsStore)
 - **UTF-8 Output** — Console output encoding explicitly set to UTF-8 to prevent garbled characters
-- **Dashboard Quick-Actions** — All artifact operations (copy, backup, restore, push, pull, tag) accessible from main menu
+- **Artifacts Sub-Menu** — Push, Pull, Copy, Tag, Backup, Restore grouped under a dedicated "Artifacts" menu entry
+- **Cyclic Navigation** — All menus wrap around (↓ from last item → first, ↑ from first → last)
+- **Non-Selectable Separators** — `───` line before Quit/Back visually separates exit actions (uses `AddChoiceGroup`)
 - **In-Memory Caching** — Fast repeat operations with cache indicators
 - **Fully Interactive Workflows** — No more "use CLI" messages; all operations have complete TUI flows
 
@@ -76,7 +77,7 @@ oras
 Hierarchical, searchable repository and tag browser. Select a registry from stored credentials or enter a new URL, then drill into repositories and tags.
 
 ```text
-  [+] Connected to ghcr.io
+  ✔ Connected to ghcr.io
 
   Repositories in ghcr.io (Total: 12):
   Type to search...
@@ -97,7 +98,7 @@ Hierarchical, searchable repository and tag browser. Select a registry from stor
 When a registry doesn't support the catalog API (like ghcr.io, ECR, or Docker Hub's non-public repositories), the registry browser shows a helpful message:
 
 ```text
-  [i] This registry does not support repository listing (e.g., ghcr.io)
+  ℹ This registry does not support repository listing (e.g., ghcr.io)
 
   Enter repository name...
   (Type a repository path like "oras-project/oras")
@@ -193,7 +194,7 @@ Copy OCI artifacts between registries with live progress tracking.
 After entering the source:
 
 ```text
-  [+] Source: ghcr.io/myorg/webapp:v2.1.0
+  ✔ Source: ghcr.io/myorg/webapp:v2.1.0
   Enter destination reference:
   docker.io/myorg/webapp:v2.1.0
 ```
@@ -203,13 +204,13 @@ During copy:
 ```text
   Copying ghcr.io/myorg/webapp:v2.1.0 → docker.io/myorg/webapp:v2.1.0
 
-  [+] sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
-  [+] sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
+  ✔ sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
+  ✔ sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
      sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━░░░░░   78%  12.3 MB   24.5 MB/s  0:03
   Copying                                     ━━━━━━━━━━━━━━░░░░░░   66%           2/3 blobs
 
   Include referrers (signatures, SBOMs)? [y/N] y
-  [+] Copied with 1 referrer
+  ✔ Copied with 1 referrer
 ```
 
 ### Backup Artifact
@@ -228,9 +229,9 @@ After entering the reference:
 ```text
   Backing up ghcr.io/myorg/webapp:v2.1.0
 
-  [+] sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
-  [+] sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
-  [+] sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━━━━━━  100%  15.8 MB   --
+  ✔ sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
+  ✔ sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
+  ✔ sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━━━━━━  100%  15.8 MB   --
   Backup                                      ━━━━━━━━━━━━━━━━━━━━  100%           3/3 blobs
 ```
 
@@ -239,7 +240,7 @@ After completion:
 ```text
   ╭─ Backup Summary ──────────────────────────────────────────────╮
   │                                                               │
-  │  [+] Backup completed successfully                           │
+  │  ✔ Backup completed successfully                              │
   │                                                               │
   │  Reference: ghcr.io/myorg/webapp:v2.1.0                     │
   │  Blobs:     3                                                │
@@ -273,12 +274,12 @@ During restore:
 ```text
   Restoring ./oras-backup → ghcr.io/myorg/webapp-restored:v2.1.0
 
-  [+] sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
-  [+] sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
-  [+] sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━━━━━━  100%  15.8 MB   --
+  ✔ sha256:a3ed95  config.json                ━━━━━━━━━━━━━━━━━━━━  100%   1.5 KB   --
+  ✔ sha256:e1b2f3  app-binary.tar.gz          ━━━━━━━━━━━━━━━━━━━━  100%  45.6 MB   --
+  ✔ sha256:c4d5e6  static-assets.tar.gz       ━━━━━━━━━━━━━━━━━━━━  100%  15.8 MB   --
   Restoring                                   ━━━━━━━━━━━━━━━━━━━━  100%           3/3 blobs
 
-  [+] Restored to ghcr.io/myorg/webapp-restored:v2.1.0
+  ✔ Restored to ghcr.io/myorg/webapp-restored:v2.1.0
   Digest: sha256:7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b
 ```
 
@@ -468,7 +469,7 @@ View tags in a styled table with digests, compressed sizes, and timestamps. Add 
   ℹ Enter tags separated by spaces (e.g., v1.0 latest stable):
   Tags: stable production
   ℹ Tag command: oras tag ghcr.io/myorg/webapp:v2.1.0 stable production
-  [+] Tagged ghcr.io/myorg/webapp:v2.1.0
+  ✔ Tagged ghcr.io/myorg/webapp:v2.1.0
 ```
 
 **How to launch:**
@@ -510,12 +511,12 @@ Multi-select prompts powered by `MultiSelectionPrompt` for batch operations — 
 ### Confirmation for Destructive Actions
 
 ```text
-  [!] You are about to delete: ghcr.io/myorg/webapp:nightly-20260305
-  [!] Digest: sha256:b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3
-  [!] Size: 63.4 MB
+  ⚠ You are about to delete: ghcr.io/myorg/webapp:nightly-20260305
+  ⚠ Digest: sha256:b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3
+  ⚠ Size: 63.4 MB
 
   Are you sure you want to delete this manifest? [y/N] y
-  [+] Deleted ghcr.io/myorg/webapp:nightly-20260305
+  ✔ Deleted ghcr.io/myorg/webapp:nightly-20260305
 ```
 
 ### Multi-Select Repositories for Batch Pull
@@ -551,12 +552,12 @@ The TUI uses a deliberate color palette via Spectre.Console styles:
 
 | Element | Symbol | Usage |
 |:--------|:-------|:------|
-| Success | `[+]` | Completed operations, logged-in status |
-| Info | `[i]` | Informational messages, tips |
-| Warning | `[!]` | Cautions, destructive-action prompts |
-| Error | `[X]` | Error messages, failed operations |
+| Success | `✔` (green) | Completed operations, authenticated status |
+| Info | `ℹ` (cyan) | Informational messages, tips |
+| Warning | `⚠` (yellow) | Cautions, destructive-action prompts |
+| Error | `✗` (red) | Error messages, failed operations |
 
-All symbols are ASCII-safe for universal terminal compatibility.
+Symbols are Unicode for rich terminal rendering.
 
 ---
 
