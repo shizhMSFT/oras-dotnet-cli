@@ -137,14 +137,10 @@ internal class Dashboard
             .PageSize(12)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
             .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
-            .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction, MenuSeparator, QuitAction);
+            .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction)
+            .AddChoiceGroup(MenuSeparator, QuitAction);
 
         var action = AnsiConsole.Prompt(prompt);
-        if (action == MenuSeparator)
-        {
-            return true;
-        }
-
         return await HandleActionAsync(action, registries, cancellationToken).ConfigureAwait(false);
     }
 
@@ -198,13 +194,12 @@ internal class Dashboard
                 CopyArtifactAction,
                 TagArtifactAction,
                 BackupArtifactAction,
-                RestoreArtifactAction,
-                MenuSeparator,
-                BackAction);
+                RestoreArtifactAction)
+            .AddChoiceGroup(MenuSeparator, BackAction);
 
         var artifactAction = AnsiConsole.Prompt(artifactPrompt);
 
-        if (artifactAction is BackAction or MenuSeparator)
+        if (artifactAction == BackAction)
         {
             return true;
         }

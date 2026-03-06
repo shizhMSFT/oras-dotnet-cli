@@ -15,6 +15,7 @@ internal class RegistryBrowser
     private readonly IRegistryService _registryService;
     private readonly DockerConfigStore _configStore;
     private readonly TuiCache _cache;
+    private const string MenuSeparator = "───";
 
     public RegistryBrowser(IServiceProvider serviceProvider)
     {
@@ -63,23 +64,29 @@ internal class RegistryBrowser
 
     private async Task<string?> SelectOrEnterRegistryAsync(CancellationToken cancellationToken)
     {
-        var config = await _configStore.LoadAsync(cancellationToken).ConfigureAwait(false);
-        var registries = config.Auths.Keys.ToList();
+        var registries = await _configStore.ListRegistriesAsync(cancellationToken).ConfigureAwait(false);
 
-        var choices = new List<string>(registries);
-        choices.Add("Enter new registry URL...");
-        choices.Add("Back to main menu");
+        const string enterNew = "Enter new registry URL...";
+        const string back = "Back to main menu";
 
-        var selection = PromptHelper.PromptSelection(
-            "[green]Select a registry:[/]",
-            choices);
+        var prompt = new SelectionPrompt<string>()
+            .Title("[green]Select a registry:[/]")
+            .WrapAround()
+            .PageSize(10)
+            .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
+            .AddChoices(registries)
+            .AddChoices(enterNew)
+            .AddChoiceGroup(MenuSeparator, back);
 
-        if (selection == "Back to main menu")
+        var selection = AnsiConsole.Prompt(prompt);
+
+        if (selection == back)
         {
             return null;
         }
 
-        if (selection == "Enter new registry URL...")
+        if (selection == enterNew)
         {
             return PromptHelper.PromptText("Registry host (e.g., localhost:5000, ghcr.io):");
         }
@@ -518,27 +525,15 @@ internal class RegistryBrowser
         (string Username, string Password)? credentials,
         CancellationToken cancellationToken)
     {
-        var actions = new[]
-        {
-            "Inspect Manifest",
-            "Pull to directory",
-            "Copy to...",
-            "Backup to local",
-            "Tag with...",
-            "Delete",
-            "───",
-            "Back"
-        };
+        var prompt = new SelectionPrompt<string>()
+            .Title($"[green]Actions for {Markup.Escape(reference)}:[/]")
+            .WrapAround()
+            .PageSize(10)
+            .UseConverter(x => x == MenuSeparator ? "[dim]───[/]" : x)
+            .AddChoices("Inspect Manifest", "Pull to directory", "Copy to...", "Backup to local", "Tag with...", "Delete")
+            .AddChoiceGroup(MenuSeparator, "Back");
 
-        var action = PromptHelper.PromptSelection(
-            $"[green]Actions for {Markup.Escape(reference)}:[/]",
-            actions,
-            converter: x => x == "───" ? "[dim]───[/]" : x);
-
-        if (action == "───")
-        {
-            return;
-        }
+        var action = AnsiConsole.Prompt(prompt);
 
         switch (action)
         {
