@@ -194,4 +194,17 @@
 - `src/Oras.Cli/Tui/RegistryBrowser.cs` — `BrowseRepositoriesAsync`, `FetchRepositoriesAsync`, `BrowseTagsAsync` (now public)
 - `src/Oras.Cli/Tui/Dashboard.cs` — Added "Browse Repository Tags" action and `HandleBrowseRepositoryTagsAsync`
 
+### 2026-03-06 — Sprint Wave Release: v0.1.2 (Catalog-Fallback Release)
+
+**Release milestone:** v0.1.2 shipped with catalog-fallback feature.
+
+**Files modified in this wave:**
+- `src/Oras.Cli/Tui/RegistryBrowser.cs` — Finalized catalog fallback and manual entry logic
+- `src/Oras.Cli/Tui/Dashboard.cs` — Browse Repository Tags action deployed
+- Documentation updated by Vasquez (DevOps): tui-showcase.md, tui-guide.md, installation.md, index.md
+
+**Key decision documented:** DEC-TUI-001 — Catalog API Fallback and DEC-DOC-001 — Terminal Output Blocks Use `text` Fences.
+
+**Build status:** 0 errors, 0 warnings. Release published with 6 binaries.
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->

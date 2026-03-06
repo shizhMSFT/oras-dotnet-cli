@@ -799,6 +799,155 @@ dotnet pack -p:PackAsTool=true -p:PackageId=oras -p:ToolCommandName=oras
 
 ---
 
+---
+
+### DEC-TUI-001: Catalog API Fallback — Manual Repository Entry
+
+**Author:** Bishop (TUI Dev)  
+**Date:** 2026-03-06  
+**Status:** ✅ Implemented
+
+**Context:** Many public registries (ghcr.io, Docker Hub partial, ECR) don't support the `/v2/_catalog` endpoint. The TUI's "Browse Registry" flow was a dead-end when catalog failed — users saw "No repositories found" and could only go back.
+
+**Decision:**
+
+1. **Null vs empty semantics in `FetchRepositoriesAsync`:** `null` signals "catalog not supported"; empty `List<string>` signals "catalog worked but no repos exist." This drives different info messages to the user.
+
+2. **"Enter repository name..." always present:** Whether catalog succeeds or fails, users can manually enter a repo path. This is appended to the bottom of every repo selection list.
+
+3. **Graceful degradation on errors:** Unexpected fetch exceptions are treated as catalog-unavailable (return null) rather than blocking the user. They can still type a repo name.
+
+4. **Dashboard shortcut — "Browse Repository Tags":** Lets users jump directly to tag browsing by entering a full reference like `ghcr.io/oras-project/oras`. Parses registry from the first `/` segment.
+
+5. **`BrowseTagsAsync` made public:** So Dashboard can reuse it directly without duplicating tag-browsing logic.
+
+**Impact:**
+- **Dallas (CLI core):** No impact. TUI-only changes.
+- **Mercer (tests):** New public method `BrowseTagsAsync` on `RegistryBrowser` is testable. Consider integration tests for catalog-fallback paths once real API is wired.
+- **Rook (services):** When implementing real catalog API calls, throw `NotSupportedException` for registries that don't support `/v2/_catalog` — the TUI catches it and falls back gracefully.
+
+---
+
+### DEC-DOC-001: Terminal Output Blocks Use `text` Fences, Not `ansi`
+
+**Date:** 2026-03-06  
+**Author:** Bishop (TUI Developer)  
+**Status:** ✅ Implemented
+
+**Context:** When showcasing TUI output in the docs site, we needed to choose between ` ```ansi ` and ` ```text ` code fences for terminal output examples.
+
+**Decision:** Use ` ```text ` fences for all terminal output blocks in documentation. GitHub Pages / Jekyll with just-the-docs does not render ANSI escape sequences — ` ```ansi ` fences would show raw escape codes instead of colors. Colors and styles are conveyed through descriptive content (Unicode symbols like ✓/⚠/●, structural box-drawing characters) and a Color Reference table.
+
+**Impact:** Any future docs pages showing terminal output should follow this convention. If the docs site ever adds a terminal rendering plugin, blocks can be upgraded to ` ```ansi ` later.
+
+---
+
+### DEC-REL-001: Versioning Scheme for oras .NET CLI
+
+**Author:** Vasquez (DevOps)  
+**Date:** 2026-03-06  
+**Status:** ✅ Implemented
+
+**Context:** We need a versioning scheme for the oras .NET CLI that communicates maturity, integrates with .NET tooling, and drives release automation (pre-release detection, NuGet gating).
+
+**Decision:** Use **SemVer 2.0** with the following conventions:
+
+- **Pre-release tags**: `v{major}.{minor}.{patch}-{label}.{n}` (e.g., `v0.1.0-alpha.1`, `v0.2.0-beta.1`, `v1.0.0-rc.1`)
+- **Stable releases**: `v{major}.{minor}.{patch}` (e.g., `v1.0.0`)
+- **Version source of truth**: `<Version>` property in `Directory.Build.props` — applies to all projects uniformly
+- **Git tag format**: `v`-prefixed to trigger release workflow (`v*` pattern in release.yml)
+
+**Automation implications:**
+
+| Tag contains `-` | Pre-release flag | NuGet publish | Example            |
+|-------------------|-----------------|---------------|--------------------|
+| Yes               | true            | Skipped       | `v0.1.0-alpha.1`  |
+| No                | false           | Runs          | `v1.0.0`           |
+
+**Alpha release specifics:** For alpha releases, AOT compilation and IL trimming are **disabled** at publish time (`-p:PublishAot=false -p:PublishTrimmed=false`) to maximize runtime compatibility. These will be re-enabled for beta/RC once trim compatibility is validated.
+
+**Consequences:**
+- Version must be bumped in `Directory.Build.props` before tagging each release
+- The `v` prefix is mandatory for tags — bare version numbers won't trigger the pipeline
+- Pre-release labels control downstream behavior automatically; no manual flags needed
+
+---
+
+### DEC-OPS-001: Release v0.1.2 — Catalog-Less Registry Support
+
+**Date:** 2026-03-06  
+**Released by:** Vasquez (DevOps)  
+**Status:** ✅ Completed
+
+**Summary:** Released v0.1.2 with catalog-less registry support. Registries like ghcr.io, ECR, and Docker Hub private repos don't expose the catalog API (`/v2/_catalog`). The TUI now gracefully handles this:
+
+1. **Detects unavailable catalog** — Shows: *"This registry does not support repository listing (e.g., ghcr.io)"*
+2. **Always offers manual entry** — Select "Enter repository name..." to type a repo path directly
+3. **New dashboard shortcut** — "Browse Repository Tags" action for quick direct access to any repo+tag on catalog-less registries
+
+**Files Changed:**
+
+| File | Changes |
+|------|---------|
+| `Directory.Build.props` | Version: 0.1.1 → 0.1.2 |
+| `docs/tui-showcase.md` | Added "Direct Repository Browse" section, updated Dashboard menu |
+| `docs/tui-guide.md` | Added subsection on Direct Repository Browse, noted catalog-less support |
+| `docs/index.md` | Updated Quick Start tip about Browse Repository Tags |
+| `docs/installation.md` | Updated all 7 download URLs to v0.1.2, fixed version output example |
+
+**Release Workflow:**
+- **Commit:** Pushed to `main`
+- **Tag:** `v0.1.2` pushed to origin
+- **Workflow:** Release.yml triggered, completed in ~2 minutes
+- **Release Notes:** Applied via `gh release edit` with full feature description, examples, and download table
+- **Status:** ✅ Complete — visible on GitHub Releases page
+
+**Why This Matters:** Users who rely on ghcr.io (GitHub Container Registry), ECR, or private Docker registries without public catalog APIs now have a seamless path to browse tags directly. No more "No repositories found" dead end.
+
+**Release Notes Link:** https://github.com/shizhMSFT/oras-dotnet-cli/releases/tag/v0.1.2
+
+---
+
+### DEC-MIG-001: Migration Guide Accuracy Policy
+
+**Author:** Dallas (Core Developer)  
+**Date:** 2026-03-06  
+**Status:** ✅ Implemented
+
+**Context:** Migration guide creation
+
+**Decision:** The migration guide (`docs/migration.md`) reports command implementation status based on direct source code inspection — not assumptions or roadmap intent. Each command was classified by whether it throws `NotImplementedException` (stub), has partial logic (partial), or is fully functional (full).
+
+**Rationale:** Migration guides that overstate readiness erode trust. Users switching from a production Go CLI need honest status reporting. The guide should be updated whenever a stubbed command gets its real implementation.
+
+**Impact:** Any PR that implements a previously-stubbed command should also update the migration guide's command comparison table. The "Known Limitations" section should shrink as commands move from stub → full.
+
+---
+
+### DEC-DIR-001: User Directive — TUI Launch
+
+**Date:** 2026-03-06T07:49Z  
+**Author:** Shiwei Zhang (via Copilot)  
+**Status:** Captured
+
+**Directive:** TUI should be launched by just `oras` (no arguments), not `oras tui`. There is no `tui` subcommand.
+
+**Rationale:** User request — captured for team memory
+
+---
+
+### DEC-DIR-002: User Directive — Catalog-Less Registry Support
+
+**Date:** 2026-03-06T08:27Z  
+**Author:** Shiwei Zhang (via Copilot)  
+**Status:** ✅ Implemented
+
+**Directive:** Some registries like ghcr.io do not support the catalog API for listing repositories. The TUI must handle this gracefully — when catalog listing fails or is unavailable, allow users to manually enter a repository name (e.g., `oras-project/oras`) and jump directly to tag listing. Always offer manual repository entry as an option alongside catalog results.
+
+**Rationale:** User request — real-world registries vary in catalog API support. The TUI must not be a dead-end when catalog is unavailable.
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
