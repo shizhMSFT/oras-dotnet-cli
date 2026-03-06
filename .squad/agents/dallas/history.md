@@ -384,3 +384,7 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 
 **Build Status:** ✅ dotnet build src\Oras.Cli\oras.csproj succeeded with warnings only
 
+
+### CI Formatting Requirements (2026-03-07)
+
+**Whitespace compliance is enforced in CI.** The Format Check job runs `dotnet format whitespace --verify-no-changes` and `dotnet format style --verify-no-changes`. Any code changes must pass both checks before merge. Run `dotnet format whitespace` and `dotnet format style` locally before committing to avoid CI failures. The `.editorconfig` at repo root governs all formatting rules.
