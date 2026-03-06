@@ -24,7 +24,6 @@ Choose the installation method that works best for you:
 |:-------|:---------|:-------------|
 | [Binary Download](#binary-download) | Most users — zero dependencies | None |
 | [Build from Source](#build-from-source) | Contributors and developers | .NET 10 SDK, Git |
-| [.NET Global Tool](#net-global-tool) | .NET developers | .NET 10 SDK |
 
 ---
 
@@ -164,18 +163,6 @@ dotnet publish src/Oras.Cli/oras.csproj -c Release -r linux-x64 \
 | `osx-arm64` | macOS Apple Silicon |
 | `linux-x64` | Linux x64 |
 | `linux-arm64` | Linux ARM64 |
-
----
-
-## .NET Global Tool
-
-{: .note }
-> The NuGet package is not yet published for the alpha release. This method will be available in a future stable release.
-
-```bash
-# Coming soon
-dotnet tool install -g oras
-```
 
 ---
 

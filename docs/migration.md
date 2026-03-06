@@ -50,10 +50,7 @@ sudo mv oras /usr/local/bin/
 ### .NET CLI
 
 ```bash
-# .NET global tool (requires .NET 10 SDK)
-dotnet tool install -g oras
-
-# Or download a self-contained binary
+# Download a self-contained binary
 curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.1.0/oras-linux-x64.tar.gz
 tar -xzf oras-linux-x64.tar.gz
 chmod +x oras-linux-x64

@@ -118,8 +118,7 @@ The TUI mode provides:
 - **Manifest Inspector**: View manifest details, layers, and annotations
 - **Dashboard**: Monitor operations and view statistics
 
-![TUI Screenshot](docs/assets/tui-screenshot.png)
-*Interactive registry browser and manifest inspector*
+*Run `oras` with no arguments to launch the interactive dashboard.*
 
 For details, see [docs/tui-guide.md](docs/tui-guide.md).
 

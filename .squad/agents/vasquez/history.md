@@ -178,3 +178,56 @@
 - ✅ Release workflow completed successfully within ~2 minutes
 - ✅ GitHub Release created and notes applied via `gh release edit`
 - ✅ Release is visible in `gh release list`
+
+### 2026-03-06: v0.1.3 Release — Copy, Backup, Restore Commands + TUI
+
+**Release Event:** Shipped v0.1.3 with three powerful features: enhanced `oras copy`, new `oras backup`, and new `oras restore` commands, plus full TUI interactive workflows for all three.
+
+**Changes Made:**
+
+**Documentation Updates (Step 1):**
+- `docs/tui-showcase.md` — Updated Dashboard version to 0.1.3; added "Copy, Backup & Restore" section with detailed workflow examples showing prompts, progress bars, and summary panels
+- `docs/tui-guide.md` — Added subsections for Copy, Backup, and Restore under Features, explaining each workflow with CLI examples
+- `docs/migration.md` — Updated command comparison table: `oras copy` changed from 🔲 Stub to ✅ Full; added `oras backup` and `oras restore` marked as 🆕 New (.NET CLI exclusive); removed copy from stubbed commands list; added new "Backup and Restore Commands" subsection in "What's New in .NET CLI"
+- `docs/index.md` — Updated download URL v0.1.2 → v0.1.3; added backup/restore examples in Quick Start
+- `docs/installation.md` — Updated all 6 download URLs v0.1.2 → v0.1.3 (Windows x64/ARM64, macOS x64/ARM64, Linux x64/ARM64); updated version verification output to 0.1.3
+- `docs/commands/README.md` — Added backup and restore entries in Registry Operations section with "New — .NET CLI exclusive" markers
+- Created `docs/commands/backup.md` — Full command reference with synopsis, description, options (output, recursive, platform, auth), examples, exit codes, and cross-links
+- Created `docs/commands/restore.md` — Full command reference with synopsis, description, options, examples, air-gapped environment use case, exit codes, and cross-links
+
+**Version Update (Step 2):**
+- Updated `Directory.Build.props`: Version 0.1.2 → 0.1.3
+
+**Release Workflow (Step 3):**
+- Committed all doc and version changes with detailed commit message
+- Pushed main branch to origin
+- Created and pushed tag v0.1.3 to trigger release workflow
+- Workflow completed in ~4 minutes; GitHub Release auto-created with changelog from git log
+- Updated release notes via `gh release edit v0.1.3 --notes-file` with comprehensive markdown:
+  - Feature highlights for copy, backup, restore with code examples
+  - TUI menu showcase showing new dashboard options
+  - Download links for all 6 platforms
+  - Changelog link (v0.1.2...v0.1.3)
+
+**Key Features in Release:**
+- **Copy with TUI**: Source/dest prompts, referrers toggle, live progress, success message
+- **Backup with TUI**: Reference prompt, output path selection, progress bars, summary panel showing layers/size/path, OCI layout or tar archive format
+- **Restore with TUI**: Path prompt, destination entry, progress tracking, success confirmation with digest
+- **Dashboard Updated**: New menu options for Copy, Backup, Restore positioned between Login and Push Artifact
+
+**Verification:**
+- ✅ All 8 docs files updated (tui-showcase, tui-guide, migration, index, installation, commands/README, commands/backup, commands/restore)
+- ✅ Version bumped in Directory.Build.props (0.1.2 → 0.1.3)
+- ✅ All v0.1.2 URLs updated to v0.1.3 across 6 download sections
+- ✅ Commit created with co-authored footer
+- ✅ Tag v0.1.3 pushed; release workflow triggered
+- ✅ GitHub Release created with 6 platform binaries (win-x64, win-arm64, osx-x64, osx-arm64, linux-x64, linux-arm64)
+- ✅ Release notes applied with full markdown content
+- ✅ Release visible in `gh release list` and publicly accessible
+
+**Key Decisions:**
+- Release notes use emoji for visual clarity (📋, 💾, 🔄, 🖥️) while maintaining markdown consistency
+- Backup and restore documented as ".NET CLI exclusive" to emphasize .NET-only capabilities
+- Command reference pages follow existing copy.md pattern for consistency
+- Dashboard menu order: Browse Registry, Browse Repository Tags, Login, Copy, Backup, Restore, Push, Pull, Tag, Quit
+- Version number SemVer patch bump (0.1.2 → 0.1.3) for feature additions, not breaking changes

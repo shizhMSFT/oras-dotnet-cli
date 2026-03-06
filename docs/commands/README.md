@@ -154,4 +154,4 @@ oras copy ghcr.io/source/artifact:v1 ghcr.io/dest/artifact:v1
 oras repo ls ghcr.io
 ```
 
-For more examples and workflows, see the [Quick Start Guide](../quickstart.md).
+For more examples and workflows, see the [Installation Guide](../installation).
