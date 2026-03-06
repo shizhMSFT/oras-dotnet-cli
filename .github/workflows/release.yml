@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Release Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build release
+        run: dotnet build --no-restore --configuration Release
+      
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release
+      
+      # Placeholder for Sprint 4: Publish self-contained binaries
+      # - name: Publish Linux x64
+      #   run: dotnet publish src/oras/oras.csproj -c Release -r linux-x64 --self-contained -o artifacts/linux-x64
+      #
+      # - name: Publish Windows x64
+      #   run: dotnet publish src/oras/oras.csproj -c Release -r win-x64 --self-contained -o artifacts/win-x64
+      #
+      # - name: Publish macOS x64
+      #   run: dotnet publish src/oras/oras.csproj -c Release -r osx-x64 --self-contained -o artifacts/osx-x64
+      #
+      # - name: Publish macOS arm64
+      #   run: dotnet publish src/oras/oras.csproj -c Release -r osx-arm64 --self-contained -o artifacts/osx-arm64
+      
+      # Placeholder for Sprint 4: Create GitHub Release
+      # - name: Create GitHub Release
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     files: artifacts/**/*
+      #     draft: false
+      #     prerelease: false
+      #     generate_release_notes: true
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Placeholder - Release
+        run: |
+          echo "Release workflow triggered for ${{ github.ref_name }}"
+          echo "Full release publishing will be implemented in Sprint 4"

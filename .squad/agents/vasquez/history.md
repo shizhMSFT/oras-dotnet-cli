@@ -40,3 +40,35 @@
 - ADR-009 (Phase 1 Scope): v0.5.0 supports 10/12 commands per Dallas's research. Credential storage (login/logout) and version command are CLI-level responsibility.
 
 **Team Decision Pending:** Whether v0.5.0 API surface meets all Phase 1 requirements or if contributions/adjustments needed.
+
+### 2026-03-06: Sprint 1 CI Pipeline Implementation (S1-14)
+
+**Workflows Created:**
+- `.github/workflows/ci.yml` — PR gate and main branch CI
+  - Build matrix: ubuntu-latest, windows-latest, macos-latest
+  - Steps: checkout → setup .NET 10 SDK → restore → build → test
+  - NuGet package caching enabled (actions/cache@v4)
+  - Unit tests run on all platforms
+  - Integration tests run only on ubuntu-latest (Docker pre-installed)
+  - Format check runs as separate job (`dotnet format --verify-no-changes`)
+  - Test results uploaded as artifacts for diagnostics
+- `.github/workflows/release.yml` — Release stub for Sprint 4
+  - Triggered on tag push (v*)
+  - Placeholder steps for multi-platform binary publishing
+  - Will be fully implemented in Sprint 4
+
+**Integration Test Strategy:**
+- Integration tests reside in `test/oras.Tests/Integration/` (not a separate project)
+- Tests use `ghcr.io/distribution/distribution:3.0.0` via Testcontainers
+- Docker availability:
+  - ✅ ubuntu-latest: Docker pre-installed and working
+  - ❌ windows-latest: Docker Desktop not available on GHA Windows runners
+  - ❌ macos-latest: Docker Desktop not pre-installed, requires manual setup
+- CI filters integration tests by namespace pattern: `--filter "FullyQualifiedName~Integration"`
+
+**CI Performance Target:** Under 5 minutes total (per ADR requirement)
+
+**Known Limitations:**
+- Integration tests not yet fully implemented (RegistryFixture throws NotImplementedException)
+- Test filtering assumes integration tests live in `Integration` namespace
+- When integration tests are implemented, they'll automatically run on ubuntu-latest only
