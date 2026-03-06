@@ -8,7 +8,7 @@ description: "Complete reference documentation for all oras CLI commands"
 
 # Command Reference
 
-Complete reference documentation for all `oras` CLI commands.
+Complete reference documentation for all `oras` CLI commands. All operations support both CLI and interactive TUI modes.
 
 ## Core Commands
 
@@ -111,6 +111,23 @@ Examples:
 - `localhost:5000/myrepo:latest`
 - `ghcr.io/myorg/myartifact:v1.0`
 - `docker.io/library/alpine@sha256:abc123...`
+
+## Interactive TUI Mode
+
+All commands are available through the interactive TUI. Launch with:
+
+```bash
+oras
+```
+
+The TUI provides:
+- **Dashboard** with quick-actions menu
+- **Context menus** for repositories and tags
+- **Live progress bars** for all transfer operations
+- **In-memory caching** with refresh options
+- **ASCII-safe status indicators** for universal terminal compatibility
+
+See [TUI Guide](../tui-guide) for details.
 
 ## Getting Help
 

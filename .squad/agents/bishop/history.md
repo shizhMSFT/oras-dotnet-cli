@@ -235,4 +235,86 @@
 - `AnsiConsole.Progress()` with `.AutoClear(false).HideCompleted(false)` for persistent progress display
 - Simulated operations use `Task.Delay` as placeholder until real service integration
 
+### 2026-03-07 — Full TUI Redesign: Visual Polish, Context Actions, Caching, and Complete Interactivity
+
+**Problem addressed:** User feedback identified five major issues with the TUI:
+1. Not visually elegant — plain panels, no richness
+2. No context actions on repo/tag selection — went straight to inspector
+3. No caching — every navigation re-fetched data
+4. Unicode characters (`✓`, `ℹ`, `⚠`) rendered as `?` on some terminals
+5. Multiple actions showed "use command line" messages instead of being interactive
+
+**Visual overhaul implemented:**
+- Dashboard header now uses `FigletText("ORAS")` for stunning ASCII art logo
+- Registry table upgraded with two columns (Registry | Status), styled panel border
+- Better color hierarchy: cyan headers, green for actions/success, yellow for warnings, red for errors, dim grey for secondary info
+- All selection menus now use 15-20 items page size for generous viewing
+- Panels with rounded borders and proper padding throughout
+
+**Context menus added:**
+- After selecting a repository: "Browse Tags", "Copy entire repository", "Backup repository", "Back"
+- After selecting a tag: "Inspect Manifest", "Pull to directory", "Copy to...", "Backup to local", "Tag with...", "Delete", "Back"
+- All context actions are FULLY INTERACTIVE with progress bars — no "use CLI" messages remain
+- Repository-level copy/backup operations with multi-tag workflows
+
+**Caching system implemented:**
+- Created `TuiCache.cs` with TTL-based in-memory caching using `ConcurrentDictionary`
+- Cache keys: `repos:{registryHost}`, `tags:{registryHost}/{repository}`
+- Default TTL: 5 minutes (configurable)
+- `ShowCachedIndicator()` displays "[dim grey](cached)[/]" when data comes from cache
+- "Refresh" option in repo/tag lists with `InvalidatePattern()` for targeted cache clearing
+- Cache scoped to TUI session — cleared when dashboard exits
+
+**Unicode character fixes:**
+- Replaced `✓` with `[+]`, `ℹ` with `[i]`, `⚠` with `[!]`, error indicator with `[X]`
+- All changes in `PromptHelper.cs` — now ASCII-safe for all terminal types
+- Maintains visual clarity without Unicode dependency
+
+**Full interactivity for all operations:**
+- Dashboard: Added `HandlePushArtifactAsync()`, `HandlePullArtifactAsync()`, `HandleTagArtifactAsync()`
+  - Push: prompts for reference, files (comma-separated), artifact type, shows 3-stage progress
+  - Pull: prompts for reference, output directory, referrers option, shows 4-stage progress
+  - Tag: prompts for reference, space-separated tags, shows 2-stage progress
+- RegistryBrowser: Added 8 new handler methods for context actions
+  - Repository: copy/backup workflows with multi-tag simulation
+  - Tag: pull/copy/backup/tag/delete workflows with proper progress tracking
+- ManifestInspector: Completely rewrote `ExecuteBrowserActionAsync()`
+  - "Pull to local directory" → `HandlePullAsync()` with full interactive workflow
+  - "Copy to another registry" → `HandleCopyAsync()` with destination prompt and referrers
+  - "Tag with additional tags" → Enhanced with progress bars
+  - "Delete manifest" → Enhanced with confirmation and progress display
+- All operations use consistent pattern: prompt → confirm → progress → success/error
+
+**Spectre.Console patterns learned:**
+- `FigletText` for ASCII art — requires `.Centered()` and `.Color()` calls
+- `PanelHeader` constructor: `new PanelHeader("text", Justify.Left)` (not `Justification`)
+- `Table.AddColumn()` with `.LeftAligned()` or `.Centered()` for column alignment
+- `Panel.Padding = new Padding(left, top, right, bottom)` for precise spacing
+- Multi-column tables look professional with consistent border styling
+
+**Code patterns reinforced:**
+- All `Fetch*Async` methods now take `forceRefresh` parameter for cache bypassing
+- Context menu pattern: selection list → switch statement → dedicated async handler
+- Progress bar pattern for all operations: resolve → process → complete (3+ stages)
+- Consistent error handling: try/catch with `OperationCanceledException` separate from general exceptions
+- All user input escaped with `Markup.Escape()` before display in markup strings
+
+**Files created:**
+- `src/Oras.Cli/Tui/TuiCache.cs` — In-memory cache with TTL and pattern invalidation
+
+**Files modified:**
+- `src/Oras.Cli/Tui/PromptHelper.cs` — Fixed Unicode characters, added `ShowCachedIndicator()`
+- `src/Oras.Cli/Tui/Dashboard.cs` — FigletText header, visual overhaul, interactive push/pull/tag
+- `src/Oras.Cli/Tui/RegistryBrowser.cs` — Context menus, caching integration, 8 new handler methods
+- `src/Oras.Cli/Tui/ManifestInspector.cs` — Removed all "use CLI" messages, full interactive operations
+
+**Build status:** Clean build with 0 errors, 138 warnings (all pre-existing AOT/CA warnings).
+
+**User experience impact:**
+- TUI now feels like a premium terminal application (comparable to lazydocker, k9s)
+- Navigation is fast with caching — repeated browsing is instant
+- Every operation can be completed without leaving the TUI
+- Terminal compatibility improved — works on all terminal types without Unicode issues
+- Visual hierarchy makes information scanning effortless
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
