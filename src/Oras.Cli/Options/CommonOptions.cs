@@ -37,9 +37,4 @@ internal class CommonOptions
             }
         }
     }
-
-    public static CommonOptions GetValues(ParseResult parseResult, CommonOptions options)
-    {
-        return options;
-    }
 }

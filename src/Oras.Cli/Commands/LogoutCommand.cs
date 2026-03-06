@@ -30,7 +30,7 @@ internal static class LogoutCommand
                 var registry = parseResult.GetValue(registryArg)!;
 
                 // Normalize registry address
-                registry = NormalizeRegistry(registry);
+                registry = ReferenceHelper.NormalizeRegistry(registry);
 
                 // Remove credentials
                 await credentialService.RemoveCredentialsAsync(registry, cancellationToken).ConfigureAwait(false);
@@ -43,20 +43,4 @@ internal static class LogoutCommand
         return command;
     }
 
-    private static string NormalizeRegistry(string registry)
-    {
-        // Remove protocol if present
-        registry = registry.Replace("https://", "").Replace("http://", "");
-
-        // Remove trailing slash
-        registry = registry.TrimEnd('/');
-
-        // Handle Docker Hub special case
-        if (registry.Equals("docker.io", StringComparison.OrdinalIgnoreCase))
-        {
-            return "registry-1.docker.io";
-        }
-
-        return registry;
-    }
 }

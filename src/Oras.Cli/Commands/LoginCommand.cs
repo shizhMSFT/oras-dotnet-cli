@@ -40,7 +40,7 @@ internal static class LoginCommand
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
 
                 // Normalize registry address
-                registry = NormalizeRegistry(registry);
+                registry = ReferenceHelper.NormalizeRegistry(registry);
 
                 // Get credentials
                 if (passwordStdin)
@@ -113,20 +113,4 @@ internal static class LoginCommand
         return command;
     }
 
-    private static string NormalizeRegistry(string registry)
-    {
-        // Remove protocol if present
-        registry = registry.Replace("https://", "").Replace("http://", "");
-
-        // Remove trailing slash
-        registry = registry.TrimEnd('/');
-
-        // Handle Docker Hub special case
-        if (registry.Equals("docker.io", StringComparison.OrdinalIgnoreCase))
-        {
-            return "registry-1.docker.io";
-        }
-
-        return registry;
-    }
 }

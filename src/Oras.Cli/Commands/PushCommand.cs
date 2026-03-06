@@ -155,16 +155,4 @@ internal static class PushCommand
         return result.Count > 0 ? result : null;
     }
 
-    private static string? ExtractTag(string reference)
-    {
-        var colonIndex = reference.LastIndexOf(':');
-        var slashIndex = reference.LastIndexOf('/');
-
-        if (colonIndex > slashIndex && colonIndex >= 0)
-        {
-            return reference[(colonIndex + 1)..];
-        }
-
-        return null;
-    }
 }

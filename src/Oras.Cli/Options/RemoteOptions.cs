@@ -12,9 +12,9 @@ internal class RemoteOptions
     public Option<string?> UsernameOption { get; }
     public Option<string?> PasswordOption { get; }
     public Option<bool> PasswordStdinOption { get; }
-    public Option<string?> ResolveOption { get; }
+    public Option<string[]?> ResolveOption { get; }
     public Option<string?> CaCertOption { get; }
-    public Option<string?> HeaderOption { get; }
+    public Option<string[]?> HeaderOption { get; }
 
     public RemoteOptions()
     {
@@ -43,9 +43,10 @@ internal class RemoteOptions
             Description = "Read password or identity token from stdin"
         };
 
-        ResolveOption = new Option<string?>("--resolve")
+        ResolveOption = new Option<string[]?>("--resolve")
         {
-            Description = "Custom registry resolution (host:port:address)"
+            Description = "Custom registry resolution (host:port:address)",
+            AllowMultipleArgumentsPerToken = true
         };
 
         CaCertOption = new Option<string?>("--ca-cert")
@@ -53,9 +54,10 @@ internal class RemoteOptions
             Description = "Path to custom CA certificate file"
         };
 
-        HeaderOption = new Option<string?>("--header", "-H")
+        HeaderOption = new Option<string[]?>("--header", "-H")
         {
-            Description = "Add custom headers to requests"
+            Description = "Add custom headers to requests",
+            AllowMultipleArgumentsPerToken = true
         };
     }
 

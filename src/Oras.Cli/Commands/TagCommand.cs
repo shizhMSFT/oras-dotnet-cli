@@ -44,7 +44,7 @@ internal static class TagCommand
                 var targetTags = parseResult.GetValue(targetTagsArg)!;
 
                 // Parse source reference
-                var (registry, repository, sourceTag, sourceDigest) = ParseReference(source);
+                var (registry, repository, sourceTag, sourceDigest) = ReferenceHelper.ParseReference(source);
 
                 // Get remote options
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
@@ -69,41 +69,4 @@ internal static class TagCommand
         return command;
     }
 
-    private static (string registry, string repository, string? tag, string? digest) ParseReference(string reference)
-    {
-        // Simple reference parser - can be enhanced later
-        var parts = reference.Split('/', 2);
-        if (parts.Length < 2)
-        {
-            throw new OrasUsageException(
-                $"Invalid reference format: {reference}",
-                "Reference must be in format: registry/repository[:tag|@digest]");
-        }
-
-        var registry = parts[0];
-        var rest = parts[1];
-
-        string? tag = null;
-        string? digest = null;
-        string repository;
-
-        if (rest.Contains('@'))
-        {
-            var digestParts = rest.Split('@', 2);
-            repository = digestParts[0];
-            digest = digestParts[1];
-        }
-        else if (rest.Contains(':'))
-        {
-            var tagParts = rest.Split(':', 2);
-            repository = tagParts[0];
-            tag = tagParts[1];
-        }
-        else
-        {
-            repository = rest;
-        }
-
-        return (registry, repository, tag, digest);
-    }
 }

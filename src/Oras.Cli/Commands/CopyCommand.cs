@@ -66,7 +66,7 @@ internal static class CopyCommand
         var concurrencyOpt = new Option<int>("--concurrency")
         {
             Description = "Number of concurrent transfers",
-            DefaultValueFactory = _ => 5
+            DefaultValueFactory = _ => 3
         };
         command.Add(concurrencyOpt);
 

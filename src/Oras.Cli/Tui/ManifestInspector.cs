@@ -121,7 +121,7 @@ internal class ManifestInspector
 
         // Config node
         var configNode = tree.AddNode($"[cyan]config[/] ({manifest.ConfigMediaType})");
-        configNode.AddNode($"[dim]{manifest.ConfigDigest} ({FormatSize(manifest.ConfigSize)})[/]");
+        configNode.AddNode($"[dim]{manifest.ConfigDigest} ({Output.FormatHelper.FormatSize(manifest.ConfigSize)})[/]");
 
         // Layers node
         var layersNode = tree.AddNode($"[cyan]layers[/] ({manifest.Layers.Count} total)");
@@ -129,7 +129,7 @@ internal class ManifestInspector
         {
             var layer = manifest.Layers[i];
             var layerNode = layersNode.AddNode($"[green][{i}][/] {layer.MediaType}");
-            layerNode.AddNode($"[dim]{layer.Digest} ({FormatSize(layer.Size)})[/]");
+            layerNode.AddNode($"[dim]{layer.Digest} ({Output.FormatHelper.FormatSize(layer.Size)})[/]");
         }
 
         // Referrers (if any)
@@ -139,7 +139,7 @@ internal class ManifestInspector
             foreach (var referrer in manifest.Referrers)
             {
                 var refNode = referrersNode.AddNode($"{referrer.ArtifactType}");
-                refNode.AddNode($"[dim]{referrer.Digest} ({FormatSize(referrer.Size)})[/]");
+                refNode.AddNode($"[dim]{referrer.Digest} ({Output.FormatHelper.FormatSize(referrer.Size)})[/]");
             }
         }
 
@@ -290,7 +290,7 @@ internal class ManifestInspector
         AnsiConsole.WriteLine();
         PromptHelper.ShowWarning($"You are about to delete: {reference}");
         PromptHelper.ShowWarning($"Digest: {manifest.Digest}");
-        PromptHelper.ShowWarning($"Size: {FormatSize(manifest.TotalSize)}");
+        PromptHelper.ShowWarning($"Size: {Output.FormatHelper.FormatSize(manifest.TotalSize)}");
         AnsiConsole.WriteLine();
 
         var confirmed = PromptHelper.PromptConfirmation(
@@ -399,19 +399,6 @@ internal class ManifestInspector
     }
   ]
 }";
-    }
-
-    private static string FormatSize(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        double len = bytes;
-        int order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len = len / 1024;
-        }
-        return $"{len:0.##} {sizes[order]}";
     }
 
     private class ManifestData

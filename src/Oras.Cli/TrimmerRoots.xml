@@ -1,8 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <linker>
-  <!-- Preserve Spectre.Console.Json types -->
-  <assembly fullname="Spectre.Console">
-    <type fullname="Spectre.Console.Json.JsonText" preserve="all" />
-    <namespace fullname="Spectre.Console.Json" preserve="all" />
-  </assembly>
 </linker>

@@ -65,7 +65,7 @@ internal sealed class ProgressRenderer : IDisposable
 
         if (!_isInteractive)
         {
-            var sizeStr = FormatSize(size);
+            var sizeStr = FormatHelper.FormatSize(size);
             _console.WriteLine($"  [{_completedLayers + 1}/{_totalLayers}] {description} ({sizeStr})");
             return;
         }
@@ -107,7 +107,7 @@ internal sealed class ProgressRenderer : IDisposable
 
         if (!_isInteractive)
         {
-            var sizeStr = FormatSize(size);
+            var sizeStr = FormatHelper.FormatSize(size);
             _console.MarkupLine($"  [green]✓[/] {description} ({sizeStr})");
             return;
         }
@@ -167,19 +167,6 @@ internal sealed class ProgressRenderer : IDisposable
         _layerTasks.Clear();
         _progressContext = null;
         _overallTask = null;
-    }
-
-    private static string FormatSize(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        double len = bytes;
-        int order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len = len / 1024;
-        }
-        return $"{len:0.##} {sizes[order]}";
     }
 }
 

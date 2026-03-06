@@ -82,8 +82,8 @@ internal static class PullCommand
                     cancellationToken).ConfigureAwait(false);
 
                 // Resolve the tag or digest
-                var tag = ExtractTag(reference);
-                var digest = ExtractDigest(reference);
+                var tag = ReferenceHelper.ExtractTag(reference);
+                var digest = ReferenceHelper.ExtractDigest(reference);
 
                 Descriptor manifestDescriptor;
                 if (!string.IsNullOrEmpty(digest))
@@ -125,33 +125,4 @@ internal static class PullCommand
         return command;
     }
 
-    private static string? ExtractTag(string reference)
-    {
-        var colonIndex = reference.LastIndexOf(':');
-        var slashIndex = reference.LastIndexOf('/');
-        var atIndex = reference.IndexOf('@');
-
-        if (atIndex > 0)
-        {
-            return null; // Has digest, no tag
-        }
-
-        if (colonIndex > slashIndex && colonIndex >= 0)
-        {
-            return reference[(colonIndex + 1)..];
-        }
-
-        return "latest"; // Default tag
-    }
-
-    private static string? ExtractDigest(string reference)
-    {
-        var atIndex = reference.IndexOf('@');
-        if (atIndex > 0)
-        {
-            return reference[(atIndex + 1)..];
-        }
-
-        return null;
-    }
 }

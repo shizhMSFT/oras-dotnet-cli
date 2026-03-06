@@ -18,10 +18,6 @@ internal class OrasException : Exception
     {
         Recommendation = recommendation;
     }
-
-    public OrasException()
-    {
-    }
 }
 
 /// <summary>
@@ -31,10 +27,6 @@ internal class OrasAuthenticationException : OrasException
 {
     public OrasAuthenticationException(string message, string? recommendation = null)
         : base(message, recommendation ?? "Check your credentials or run 'oras login' to authenticate.")
-    {
-    }
-
-    public OrasAuthenticationException()
     {
     }
 }
@@ -48,10 +40,6 @@ internal class OrasNetworkException : OrasException
         : base(message, innerException, recommendation ?? "Check your network connection and registry address.")
     {
     }
-
-    public OrasNetworkException()
-    {
-    }
 }
 
 /// <summary>
@@ -61,10 +49,6 @@ internal class OrasUsageException : OrasException
 {
     public OrasUsageException(string message, string? recommendation = null)
         : base(message, recommendation)
-    {
-    }
-
-    public OrasUsageException()
     {
     }
 }

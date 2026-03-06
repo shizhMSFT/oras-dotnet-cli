@@ -48,7 +48,7 @@ internal static class BackupCommand
         var concurrencyOpt = new Option<int>("--concurrency")
         {
             Description = "Number of concurrent transfers",
-            DefaultValueFactory = _ => 5
+            DefaultValueFactory = _ => 3
         };
         command.Add(concurrencyOpt);
 
@@ -154,7 +154,7 @@ internal static class BackupCommand
                     reference,
                     output,
                     simulatedLayerCount,
-                    FormatSize(simulatedTotalSize),
+                    Output.FormatHelper.FormatSize(simulatedTotalSize),
                     recursive,
                     platform ?? "(all)",
                     "simulated");
@@ -167,7 +167,7 @@ internal static class BackupCommand
                 {
                     AnsiConsole.MarkupLine($"[green]✓[/] Backed up [bold]{reference}[/] to [bold]{output}[/]");
                     AnsiConsole.MarkupLine($"  Layers: {simulatedLayerCount}");
-                    AnsiConsole.MarkupLine($"  Total size: {FormatSize(simulatedTotalSize)}");
+                    AnsiConsole.MarkupLine($"  Total size: {Output.FormatHelper.FormatSize(simulatedTotalSize)}");
                     if (recursive)
                     {
                         AnsiConsole.MarkupLine("  Referrers: included");
@@ -191,16 +191,4 @@ internal static class BackupCommand
             || path.EndsWith(".tgz", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string FormatSize(long bytes)
-    {
-        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
-        double len = bytes;
-        var order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:0.##} {sizes[order]}";
-    }
 }

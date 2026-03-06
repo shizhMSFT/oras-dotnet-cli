@@ -8,8 +8,7 @@ namespace Oras.Credentials;
 /// is stripped during native AOT compilation.
 /// </summary>
 [JsonSourceGenerationOptions(
-    WriteIndented = true,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    WriteIndented = true)]
 [JsonSerializable(typeof(DockerConfig))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
 [JsonSerializable(typeof(CredentialHelperResponse))]
