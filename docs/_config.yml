@@ -7,7 +7,7 @@ baseurl: /oras-dotnet-cli
 
 color_scheme: dark
 
-logo: /assets/images/logo.svg
+logo: /assets/images/oras.svg
 
 aux_links:
   GitHub: https://github.com/shizhMSFT/oras-dotnet-cli
