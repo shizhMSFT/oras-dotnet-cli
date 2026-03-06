@@ -92,10 +92,14 @@ public sealed class CliRunner
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        var timeout = TimeSpan.FromSeconds(timeoutSeconds);
-        var completed = await Task.Run(() => process.WaitForExit((int)timeout.TotalMilliseconds)).ConfigureAwait(false);
-
-        if (!completed)
+        // Use WaitForExitAsync which properly waits for async output handlers
+        // to complete (unlike WaitForExit(int) which has a known race condition).
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        try
+        {
+            await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
         {
             try
             {

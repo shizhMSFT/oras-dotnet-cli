@@ -70,7 +70,15 @@ internal class NativeCredentialHelper
         string serverAddress,
         CancellationToken cancellationToken = default)
     {
-        await RunHelperAsync("erase", serverAddress, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await RunHelperAsync("erase", serverAddress, cancellationToken).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
+            // Credential helpers return non-zero when the credential doesn't exist.
+            // This is expected for idempotent logout operations.
+        }
     }
 
     private async Task<string> RunHelperAsync(
