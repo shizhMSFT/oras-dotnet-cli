@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Oras.Options;
 using Oras.Services;
 using Oras.Output;
@@ -46,8 +47,7 @@ internal static class AttachCommand
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
-                var pushService = serviceProvider.GetService(typeof(IPushService)) as IPushService
-                    ?? throw new InvalidOperationException("Push service not available");
+                var pushService = serviceProvider.GetRequiredService<IPushService>();
 
                 var reference = parseResult.GetValue(referenceArg)!;
                 var files = parseResult.GetValue(filesArg) ?? Array.Empty<string>();

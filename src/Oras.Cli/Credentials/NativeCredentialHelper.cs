@@ -153,7 +153,25 @@ internal class NativeCredentialHelper
         await process.StandardInput.FlushAsync(cancellationToken).ConfigureAwait(false);
         process.StandardInput.Close();
 
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(30));
+
+        try
+        {
+            await process.WaitForExitAsync(timeoutCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            try
+            {
+                process.Kill(entireProcessTree: true);
+            }
+            catch
+            {
+            }
+
+            throw;
+        }
 
         if (process.ExitCode != 0)
         {

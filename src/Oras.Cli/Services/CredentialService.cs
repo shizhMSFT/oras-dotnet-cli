@@ -1,3 +1,5 @@
+using Oras.Credentials;
+
 namespace Oras.Services;
 
 /// <summary>
@@ -5,25 +7,25 @@ namespace Oras.Services;
 /// </summary>
 internal class CredentialService : ICredentialService
 {
-    private readonly Credentials.DockerConfigStore _configStore;
+    private readonly DockerConfigStore _configStore;
 
-    public CredentialService()
+    public CredentialService(DockerConfigStore configStore)
     {
-        _configStore = new Credentials.DockerConfigStore();
+        _configStore = configStore;
     }
 
     public async Task<bool> ValidateCredentialsAsync(
         string registryHost,
         string username,
         string password,
-        bool plainHttp = false,
-        bool insecure = false,
+        bool plainHttp,
+        bool insecure,
+        IRegistryService registryService,
         CancellationToken cancellationToken = default)
     {
         try
         {
             // Create a simple registry client to test the credentials
-            var registryService = new RegistryService(this);
             var registry = await registryService.CreateRegistryAsync(
                 registryHost,
                 username,

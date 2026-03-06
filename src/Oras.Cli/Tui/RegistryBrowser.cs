@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using Oras.Services;
 using Oras.Credentials;
@@ -11,15 +12,16 @@ internal class RegistryBrowser
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ICredentialService _credentialService;
+    private readonly IRegistryService _registryService;
     private readonly DockerConfigStore _configStore;
     private readonly TuiCache _cache;
 
     public RegistryBrowser(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _credentialService = (ICredentialService?)serviceProvider.GetService(typeof(ICredentialService))
-            ?? throw new InvalidOperationException("ICredentialService not registered");
-        _configStore = new DockerConfigStore();
+        _credentialService = serviceProvider.GetRequiredService<ICredentialService>();
+        _registryService = serviceProvider.GetRequiredService<IRegistryService>();
+        _configStore = serviceProvider.GetRequiredService<DockerConfigStore>();
         _cache = new TuiCache();
     }
 
@@ -97,7 +99,7 @@ internal class RegistryBrowser
         try
         {
             var isValid = await _credentialService.ValidateCredentialsAsync(
-                registryHost, username, password, false, false, cancellationToken).ConfigureAwait(false);
+                registryHost, username, password, false, false, _registryService, cancellationToken).ConfigureAwait(false);
 
             if (isValid)
             {

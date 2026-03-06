@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Oras.Options;
 using Oras.Services;
 using Spectre.Console;
@@ -37,8 +38,7 @@ internal static class TagCommand
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
-                var registryService = serviceProvider.GetService(typeof(IRegistryService)) as IRegistryService
-                    ?? throw new InvalidOperationException("Registry service not available");
+                var registryService = serviceProvider.GetRequiredService<IRegistryService>();
 
                 var source = parseResult.GetValue(sourceArg)!;
                 var targetTags = parseResult.GetValue(targetTagsArg)!;

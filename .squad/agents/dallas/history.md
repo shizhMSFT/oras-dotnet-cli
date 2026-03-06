@@ -355,3 +355,12 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 - `CommandExtensions.SetAction` must accept `CancellationToken` and forward it into command handlers.
 - Command handlers should pass the cancellation token to service calls, credential operations, and async file/timeout operations.
 
+### 2026-03-09 — DI P1 Cleanup
+
+**Key Updates:**
+- Replaced all `GetService(typeof(...))` casts with `GetRequiredService<T>()` across commands and TUI.
+- Standardized DI registrations to singletons and registered `DockerConfigStore`; UI and services now resolve it via DI.
+- `CredentialService.ValidateCredentialsAsync` accepts an `IRegistryService` to avoid manual instantiation, and native credential helpers now enforce a 30s timeout with process kill on cancellation.
+
+**Build Status:** ✅ `dotnet build src\Oras.Cli\oras.csproj --no-restore` (warnings only)
+

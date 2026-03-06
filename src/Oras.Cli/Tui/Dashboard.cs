@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using Oras.Services;
 using Oras.Credentials;
@@ -11,6 +12,7 @@ namespace Oras.Tui;
 internal class Dashboard
 {
     private readonly ICredentialService _credentialService;
+    private readonly IRegistryService _registryService;
     private readonly IServiceProvider _serviceProvider;
     private readonly DockerConfigStore _configStore;
     private const string BrowseRegistryAction = "Browse Registry";
@@ -27,9 +29,9 @@ internal class Dashboard
     public Dashboard(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _credentialService = (ICredentialService?)serviceProvider.GetService(typeof(ICredentialService))
-            ?? throw new InvalidOperationException("ICredentialService not registered");
-        _configStore = new DockerConfigStore();
+        _credentialService = serviceProvider.GetRequiredService<ICredentialService>();
+        _registryService = serviceProvider.GetRequiredService<IRegistryService>();
+        _configStore = serviceProvider.GetRequiredService<DockerConfigStore>();
     }
 
     /// <summary>
@@ -331,7 +333,7 @@ internal class Dashboard
                     ctx.Spinner(Spinner.Known.Dots);
                     ctx.SpinnerStyle(Style.Parse("green"));
                     return await _credentialService.ValidateCredentialsAsync(
-                        registry, username, password, false, false, cancellationToken).ConfigureAwait(false);
+                        registry, username, password, false, false, _registryService, cancellationToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
 
             if (isValid)

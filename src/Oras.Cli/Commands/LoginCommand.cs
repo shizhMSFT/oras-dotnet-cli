@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Oras.Options;
 using Oras.Services;
 using Spectre.Console;
@@ -29,8 +30,7 @@ internal static class LoginCommand
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
-                var credentialService = serviceProvider.GetService(typeof(ICredentialService)) as ICredentialService
-                    ?? throw new InvalidOperationException("Credential service not available");
+                var credentialService = serviceProvider.GetRequiredService<ICredentialService>();
 
                 var registry = parseResult.GetValue(registryArg)!;
                 var username = parseResult.GetValue(remoteOptions.UsernameOption);
@@ -67,19 +67,25 @@ internal static class LoginCommand
                         ctx.Spinner(Spinner.Known.Dots);
                     });
 
-                var registryService = serviceProvider.GetService(typeof(IRegistryService)) as IRegistryService
-                    ?? throw new InvalidOperationException("Registry service not available");
+                var registryService = serviceProvider.GetRequiredService<IRegistryService>();
 
                 try
                 {
-                    // Try to create a registry client with the credentials
-                    await registryService.CreateRegistryAsync(
+                    var isValid = await credentialService.ValidateCredentialsAsync(
                         registry,
                         username,
                         password,
                         plainHttp,
                         insecure,
+                        registryService,
                         cancellationToken).ConfigureAwait(false);
+
+                    if (!isValid)
+                    {
+                        throw new OrasAuthenticationException(
+                            $"Authentication failed for {registry}",
+                            "Check your username and password, or use --password-stdin for secure input.");
+                    }
 
                     // Store credentials
                     await credentialService.StoreCredentialsAsync(
@@ -90,6 +96,10 @@ internal static class LoginCommand
 
                     AnsiConsole.MarkupLine($"[green]✓[/] Login succeeded for {registry}");
                     return 0;
+                }
+                catch (OrasAuthenticationException)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {

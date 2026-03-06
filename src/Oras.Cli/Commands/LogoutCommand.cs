@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Oras.Services;
 using Spectre.Console;
 
@@ -24,8 +25,7 @@ internal static class LogoutCommand
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
-                var credentialService = serviceProvider.GetService(typeof(ICredentialService)) as ICredentialService
-                    ?? throw new InvalidOperationException("Credential service not available");
+                var credentialService = serviceProvider.GetRequiredService<ICredentialService>();
 
                 var registry = parseResult.GetValue(registryArg)!;
 

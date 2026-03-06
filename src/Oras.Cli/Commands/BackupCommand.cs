@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Oras.Options;
 using Oras.Services;
 using Oras.Output;
@@ -63,8 +64,7 @@ internal static class BackupCommand
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
-                var registryService = serviceProvider.GetService(typeof(IRegistryService)) as IRegistryService
-                    ?? throw new InvalidOperationException("Registry service not available");
+                var registryService = serviceProvider.GetRequiredService<IRegistryService>();
 
                 var reference = parseResult.GetValue(referenceArg)!;
                 var output = parseResult.GetValue(outputOpt)!;

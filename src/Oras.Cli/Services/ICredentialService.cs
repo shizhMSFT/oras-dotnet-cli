@@ -12,8 +12,9 @@ internal interface ICredentialService
         string registryHost,
         string username,
         string password,
-        bool plainHttp = false,
-        bool insecure = false,
+        bool plainHttp,
+        bool insecure,
+        IRegistryService registryService,
         CancellationToken cancellationToken = default);
 
     /// <summary>

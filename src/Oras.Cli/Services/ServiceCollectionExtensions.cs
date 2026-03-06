@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Oras.Credentials;
 
 namespace Oras.Services;
 
@@ -14,8 +15,9 @@ internal static class ServiceCollectionExtensions
     {
         services.AddSingleton<ICredentialService, CredentialService>();
         services.AddSingleton<IRegistryService, RegistryService>();
-        services.AddTransient<IPushService, PushService>();
-        services.AddTransient<IPullService, PullService>();
+        services.AddSingleton<IPushService, PushService>();
+        services.AddSingleton<IPullService, PullService>();
+        services.AddSingleton<DockerConfigStore>();
 
         return services;
     }
