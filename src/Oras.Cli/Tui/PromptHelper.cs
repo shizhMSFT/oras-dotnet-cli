@@ -82,7 +82,7 @@ internal static class PromptHelper
 
     public static void ShowError(string message, string? recommendation = null)
     {
-        AnsiConsole.MarkupLine($"[red][[X]] {Markup.Escape(message)}[/]");
+        AnsiConsole.MarkupLine($"[red]✗ {Markup.Escape(message)}[/]");
         if (!string.IsNullOrEmpty(recommendation))
         {
             AnsiConsole.MarkupLine($"[yellow]    {Markup.Escape(recommendation)}[/]");
@@ -91,17 +91,17 @@ internal static class PromptHelper
 
     public static void ShowSuccess(string message)
     {
-        AnsiConsole.MarkupLine($"[green][[+]] {Markup.Escape(message)}[/]");
+        AnsiConsole.MarkupLine($"[green]✔ {Markup.Escape(message)}[/]");
     }
 
     public static void ShowInfo(string message)
     {
-        AnsiConsole.MarkupLine($"[cyan][[i]] {Markup.Escape(message)}[/]");
+        AnsiConsole.MarkupLine($"[cyan]ℹ {Markup.Escape(message)}[/]");
     }
 
     public static void ShowWarning(string message)
     {
-        AnsiConsole.MarkupLine($"[yellow][[!]] {Markup.Escape(message)}[/]");
+        AnsiConsole.MarkupLine($"[yellow]⚠ {Markup.Escape(message)}[/]");
     }
 
     public static void ShowCachedIndicator()
