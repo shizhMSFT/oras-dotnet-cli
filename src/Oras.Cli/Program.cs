@@ -10,6 +10,8 @@ internal static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+
         // Set up dependency injection
         var services = new ServiceCollection();
         services.AddOrasServices();
