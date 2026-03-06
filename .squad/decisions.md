@@ -1560,3 +1560,51 @@ Shipped v0.1.3 with three critical new features: enhanced `oras copy`, new `oras
 - 69 tests pass, clean build
 - Ready for v0.2.0 release
 
+---
+
+### DEC-AUTH-001: Credential Helper `list` Protocol Support
+
+**Date:** 2026-03-06  
+**Author:** Dallas (Core Dev)  
+**Status:** Implemented (commit b5ac13c)
+
+**Context:** The TUI dashboard enumerated connected registries solely from `config.Auths.Keys`, missing any credentials stored via Docker credential helpers (`credsStore` / `credHelpers`).
+
+**Decision:**
+1. `NativeCredentialHelper` now supports the `list` action from the docker-credential-helpers protocol. It returns a `Dictionary<string, string>` (serverURL → username). The action may not be supported by all helpers — failure returns an empty dictionary.
+2. `DockerConfigStore.ListRegistriesAsync()` is the single entry point for enumerating all known registries. It aggregates from three sources: `auths` keys, `credHelpers` keys, and the global `credsStore` list output.
+3. Any code that needs to enumerate registries should call `ListRegistriesAsync()` rather than reading `config.Auths.Keys` directly.
+
+**Implications:**
+- **For Bishop (TUI):** Dashboard now shows all authenticated registries. Any future TUI screens that list registries should use `ListRegistriesAsync()`.
+- **For Hicks (Tests):** New methods `NativeCredentialHelper.ListAsync` and `DockerConfigStore.ListRegistriesAsync` need unit test coverage.
+- **For Vasquez (CI):** No CI impact — the `list` action is only called at runtime when a credential helper is configured.
+
+---
+
+### DEC-REL-002: v0.2.1 Patch Release — Spectre.Console Markup Fix
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** Executed
+
+**Decision:** Ship v0.2.1 as a patch release addressing 3 TUI and platform compatibility bugs discovered post-v0.2.0.
+
+**Bugs Fixed:**
+1. **Spectre.Console markup crash** — ASCII-safe indicators (`[+]`, `[i]`, `[!]`, `[X]`) were interpreted as Spectre.Console markup tags, causing runtime crashes. Fixed by escaping to double-bracket form in PromptHelper.
+2. **UTF-8 encoding** — Console output encoding now explicitly set to UTF-8 in Program.Main. Prevents garbled characters on Windows consoles that default to non-UTF-8 codepages.
+3. **Banner alignment** — FigletText banner changed from centered to left-aligned for consistent rendering across terminal widths.
+
+**Release Artifacts:**
+- 6 platform binaries (win-x64, win-arm64, osx-x64, osx-arm64, linux-x64, linux-arm64)
+- GitHub Release auto-created via release.yml workflow
+- GitHub Pages docs deployed via docs.yml workflow
+- NuGet package skipped (no API key configured)
+
+**Versioning Rationale:** SemVer patch bump (0.2.0 → 0.2.1) — bug fixes only, fully backward compatible, no API or behavior changes beyond the fixes.
+
+**Team Impact:**
+- All download URLs in docs updated to v0.2.1
+- Version verification output now shows 0.2.1
+- No breaking changes — existing workflows unaffected
+

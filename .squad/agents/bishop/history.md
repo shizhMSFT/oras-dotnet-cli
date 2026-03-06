@@ -317,4 +317,25 @@
 - Terminal compatibility improved — works on all terminal types without Unicode issues
 - Visual hierarchy makes information scanning effortless
 
+### 2026-03-06 — Credential Helper `list` Protocol and Registry Enumeration (Dallas Core Dev Task)
+
+**Problem addressed:** Dashboard enumerated registries from `config.Auths.Keys` only, missing credentials stored via Docker credential helpers (`credsStore` / `credHelpers`).
+
+**Implementation:**
+- `NativeCredentialHelper.ListAsync()` — New method supporting docker-credential-helpers `list` action. Returns `Dictionary<string, string>` (serverURL → username). Gracefully handles unsupported helpers by returning empty dictionary.
+- `DockerConfigStore.ListRegistriesAsync()` — Single entry point for registry enumeration. Aggregates from: (1) `auths` keys, (2) `credHelpers` keys, (3) global `credsStore` list output.
+- `Dashboard.cs` updated to use `ListRegistriesAsync()` instead of `config.Auths.Keys` directly.
+
+**Impact on Dashboard:**
+- Registry table now displays all known registries: those with standard auths + those using credential helpers
+- No more "missing" registries when using Docker credential helpers
+- Consistent, comprehensive credential source enumeration
+
+**Design principle:** Any code that enumerates registries should call `ListRegistriesAsync()` — never read `config.Auths.Keys` directly.
+
+**Commit:** b5ac13c  
+**Status:** ✅ Implementation complete, build passes
+
+**Future work:** Unit test coverage for `NativeCredentialHelper.ListAsync` and `DockerConfigStore.ListRegistriesAsync` (Hicks task)
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->

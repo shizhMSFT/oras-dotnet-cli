@@ -293,3 +293,21 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 
 **Build Status:** ✅ 0 errors, 238 warnings (all pre-existing CA1707 naming warnings in tests); 69 tests pass, 27 skipped
 
+### Credential Helper List & Dashboard Registry Fix — 2026-03-06
+
+**Bug:** TUI dashboard showed "No connected registries" even when Docker Desktop or native credential helpers had stored credentials, because `Dashboard.cs` only checked `config.Auths.Keys`.
+
+**Root Cause:** Docker credential helpers (`credsStore`, `credHelpers`) store credentials outside the `auths` section of `config.json`. The dashboard enumeration missed these entirely.
+
+**Fix (commit b5ac13c):**
+1. **`NativeCredentialHelper.ListAsync()`** — Implements the `docker-credential-helpers` `list` protocol action. Runs `docker-credential-{helper} list` with empty stdin, returns `Dictionary<string, string>` mapping server URLs to usernames. Gracefully returns empty dict if the helper doesn't support `list`.
+2. **`DockerConfigStore.ListRegistriesAsync()`** — Aggregates all known registries from three sources: `config.Auths.Keys`, `config.CredHelpers?.Keys`, and the global `credsStore` helper's `list` output. Returns deduplicated `IReadOnlyList<string>`.
+3. **`Dashboard.cs`** — Replaced `config.Auths.Keys.ToList()` with `_configStore.ListRegistriesAsync()`. Updated `HandleActionAsync` parameter from `List<string>` to `IReadOnlyList<string>`.
+
+**Key Patterns:**
+- `[RequiresDynamicCode]` and `[RequiresUnreferencedCode]` attributes propagated through the call chain for AOT/trimming safety
+- Case-insensitive `HashSet<string>` for registry deduplication (registries may appear in multiple sources)
+- Defensive error handling: `ListAsync` catch-all returns empty dict; callers never fail due to an unsupported helper
+
+**Build Status:** ✅ 0 errors, 262 warnings (all pre-existing); no new trimming warnings
+
