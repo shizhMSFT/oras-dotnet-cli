@@ -61,6 +61,52 @@ internal class DockerConfigStore
         await File.WriteAllTextAsync(_configPath, json, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Aggregates all known registries from the Docker config by combining:
+    /// <list type="bullet">
+    ///   <item><c>auths</c> keys (direct auth entries)</item>
+    ///   <item><c>credHelpers</c> keys (per-registry credential helper entries)</item>
+    ///   <item>Entries returned by the global <c>credsStore</c> helper's <c>list</c> action</item>
+    /// </list>
+    /// Returns a deduplicated list of registry server addresses.
+    /// </summary>
+    [RequiresDynamicCode("Calls NativeCredentialHelper.ListAsync which uses JSON deserialization")]
+    [RequiresUnreferencedCode("Calls NativeCredentialHelper.ListAsync which uses JSON deserialization")]
+    public async Task<IReadOnlyList<string>> ListRegistriesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var config = await LoadAsync(cancellationToken).ConfigureAwait(false);
+        var registries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // 1. Direct auth entries
+        foreach (var key in config.Auths.Keys)
+        {
+            registries.Add(key);
+        }
+
+        // 2. Per-registry credential helper entries
+        if (config.CredHelpers is not null)
+        {
+            foreach (var key in config.CredHelpers.Keys)
+            {
+                registries.Add(key);
+            }
+        }
+
+        // 3. Global credential store — enumerate all stored credentials
+        if (!string.IsNullOrEmpty(config.CredsStore))
+        {
+            var helper = new NativeCredentialHelper(config.CredsStore);
+            var stored = await helper.ListAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var key in stored.Keys)
+            {
+                registries.Add(key);
+            }
+        }
+
+        return registries.ToList().AsReadOnly();
+    }
+
     public async Task<(string? Username, string? Password)?> GetCredentialsAsync(
         string serverAddress,
         CancellationToken cancellationToken = default)

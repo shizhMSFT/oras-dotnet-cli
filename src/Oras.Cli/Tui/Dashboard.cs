@@ -74,9 +74,8 @@ internal class Dashboard
         };
         AnsiConsole.Write(subtitle);
 
-        // Connected registries
-        var config = await _configStore.LoadAsync(cancellationToken).ConfigureAwait(false);
-        var registries = config.Auths.Keys.ToList();
+        // Connected registries (auths + credHelpers + credsStore)
+        var registries = await _configStore.ListRegistriesAsync(cancellationToken).ConfigureAwait(false);
 
         if (registries.Any())
         {
@@ -138,7 +137,7 @@ internal class Dashboard
         return await HandleActionAsync(action, registries, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<bool> HandleActionAsync(string action, List<string> registries, CancellationToken cancellationToken)
+    private async Task<bool> HandleActionAsync(string action, IReadOnlyList<string> registries, CancellationToken cancellationToken)
     {
         try
         {

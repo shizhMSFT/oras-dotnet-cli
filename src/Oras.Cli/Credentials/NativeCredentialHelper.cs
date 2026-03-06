@@ -66,6 +66,39 @@ internal class NativeCredentialHelper
         await RunHelperAsync("store", input, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Lists all credentials stored in the native helper.
+    /// Runs <c>docker-credential-{helper} list</c> with empty stdin.
+    /// Returns a dictionary mapping server URLs to usernames.
+    /// </summary>
+    /// <remarks>
+    /// Not all credential helpers support the <c>list</c> action.
+    /// Callers should handle failure gracefully.
+    /// </remarks>
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
+    public async Task<Dictionary<string, string>> ListAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var output = await RunHelperAsync("list", string.Empty, cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(output))
+            {
+                return new Dictionary<string, string>();
+            }
+
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(output)
+                ?? new Dictionary<string, string>();
+        }
+        catch
+        {
+            // Not all credential helpers support the 'list' action.
+            // Return empty on failure — callers aggregate from other sources.
+            return new Dictionary<string, string>();
+        }
+    }
+
     public async Task EraseAsync(
         string serverAddress,
         CancellationToken cancellationToken = default)
