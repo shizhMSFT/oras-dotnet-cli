@@ -307,7 +307,7 @@ As implementations mature beyond current stubs:
 2. **Rate Limiting:** Consider abuse scenarios if CLI is exposed via automation
 3. **Audit Logging:** Consider structured audit logs for credential access in enterprise scenarios
 4. **SBOM Generation:** Publish Software Bill of Materials for supply chain security
-5. **Code Signing:** Sign CLI binaries and NuGet packages for release
+5. **Code Signing:** Sign CLI binaries for release
 
 ---
 

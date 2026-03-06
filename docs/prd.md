@@ -962,12 +962,11 @@ GitHub Actions workflow: `.github/workflows/ci.yml`
 | `oras-linux-arm64` | `linux-arm64` | Self-contained single-file (AOT) |
 | `oras-osx-x64` | `osx-x64` | Self-contained single-file (AOT) |
 | `oras-osx-arm64` | `osx-arm64` | Self-contained single-file (AOT) |
-| `oras` (NuGet tool) | — | `dotnet tool install -g oras` |
+
 
 Release workflow: `.github/workflows/release.yml`
 ```
 Tag push → Build matrix (6 RIDs) → Publish AOT binaries → Create GitHub Release
-         → Pack NuGet tool → Push to NuGet.org
          → Build & deploy docs to GitHub Pages
 ```
 
@@ -1065,7 +1064,7 @@ Goal: Production readiness. Documentation, release pipeline, performance optimiz
 | ID | Title | Description | Assignee | Dependencies | Priority |
 |----|-------|-------------|----------|-------------- |----------|
 | **S4-01** | Native AOT configuration | Configure AOT publish profiles for all 6 RIDs. Resolve trimming warnings. Verify all commands work under AOT. Add `rd.xml` / trimmer directives as needed. | Vasquez | S2-* | P0 |
-| **S4-02** | Release pipeline | Create `.github/workflows/release.yml`: tag-triggered build matrix, AOT publish, GitHub Release with binaries, NuGet pack and push. | Vasquez | S4-01 | P0 |
+| **S4-02** | Release pipeline | Create `.github/workflows/release.yml`: tag-triggered build matrix, AOT publish, GitHub Release with binaries. | Vasquez | S4-01 | P0 |
 | **S4-03** | Shell completions | Enable System.CommandLine tab completion for bash, zsh, PowerShell, fish. Document installation. | Dallas | S2-* | P1 |
 | **S4-04** | Performance benchmarks | Benchmark cold start (AOT vs non-AOT), push/pull throughput, memory usage. Compare with Go CLI. Document results. Optimize if targets not met. | Vasquez | S4-01 | P1 |
 | **S4-05** | Installation documentation | Write installation guide: binary download, `dotnet tool install`, build from source. Platform-specific instructions. | Dallas | S4-02 | P0 |

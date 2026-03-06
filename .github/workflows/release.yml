@@ -131,34 +131,4 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-  nuget:
-    name: Publish NuGet Package
-    needs: build
-    runs-on: ubuntu-latest
-    if: ${{ !contains(github.ref_name, '-') }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup .NET 10 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
-      
-      - name: Pack NuGet package
-        run: |
-          dotnet pack src/Oras.Cli/oras.csproj \
-            -c Release \
-            -p:PackAsTool=true \
-            -p:PackageId=oras \
-            -p:ToolCommandName=oras \
-            -p:Version=${{ github.ref_name }} \
-            -o nupkg
-      
-      - name: Push to NuGet.org
-        if: env.NUGET_API_KEY != ''
-        run: dotnet nuget push nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
