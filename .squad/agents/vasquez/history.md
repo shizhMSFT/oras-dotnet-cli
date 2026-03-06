@@ -294,3 +294,34 @@
 - Command reference pages follow existing copy.md pattern for consistency
 - Dashboard menu order: Browse Registry, Browse Repository Tags, Login, Copy, Backup, Restore, Push, Pull, Tag, Quit
 - Version number SemVer patch bump (0.1.2 → 0.1.3) for feature additions, not breaking changes
+
+### 2026-03-06: v0.2.1 Patch Release — TUI Bug Fixes
+
+**Release Event:** Shipped v0.2.1 patch fixing 3 TUI/platform bugs discovered post-v0.2.0.
+
+**Bugs Fixed (commits already on main before this release):**
+1. **Spectre.Console markup crash** (`8091903`) — `[X]`/`[+]`/`[i]`/`[!]` in PromptHelper were parsed as Spectre.Console markup style tags, causing crashes. Fixed by escaping to `[[X]]`/`[[+]]`/`[[i]]`/`[[!]]`.
+2. **UTF-8 encoding** (`8091903`) — Added `Console.OutputEncoding = System.Text.Encoding.UTF8` in Program.Main to prevent garbled output on non-UTF-8 default consoles.
+3. **Banner alignment** (`3289a36`) — Changed FigletText from `.Centered()` to `.LeftJustified()` for consistent terminal rendering.
+
+**Documentation Updates (6 files):**
+- `Directory.Build.props` — Version bumped 0.2.0 → 0.2.1
+- `docs/tui-showcase.md` — Updated version header to 0.2.1; noted escaped indicators, left-aligned banner, UTF-8 fix
+- `docs/tui-guide.md` — Updated version ref to v0.2.1; noted left-aligned banner, escaped indicators, UTF-8 encoding
+- `docs/index.md` — Updated download URL v0.2.0 → v0.2.1
+- `docs/installation.md` — Updated all 6 download URLs + version verification output (v0.2.0 → v0.2.1)
+- `README.md` — Updated TUI version reference to v0.2.1
+
+**Release Workflow:**
+- Commit `2367841` with co-authored footer
+- Tag `v0.2.1` pushed to origin
+- Release workflow run 22761445987: all 6 builds succeeded, GitHub Release created
+- NuGet package job failed as expected (no NUGET_API_KEY secret)
+- Docs workflow run 22761444961: completed successfully
+
+**Verification:**
+- ✅ All 6 download URLs updated to v0.2.1
+- ✅ Version bumped in Directory.Build.props (0.2.0 → 0.2.1)
+- ✅ 6 binary assets: oras-win-x64.zip, oras-win-arm64.zip, oras-osx-x64.tar.gz, oras-osx-arm64.tar.gz, oras-linux-x64.tar.gz, oras-linux-arm64.tar.gz
+- ✅ GitHub Pages docs deployed
+- ✅ No stale v0.2.0 references in user-facing docs
