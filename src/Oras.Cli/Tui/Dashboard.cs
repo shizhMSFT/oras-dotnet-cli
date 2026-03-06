@@ -79,14 +79,14 @@ internal class Dashboard
         // Hand-crafted Unicode art header
         var version = GetVersion();
         AnsiConsole.Markup(
-            "[bold purple4]  ██████╗ [/][bold slateblue3]██████╗ [/][bold mediumpurple3_1] █████╗ [/][bold mediumpurple]███████╗[/]\n" +
-            "[bold purple4] ██╔═══██╗[/][bold slateblue3]██╔══██╗[/][bold mediumpurple3_1]██╔══██╗[/][bold mediumpurple]██╔════╝[/]\n" +
-            "[bold purple4] ██║   ██║[/][bold slateblue3]██████╔╝[/][bold mediumpurple3_1]███████║[/][bold mediumpurple]███████╗[/]\n" +
-            "[bold purple4] ██║   ██║[/][bold slateblue3]██╔══██╗[/][bold mediumpurple3_1]██╔══██║[/][bold mediumpurple]╚════██║[/]\n" +
-            "[bold purple4] ╚██████╔╝[/][bold slateblue3]██║  ██║[/][bold mediumpurple3_1]██║  ██║[/][bold mediumpurple]███████║[/]\n" +
-            "[bold purple4]  ╚═════╝ [/][bold slateblue3]╚═╝  ╚═╝[/][bold mediumpurple3_1]╚═╝  ╚═╝[/][bold mediumpurple]╚══════╝[/]\n");
+            "[bold #D04485]  ██████╗ [/][bold #5EBAB4]██████╗ [/][bold #FCFCFD] █████╗ [/][bold #CCF575]███████╗[/]\n" +
+            "[bold #D04485] ██╔═══██╗[/][bold #5EBAB4]██╔══██╗[/][bold #FCFCFD]██╔══██╗[/][bold #CCF575]██╔════╝[/]\n" +
+            "[bold #D04485] ██║   ██║[/][bold #5EBAB4]██████╔╝[/][bold #FCFCFD]███████║[/][bold #CCF575]███████╗[/]\n" +
+            "[bold #D04485] ██║   ██║[/][bold #5EBAB4]██╔══██╗[/][bold #FCFCFD]██╔══██║[/][bold #CCF575]╚════██║[/]\n" +
+            "[bold #D04485] ╚██████╔╝[/][bold #5EBAB4]██║  ██║[/][bold #FCFCFD]██║  ██║[/][bold #CCF575]███████║[/]\n" +
+            "[bold #D04485]  ╚═════╝ [/][bold #5EBAB4]╚═╝  ╚═╝[/][bold #FCFCFD]╚═╝  ╚═╝[/][bold #CCF575]╚══════╝[/]\n");
         AnsiConsole.Markup(
-            $"[bold slateblue3] OCI Registry As Storage[/]  [dim grey]│[/]  [dim grey]v{version} • Interactive Terminal UI[/]\n" +
+            $"[bold #5EBAB4] OCI Registry As Storage[/]  [dim grey]│[/]  [dim grey]v{version} • Interactive Terminal UI[/]\n" +
             "[dim grey] ─────────────────────────────────────────────[/]\n\n");
 
         // Connected registries (auths + credHelpers + credsStore)
