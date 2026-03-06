@@ -1,3 +1,10 @@
+---
+title: login
+layout: default
+parent: Command Reference
+nav_order: 1
+---
+
 # oras login
 
 Log in to a remote registry.

@@ -1,3 +1,10 @@
+---
+title: pull
+layout: default
+parent: Command Reference
+nav_order: 4
+---
+
 # oras pull
 
 Pull files from a remote registry.

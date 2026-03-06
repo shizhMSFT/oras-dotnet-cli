@@ -1,3 +1,10 @@
+---
+title: manifest fetch-config
+layout: default
+parent: Command Reference
+nav_order: 15
+---
+
 # oras manifest fetch-config
 
 Fetch the config blob of a manifest.

@@ -1,3 +1,10 @@
+---
+title: resolve
+layout: default
+parent: Command Reference
+nav_order: 9
+---
+
 # oras resolve
 
 Resolve a reference to a manifest digest.

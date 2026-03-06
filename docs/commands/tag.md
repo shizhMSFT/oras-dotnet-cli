@@ -1,3 +1,10 @@
+---
+title: tag
+layout: default
+parent: Command Reference
+nav_order: 8
+---
+
 # oras tag
 
 Tag a manifest in a remote registry.

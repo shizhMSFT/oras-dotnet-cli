@@ -1,3 +1,11 @@
+---
+title: Command Reference
+layout: default
+nav_order: 3
+has_children: true
+description: "Complete reference documentation for all oras CLI commands"
+---
+
 # Command Reference
 
 Complete reference documentation for all `oras` CLI commands.

@@ -1,3 +1,10 @@
+---
+title: logout
+layout: default
+parent: Command Reference
+nav_order: 2
+---
+
 # oras logout
 
 Log out from a remote registry.

@@ -1,0 +1,38 @@
+// Custom styles for ORAS .NET CLI documentation
+
+// Hero section
+.hero {
+  text-align: center;
+  padding: 2rem 0 1rem;
+}
+
+// Feature grid tables - center the content
+.features-grid {
+  table {
+    th, td {
+      vertical-align: top;
+      font-size: 0.85rem;
+      padding: 1rem;
+    }
+    th {
+      font-size: 1rem;
+    }
+  }
+}
+
+// Code blocks in the landing page
+.main-content {
+  pre {
+    border-radius: 8px;
+  }
+}
+
+// Badge styling
+.main-content img[src*="badge"] {
+  margin: 0 0.25rem;
+}
+
+// Smooth scrolling
+html {
+  scroll-behavior: smooth;
+}

@@ -1,3 +1,10 @@
+---
+title: repo ls
+layout: default
+parent: Command Reference
+nav_order: 10
+---
+
 # oras repo ls
 
 List repositories in a registry.

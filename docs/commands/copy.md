@@ -1,3 +1,10 @@
+---
+title: copy
+layout: default
+parent: Command Reference
+nav_order: 7
+---
+
 # oras copy
 
 Copy artifacts between registries or repositories.

@@ -1,3 +1,10 @@
+---
+title: discover
+layout: default
+parent: Command Reference
+nav_order: 6
+---
+
 # oras discover
 
 Discover referrers of a manifest in a registry.

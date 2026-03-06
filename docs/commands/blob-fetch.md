@@ -1,3 +1,10 @@
+---
+title: blob fetch
+layout: default
+parent: Command Reference
+nav_order: 16
+---
+
 # oras blob fetch
 
 Fetch a blob from a registry.

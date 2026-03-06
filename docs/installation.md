@@ -1,3 +1,10 @@
+---
+title: Installation
+layout: default
+nav_order: 2
+description: "Platform-specific installation instructions for the ORAS .NET CLI"
+---
+
 # Installation Guide
 
 The `oras` .NET CLI can be installed in multiple ways depending on your environment and needs.

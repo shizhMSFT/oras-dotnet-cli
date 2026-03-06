@@ -1,3 +1,10 @@
+---
+title: push
+layout: default
+parent: Command Reference
+nav_order: 3
+---
+
 # oras push
 
 Push files to a remote registry as an OCI artifact.

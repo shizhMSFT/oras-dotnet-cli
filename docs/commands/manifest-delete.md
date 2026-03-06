@@ -1,3 +1,10 @@
+---
+title: manifest delete
+layout: default
+parent: Command Reference
+nav_order: 14
+---
+
 # oras manifest delete
 
 Delete a manifest from a registry.

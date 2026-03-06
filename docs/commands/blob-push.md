@@ -1,3 +1,10 @@
+---
+title: blob push
+layout: default
+parent: Command Reference
+nav_order: 17
+---
+
 # oras blob push
 
 Push a blob to a registry.

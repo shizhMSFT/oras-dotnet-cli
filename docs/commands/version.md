@@ -1,3 +1,10 @@
+---
+title: version
+layout: default
+parent: Command Reference
+nav_order: 19
+---
+
 # oras version
 
 Show version information.

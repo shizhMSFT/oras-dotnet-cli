@@ -1,3 +1,10 @@
+---
+title: Shell Completions
+layout: default
+nav_order: 5
+description: "Tab completion setup for bash, zsh, PowerShell, and fish"
+---
+
 # Shell Completions
 
 The `oras` CLI provides tab-completion support for Bash, Zsh, PowerShell, and Fish shells using System.CommandLine's built-in completion system.

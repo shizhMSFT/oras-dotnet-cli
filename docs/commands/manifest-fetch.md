@@ -1,3 +1,10 @@
+---
+title: manifest fetch
+layout: default
+parent: Command Reference
+nav_order: 12
+---
+
 # oras manifest fetch
 
 Fetch a manifest from a registry.

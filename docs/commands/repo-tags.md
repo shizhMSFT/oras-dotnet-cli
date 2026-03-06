@@ -1,3 +1,10 @@
+---
+title: repo tags
+layout: default
+parent: Command Reference
+nav_order: 11
+---
+
 # oras repo tags
 
 List tags in a repository.

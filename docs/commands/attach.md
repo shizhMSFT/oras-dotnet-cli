@@ -1,3 +1,10 @@
+---
+title: attach
+layout: default
+parent: Command Reference
+nav_order: 5
+---
+
 # oras attach
 
 Attach files to an existing artifact in a registry.

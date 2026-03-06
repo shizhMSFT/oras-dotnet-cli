@@ -1,3 +1,10 @@
+---
+title: manifest push
+layout: default
+parent: Command Reference
+nav_order: 13
+---
+
 # oras manifest push
 
 Push a manifest to a registry.

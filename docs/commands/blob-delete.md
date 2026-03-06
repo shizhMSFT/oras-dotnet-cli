@@ -1,3 +1,10 @@
+---
+title: blob delete
+layout: default
+parent: Command Reference
+nav_order: 18
+---
+
 # oras blob delete
 
 Delete a blob from a registry.

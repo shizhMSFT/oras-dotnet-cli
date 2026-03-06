@@ -1,3 +1,10 @@
+---
+title: TUI Guide
+layout: default
+nav_order: 4
+description: "Using the interactive Terminal UI for registry exploration"
+---
+
 # TUI Guide
 
 > Using the interactive Terminal UI for registry exploration
