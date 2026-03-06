@@ -78,14 +78,14 @@ internal class Dashboard
         // Hand-crafted Unicode art header
         var version = GetVersion();
         AnsiConsole.Markup(
-            "[bold cyan]  ██████╗ [/][bold deepskyblue1]██████╗ [/][bold dodgerblue1] █████╗ [/][bold blue]███████╗[/]\n" +
-            "[bold cyan] ██╔═══██╗[/][bold deepskyblue1]██╔══██╗[/][bold dodgerblue1]██╔══██╗[/][bold blue]██╔════╝[/]\n" +
-            "[bold cyan] ██║   ██║[/][bold deepskyblue1]██████╔╝[/][bold dodgerblue1]███████║[/][bold blue]███████╗[/]\n" +
-            "[bold cyan] ██║   ██║[/][bold deepskyblue1]██╔══██╗[/][bold dodgerblue1]██╔══██║[/][bold blue]╚════██║[/]\n" +
-            "[bold cyan] ╚██████╔╝[/][bold deepskyblue1]██║  ██║[/][bold dodgerblue1]██║  ██║[/][bold blue]███████║[/]\n" +
-            "[bold cyan]  ╚═════╝ [/][bold deepskyblue1]╚═╝  ╚═╝[/][bold dodgerblue1]╚═╝  ╚═╝[/][bold blue]╚══════╝[/]\n");
+            "[bold purple4]  ██████╗ [/][bold slateblue3]██████╗ [/][bold mediumpurple3_1] █████╗ [/][bold mediumpurple]███████╗[/]\n" +
+            "[bold purple4] ██╔═══██╗[/][bold slateblue3]██╔══██╗[/][bold mediumpurple3_1]██╔══██╗[/][bold mediumpurple]██╔════╝[/]\n" +
+            "[bold purple4] ██║   ██║[/][bold slateblue3]██████╔╝[/][bold mediumpurple3_1]███████║[/][bold mediumpurple]███████╗[/]\n" +
+            "[bold purple4] ██║   ██║[/][bold slateblue3]██╔══██╗[/][bold mediumpurple3_1]██╔══██║[/][bold mediumpurple]╚════██║[/]\n" +
+            "[bold purple4] ╚██████╔╝[/][bold slateblue3]██║  ██║[/][bold mediumpurple3_1]██║  ██║[/][bold mediumpurple]███████║[/]\n" +
+            "[bold purple4]  ╚═════╝ [/][bold slateblue3]╚═╝  ╚═╝[/][bold mediumpurple3_1]╚═╝  ╚═╝[/][bold mediumpurple]╚══════╝[/]\n");
         AnsiConsole.Markup(
-            $"[bold cyan] OCI Registry As Storage[/]  [dim grey]│[/]  [dim grey]v{version} • Interactive Terminal UI[/]\n" +
+            $"[bold slateblue3] OCI Registry As Storage[/]  [dim grey]│[/]  [dim grey]v{version} • Interactive Terminal UI[/]\n" +
             "[dim grey] ─────────────────────────────────────────────[/]\n\n");
 
         // Connected registries (auths + credHelpers + credsStore)
@@ -108,9 +108,9 @@ internal class Dashboard
 
             var registryPanel = new Panel(registryTable)
             {
-                Header = new PanelHeader("[cyan]Connected Registries[/]", Justify.Left),
+                Header = new PanelHeader("[mediumpurple]Connected Registries[/]", Justify.Left),
                 Border = BoxBorder.Rounded,
-                BorderStyle = new Style(foreground: Color.Cyan1),
+                BorderStyle = new Style(foreground: new Color(95, 95, 215)),
                 Padding = new Padding(1, 1, 1, 1)
             };
 
