@@ -74,10 +74,11 @@ internal class NativeCredentialHelper
         {
             await RunHelperAsync("erase", serverAddress, cancellationToken).ConfigureAwait(false);
         }
-        catch (InvalidOperationException)
+        catch
         {
-            // Credential helpers return non-zero when the credential doesn't exist.
-            // This is expected for idempotent logout operations.
+            // Credential helpers return non-zero when the credential doesn't exist,
+            // or the helper binary may not be installed. Both are expected for
+            // idempotent logout operations.
         }
     }
 
