@@ -46,6 +46,8 @@ internal static class ManifestDeleteCommand
                 var registryService = serviceProvider.GetRequiredService<IRegistryService>();
 
                 var reference = parseResult.GetValue(referenceArg)!;
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
                 var force = parseResult.GetValue(forceOpt);
@@ -70,15 +72,31 @@ internal static class ManifestDeleteCommand
                         "Use --force to confirm deletion or run in an interactive terminal.");
                 }
 
-                // TODO: Implement using IDeletable.DeleteAsync() or IManifestStore.DeleteAsync()
-                // For now, stub with NotImplementedException
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Manifest delete operation not yet implemented for reference: {reference}");
+                var tag = ReferenceHelper.ExtractTag(reference);
+                var digest = ReferenceHelper.ExtractDigest(reference);
+                var resolveRef = digest ?? tag ?? "latest";
 
-                // Expected output:
-                // Text: "Deleted <reference>"
-                // JSON: success status
+                var descriptor = await repo.Manifests.ResolveAsync(resolveRef, cancellationToken).ConfigureAwait(false);
+                await repo.Manifests.DeleteAsync(descriptor, cancellationToken).ConfigureAwait(false);
+
+                if (format == "text")
+                {
+                    AnsiConsole.MarkupLine($"[green]✓[/] Deleted {Markup.Escape(reference)}");
+                }
+                else
+                {
+                    formatter.WriteObject(new DeleteResult(reference, "deleted"), OutputJsonContext.Default.DeleteResult);
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

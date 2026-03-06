@@ -4,6 +4,7 @@ using Oras.Options;
 using Oras.Services;
 using Spectre.Console;
 using OrasProject.Oras.Oci;
+using System.Text.Json;
 
 namespace Oras.Commands;
 
@@ -101,24 +102,86 @@ internal static class PullCommand
                         "Specify a tag (e.g., :latest) or digest (e.g., @sha256:...)");
                 }
 
-                AnsiConsole.MarkupLine($"[dim]Manifest digest: {manifestDescriptor.Digest}[/]");
+                AnsiConsole.MarkupLine($"[dim]Manifest digest: {Markup.Escape(manifestDescriptor.Digest)}[/]");
 
-                // TODO: Implement manifest and layer fetching with OrasProject.Oras v0.5.0 API
-                // The Manifests.FetchAsync and Blobs.FetchAsync signatures differ from expected
-                throw new NotImplementedException(
-                    "Pull operation needs OrasProject.Oras v0.5.0 API integration. " +
-                    "The Manifests.FetchAsync API signature differs from expected.");
+                // Fetch the manifest
+                var (fetchedDescriptor, manifestStream) = await repo.Manifests.FetchAsync(
+                    manifestDescriptor.Digest, cancellationToken).ConfigureAwait(false);
+                string manifestJson;
+                await using (manifestStream)
+                {
+                    using var reader = new StreamReader(manifestStream);
+                    manifestJson = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                }
 
-                // Pull each layer
-                // foreach (var layer in manifest.Layers)
-                // {
-                //     var fileName = ...
-                //     var filePath = Path.Combine(outputDir, fileName);
-                //     ...
-                // }
+                // Parse layers from manifest JSON
+                using var doc = JsonDocument.Parse(manifestJson);
+                var root = doc.RootElement;
 
-                // AnsiConsole.MarkupLine($"[green]✓[/] Pulled {reference}");
-                // return 0;
+                if (!root.TryGetProperty("layers", out var layersElement))
+                {
+                    AnsiConsole.MarkupLine("[yellow]No layers found in manifest[/]");
+                    return 0;
+                }
+
+                var pulledFiles = new List<string>();
+
+                foreach (var layer in layersElement.EnumerateArray())
+                {
+                    var layerDigest = layer.GetProperty("digest").GetString()!;
+                    var layerMediaType = layer.GetProperty("mediaType").GetString() ?? "application/octet-stream";
+                    var layerSize = layer.GetProperty("size").GetInt64();
+                    
+                    // Get filename from annotations
+                    string fileName;
+                    if (layer.TryGetProperty("annotations", out var annotationsEl) &&
+                        annotationsEl.TryGetProperty("org.opencontainers.image.title", out var titleEl))
+                    {
+                        fileName = titleEl.GetString()!;
+                    }
+                    else
+                    {
+                        // Use digest as filename if no title annotation
+                        fileName = layerDigest.Replace("sha256:", "").Substring(0, 12);
+                    }
+
+                    var filePath = Path.Combine(outputDir, fileName);
+                    
+                    if (keepOldFiles && File.Exists(filePath))
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]Skipping {Markup.Escape(fileName)} (already exists)[/]");
+                        continue;
+                    }
+
+                    var layerDescriptor = new Descriptor
+                    {
+                        MediaType = layerMediaType,
+                        Digest = layerDigest,
+                        Size = layerSize
+                    };
+
+                    var blobStream = await repo.Blobs.FetchAsync(layerDescriptor, cancellationToken).ConfigureAwait(false);
+                    await using (blobStream)
+                    {
+                        // Ensure parent directory exists
+                        var parentDir = Path.GetDirectoryName(filePath);
+                        if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
+                        {
+                            Directory.CreateDirectory(parentDir);
+                        }
+                        
+                        await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+                        await blobStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    pulledFiles.Add(fileName);
+                    AnsiConsole.MarkupLine($"[green]✓[/] Pulled {Markup.Escape(fileName)}");
+                }
+
+                AnsiConsole.MarkupLine($"[green]✓[/] Pulled {Markup.Escape(reference)}");
+                AnsiConsole.MarkupLine($"[dim]Files: {pulledFiles.Count}[/]");
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

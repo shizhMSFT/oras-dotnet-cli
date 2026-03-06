@@ -25,6 +25,7 @@
     <PackageReference Include="Spectre.Console" />
     <PackageReference Include="OrasProject.Oras" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
   
   <!-- Trimmer root assemblies to preserve reflection-based APIs -->

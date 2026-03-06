@@ -50,6 +50,8 @@ internal static class ManifestFetchConfigCommand
                 var registryService = serviceProvider.GetRequiredService<IRegistryService>();
 
                 var reference = parseResult.GetValue(referenceArg)!;
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
                 var platform = parseResult.GetValue(platformOptions.PlatformOption);
@@ -58,17 +60,67 @@ internal static class ManifestFetchConfigCommand
 
                 var formatter = FormatOptions.CreateFormatter(format);
 
-                // TODO: Implement two-step fetch:
-                // 1. Fetch manifest using IManifestStore.FetchAsync()
-                // 2. Extract config descriptor from manifest
-                // 3. Fetch config blob using IBlobStore.FetchAsync(config descriptor)
-                // For now, stub with NotImplementedException
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Manifest fetch-config operation not yet implemented for reference: {reference}");
+                var resolveRef = ReferenceHelper.ExtractDigest(reference) ?? ReferenceHelper.ExtractTag(reference) ?? "latest";
 
-                // Expected output:
-                // Config blob JSON to stdout or file
+                // Step 1: Fetch the manifest
+                var (manifestDescriptor, manifestStream) = await repo.Manifests.FetchAsync(resolveRef, cancellationToken).ConfigureAwait(false);
+                string manifestJson;
+                await using (manifestStream)
+                {
+                    using var reader = new StreamReader(manifestStream);
+                    manifestJson = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                // Step 2: Parse manifest to extract config descriptor
+                using var doc = System.Text.Json.JsonDocument.Parse(manifestJson);
+                var root = doc.RootElement;
+
+                if (!root.TryGetProperty("config", out var configElement))
+                {
+                    throw new OrasException("Manifest does not contain a config field",
+                        "This manifest may not be an OCI image manifest.");
+                }
+
+                var configDigest = configElement.GetProperty("digest").GetString()!;
+                var configMediaType = configElement.GetProperty("mediaType").GetString() ?? "application/octet-stream";
+                var configSize = configElement.GetProperty("size").GetInt64();
+
+                var configDescriptor = new OrasProject.Oras.Oci.Descriptor
+                {
+                    MediaType = configMediaType,
+                    Digest = configDigest,
+                    Size = configSize
+                };
+
+                // Step 3: Fetch config blob
+                var configStream = await repo.Blobs.FetchAsync(configDescriptor, cancellationToken).ConfigureAwait(false);
+                string configJson;
+                await using (configStream)
+                {
+                    using var reader = new StreamReader(configStream);
+                    configJson = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                // Step 4: Output
+                if (output != null)
+                {
+                    await File.WriteAllTextAsync(output, configJson, cancellationToken).ConfigureAwait(false);
+                    AnsiConsole.MarkupLine($"[green]✓[/] Saved config to {Markup.Escape(output)}");
+                }
+                else
+                {
+                    formatter.WriteJson(configJson, pretty: true);
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

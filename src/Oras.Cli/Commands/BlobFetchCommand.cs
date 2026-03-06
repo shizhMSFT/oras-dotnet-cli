@@ -56,23 +56,65 @@ internal static class BlobFetchCommand
                 var reference = parseResult.GetValue(referenceArg)!;
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var output = parseResult.GetValue(outputOpt);
                 var descriptorMode = parseResult.GetValue(descriptorOpt);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
 
                 var formatter = FormatOptions.CreateFormatter(format);
 
-                // TODO: Implement using IBlobStore.FetchAsync()
-                // If descriptorMode: output descriptor JSON
-                // Else: stream blob to stdout or file
-                // For now, stub with NotImplementedException
+                // Create repository
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference, username, password, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Blob fetch operation not yet implemented for reference: {reference}");
+                // Extract digest from reference
+                var digest = ReferenceHelper.ExtractDigest(reference);
+                if (string.IsNullOrEmpty(digest))
+                {
+                    throw new OrasUsageException(
+                        "Reference must include a digest (@sha256:...)",
+                        "Use format: registry/repository@sha256:digest");
+                }
 
-                // Expected output:
-                // --descriptor: JSON descriptor { digest, size, mediaType }
-                // Normal: raw blob content to stdout or file
+                if (descriptorMode)
+                {
+                    // Resolve and output descriptor only
+                    var descriptor = await repo.Blobs.ResolveAsync(digest, cancellationToken).ConfigureAwait(false);
+                    formatter.WriteDescriptor(new DescriptorResult(
+                        descriptor.MediaType,
+                        descriptor.Digest,
+                        descriptor.Size,
+                        descriptor.Annotations as Dictionary<string, string>));
+                }
+                else
+                {
+                    // Fetch blob content
+                    var (descriptor, stream) = await repo.Blobs.FetchAsync(digest, cancellationToken).ConfigureAwait(false);
+
+                    if (output != null)
+                    {
+                        // Write to file
+                        await using var fileStream = new FileStream(output, FileMode.Create, FileAccess.Write);
+                        await stream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // Write to stdout
+                        await using (stream)
+                        {
+                            await stream.CopyToAsync(Console.OpenStandardOutput(), cancellationToken).ConfigureAwait(false);
+                        }
+                    }
+
+                    // In text mode, also print descriptor info
+                    if (format == "text")
+                    {
+                        AnsiConsole.MarkupLine($"[green]✓[/] Fetched blob {Markup.Escape(descriptor.Digest)}");
+                    }
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

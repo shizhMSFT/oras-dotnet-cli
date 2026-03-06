@@ -48,21 +48,40 @@ internal static class RepoTagsCommand
                 var reference = parseResult.GetValue(referenceArg)!;
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var last = parseResult.GetValue(lastOpt);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
 
                 var formatter = FormatOptions.CreateFormatter(format);
 
-                // TODO: Implement using IRepository.TagsAsync() or ITagListable.TagsAsync()
-                // Returns IAsyncEnumerable<string> of tag names
-                // For now, stub with NotImplementedException
+                // Create repository
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Tag list operation not yet implemented for reference: {reference}");
+                // List tags
+                var tags = new List<string>();
+                await foreach (var tag in repo.ListTagsAsync(last ?? "", cancellationToken).ConfigureAwait(false))
+                {
+                    tags.Add(tag);
+                    if (format == "text")
+                    {
+                        Console.WriteLine(tag);
+                    }
+                }
 
-                // Expected output:
-                // Text: one tag per line
-                // JSON: array of tag names
+                // Output as JSON if requested
+                if (format == "json")
+                {
+                    formatter.WriteObject(new ListResult(tags.ToArray()), OutputJsonContext.Default.ListResult);
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

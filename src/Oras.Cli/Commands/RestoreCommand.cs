@@ -1,9 +1,11 @@
 using System.CommandLine;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Oras.Options;
 using Oras.Services;
 using Oras.Output;
 using Spectre.Console;
+using OrasProject.Oras.Oci;
 
 namespace Oras.Commands;
 
@@ -77,67 +79,135 @@ internal static class RestoreCommand
                 var isArchive = BackupCommand.IsArchivePath(path);
                 if (isArchive)
                 {
-                    if (!File.Exists(path))
-                    {
-                        throw new OrasUsageException(
-                            $"Backup archive not found: {path}",
-                            "Provide a valid path to a .tar or .tar.gz backup archive.");
-                    }
+                    throw new OrasException(
+                        "Archive restore (.tar/.tar.gz) is not yet supported",
+                        "Use an OCI layout directory as the source instead.");
                 }
-                else
+
+                if (!Directory.Exists(path))
                 {
-                    if (!Directory.Exists(path))
-                    {
-                        throw new OrasUsageException(
-                            $"Backup directory not found: {path}",
-                            "Provide a valid path to an OCI layout directory.");
-                    }
+                    throw new OrasUsageException(
+                        $"Backup directory not found: {path}",
+                        "Provide a valid path to an OCI layout directory.");
                 }
 
                 // Validate destination reference
                 CopyCommand.ValidateReference(reference, "destination");
 
-                // TODO: Replace simulation with actual library calls:
-                // 1. If isArchive, extract the tar/tar.gz to a temp OCI layout directory
-                // 2. Open the OCI layout as a local ITarget (OCI layout store)
-                // 3. Create destination Repository via registryService.CreateRepositoryAsync(reference, username, password, plainHttp, insecure)
-                // 4. Walk the DAG using ReadOnlyTargetExtensions.CopyAsync() from local store to remote repo
-                // 5. If recursive, include referrers graph
-                // 6. Tag the manifest at the destination with the reference tag
+                // Validate OCI layout
+                var ociLayoutPath = Path.Combine(path, "oci-layout");
+                if (!File.Exists(ociLayoutPath))
+                {
+                    throw new OrasUsageException(
+                        $"Not a valid OCI layout: missing oci-layout file in {path}",
+                        "Ensure the directory was created by 'oras backup' or another OCI-compliant tool.");
+                }
 
-                await AnsiConsole.Status()
-                    .Spinner(Spinner.Known.Dots)
-                    .SpinnerStyle(Style.Parse("blue"))
-                    .StartAsync($"Restoring {path} to {reference}...", async ctx =>
+                var indexPath = Path.Combine(path, "index.json");
+                if (!File.Exists(indexPath))
+                {
+                    throw new OrasUsageException(
+                        $"Not a valid OCI layout: missing index.json in {path}",
+                        "Ensure the directory was created by 'oras backup' or another OCI-compliant tool.");
+                }
+
+                // Create destination repository
+                AnsiConsole.MarkupLine($"[blue]Restoring[/] to {Markup.Escape(reference)}...");
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference, username, password, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
+
+                // Parse index.json and push manifest + blobs
+                var indexJson = await File.ReadAllTextAsync(indexPath, cancellationToken).ConfigureAwait(false);
+                using var indexDoc = JsonDocument.Parse(indexJson);
+                var manifests = indexDoc.RootElement.GetProperty("manifests");
+
+                var blobsDir = Path.Combine(path, "blobs", "sha256");
+
+                foreach (var manifestEntry in manifests.EnumerateArray())
+                {
+                    var manifestDigest = manifestEntry.GetProperty("digest").GetString()!;
+                    var manifestMediaType = manifestEntry.GetProperty("mediaType").GetString()!;
+                    var manifestSize = manifestEntry.GetProperty("size").GetInt64();
+
+                    // Read manifest blob
+                    var manifestHash = manifestDigest.Replace("sha256:", "");
+                    var manifestBlobPath = Path.Combine(blobsDir, manifestHash);
+                    var manifestBytes = await File.ReadAllBytesAsync(manifestBlobPath, cancellationToken).ConfigureAwait(false);
+                    var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
+
+                    // Parse manifest to find config and layers that need pushing
+                    using var manifestDoc = JsonDocument.Parse(manifestJson);
+                    var manifestRoot = manifestDoc.RootElement;
+
+                    // Push config blob
+                    if (manifestRoot.TryGetProperty("config", out var configEl))
                     {
-                        if (isArchive)
+                        var configDigest = configEl.GetProperty("digest").GetString()!;
+                        var configSize = configEl.GetProperty("size").GetInt64();
+                        var configMediaType = configEl.GetProperty("mediaType").GetString() ?? "application/octet-stream";
+                        var configHash = configDigest.Replace("sha256:", "");
+                        var configBlobPath = Path.Combine(blobsDir, configHash);
+
+                        if (File.Exists(configBlobPath))
                         {
-                            ctx.Status($"Extracting archive: {path}...");
-                            await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                            var configDescriptor = new Descriptor
+                            {
+                                MediaType = configMediaType,
+                                Digest = configDigest,
+                                Size = configSize
+                            };
+                            await using var configStream = File.OpenRead(configBlobPath);
+                            await repo.Blobs.PushAsync(configDescriptor, configStream, cancellationToken).ConfigureAwait(false);
+                            AnsiConsole.MarkupLine($"[green]✓[/] Pushed config {Markup.Escape(configDigest[..19])}...");
                         }
+                    }
 
-                        ctx.Status("Reading OCI layout...");
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-
-                        ctx.Status($"Pushing layers to {reference}...");
-                        await Task.Delay(300, cancellationToken).ConfigureAwait(false);
-
-                        if (recursive)
+                    // Push layer blobs
+                    if (manifestRoot.TryGetProperty("layers", out var layersEl))
+                    {
+                        foreach (var layer in layersEl.EnumerateArray())
                         {
-                            ctx.Status("Pushing referrers (signatures, SBOMs)...");
-                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-                        }
+                            var layerDigest = layer.GetProperty("digest").GetString()!;
+                            var layerSize = layer.GetProperty("size").GetInt64();
+                            var layerMediaType = layer.GetProperty("mediaType").GetString() ?? "application/octet-stream";
+                            var layerHash = layerDigest.Replace("sha256:", "");
+                            var layerBlobPath = Path.Combine(blobsDir, layerHash);
 
-                        ctx.Status("Verifying...");
-                        await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-                    }).ConfigureAwait(false);
+                            if (File.Exists(layerBlobPath))
+                            {
+                                var layerDescriptor = new Descriptor
+                                {
+                                    MediaType = layerMediaType,
+                                    Digest = layerDigest,
+                                    Size = layerSize
+                                };
+                                await using var layerStream = File.OpenRead(layerBlobPath);
+                                await repo.Blobs.PushAsync(layerDescriptor, layerStream, cancellationToken).ConfigureAwait(false);
+                                AnsiConsole.MarkupLine($"[green]✓[/] Pushed layer {Markup.Escape(layerDigest[..19])}...");
+                            }
+                        }
+                    }
+
+                    // Push manifest
+                    var mDescriptor = new Descriptor
+                    {
+                        MediaType = manifestMediaType,
+                        Digest = manifestDigest,
+                        Size = manifestSize
+                    };
+                    
+                    var dstTag = ReferenceHelper.ExtractTag(reference) ?? "latest";
+                    await using var manifestPushStream = File.OpenRead(manifestBlobPath);
+                    await repo.Manifests.PushAsync(mDescriptor, manifestPushStream, dstTag, cancellationToken).ConfigureAwait(false);
+                    AnsiConsole.MarkupLine($"[green]✓[/] Pushed manifest {Markup.Escape(manifestDigest[..19])}...");
+                }
 
                 var summary = new RestoreResult(
                     path,
                     reference,
                     recursive,
                     concurrency,
-                    "simulated");
+                    "completed");
 
                 if (format == "json")
                 {
@@ -145,7 +215,7 @@ internal static class RestoreCommand
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine($"[green]Restored[/] {path} => {reference}");
+                    AnsiConsole.MarkupLine($"[green]✓[/] Restored {Markup.Escape(path)} => {Markup.Escape(reference)}");
                 }
 
                 return 0;

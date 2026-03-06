@@ -15,5 +15,12 @@ namespace Oras.Output;
 [JsonSerializable(typeof(DescriptorResult))]
 [JsonSerializable(typeof(TableResult))]
 [JsonSerializable(typeof(TreeNodeResult))]
+[JsonSerializable(typeof(PushResult))]
+[JsonSerializable(typeof(PullResult))]
+[JsonSerializable(typeof(AttachResult))]
+[JsonSerializable(typeof(TagResult))]
+[JsonSerializable(typeof(ListResult))]
+[JsonSerializable(typeof(DiscoverResult))]
+[JsonSerializable(typeof(DeleteResult))]
 [JsonSerializable(typeof(JsonDocument))]
 internal partial class OutputJsonContext : JsonSerializerContext;

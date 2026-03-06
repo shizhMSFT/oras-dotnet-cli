@@ -43,23 +43,33 @@ internal static class TagCommand
                 var source = parseResult.GetValue(sourceArg)!;
                 var targetTags = parseResult.GetValue(targetTagsArg)!;
 
-                // Parse source reference
-                var (registry, repository, sourceTag, sourceDigest) = ReferenceHelper.ParseReference(source);
-
                 // Get remote options
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
 
-                // TODO: Implement actual tagging using oras-dotnet library
-                // This requires IRepository.TagAsync() or ITaggable.TagAsync()
-                // For now, stub with NotImplementedException
+                // Create repository using the source reference
+                var repo = await registryService.CreateRepositoryAsync(
+                    source,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
+                // Resolve the source to get a descriptor
+                var digest = ReferenceHelper.ExtractDigest(source);
+                var tag = digest == null ? ReferenceHelper.ExtractTag(source) : null;
+                var tagOrDigest = digest ?? tag ?? "latest";
+
+                var descriptor = await repo.ResolveAsync(tagOrDigest, cancellationToken).ConfigureAwait(false);
+
+                // Tag each target
                 foreach (var targetTag in targetTags)
                 {
-                    // TODO: Call library API
-                    // await repository.TagAsync(sourceDigest, targetTag, cancellationToken);
-                    throw new NotImplementedException(
-                        $"Tag operation not yet implemented. Would tag {source} as {targetTag}");
+                    await repo.TagAsync(descriptor, targetTag, cancellationToken).ConfigureAwait(false);
+                    AnsiConsole.MarkupLine($"[green]✓[/] Tagged {Markup.Escape(source)} as {Markup.Escape(targetTag)}");
                 }
 
                 return 0;

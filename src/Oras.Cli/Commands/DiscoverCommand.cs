@@ -4,6 +4,7 @@ using Oras.Options;
 using Oras.Services;
 using Oras.Output;
 using Spectre.Console;
+using OrasProject.Oras.Oci;
 
 namespace Oras.Commands;
 
@@ -50,24 +51,69 @@ internal static class DiscoverCommand
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
                 var artifactTypeFilter = parseResult.GetValue(artifactTypeOpt);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
 
                 var formatter = FormatOptions.CreateFormatter(format);
 
-                // TODO: Implement using IRepository.FetchReferrersAsync() or IPredecessorFindable.PredecessorsAsync()
-                // Returns descriptors of artifacts that reference this manifest
-                // For now, stub with NotImplementedException
+                // Create repository and resolve
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference, username, password, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Discover operation not yet implemented for reference: {reference}");
+                var resolveRef = ReferenceHelper.ExtractDigest(reference) ?? ReferenceHelper.ExtractTag(reference) ?? "latest";
+                var descriptor = await repo.ResolveAsync(resolveRef, cancellationToken).ConfigureAwait(false);
 
-                // Expected output:
-                // Text: Tree format showing referrer hierarchy
-                //   localhost:5000/hello:latest
-                //   ├── application/vnd.example.sbom
-                //   │   └── sha256:def456... (1.2 KB)
-                //   └── application/vnd.example.signature
-                //       └── sha256:789abc... (256 B)
-                // JSON: array of referrer descriptors
+                // Fetch referrers
+                var referrers = new List<Descriptor>();
+                if (!string.IsNullOrEmpty(artifactTypeFilter))
+                {
+                    await foreach (var referrer in repo.FetchReferrersAsync(descriptor, artifactTypeFilter, cancellationToken).ConfigureAwait(false))
+                    {
+                        referrers.Add(referrer);
+                    }
+                }
+                else
+                {
+                    await foreach (var referrer in repo.FetchReferrersAsync(descriptor, cancellationToken).ConfigureAwait(false))
+                    {
+                        referrers.Add(referrer);
+                    }
+                }
+
+                if (format == "json")
+                {
+                    var results = referrers.Select(r => new DescriptorResult(
+                        r.MediaType, r.Digest, r.Size, r.Annotations as Dictionary<string, string>)).ToArray();
+                    formatter.WriteObject(new DiscoverResult(reference, results), OutputJsonContext.Default.DiscoverResult);
+                }
+                else
+                {
+                    // Build tree for text output
+                    var root = new Output.TreeNode { Label = reference };
+                    
+                    // Group by artifact type (use MediaType for grouping)
+                    var grouped = referrers.GroupBy(r => r.MediaType);
+                    foreach (var group in grouped)
+                    {
+                        var typeNode = new Output.TreeNode { Label = group.Key };
+                        foreach (var referrer in group)
+                        {
+                            var childNode = new Output.TreeNode
+                            {
+                                Label = referrer.Digest,
+                                Metadata = new Dictionary<string, string>
+                                {
+                                    ["size"] = FormatHelper.FormatSize(referrer.Size)
+                                }
+                            };
+                            typeNode.Children.Add(childNode);
+                        }
+                        root.Children.Add(typeNode);
+                    }
+
+                    formatter.WriteTree(root);
+                }
+                return 0;
             }).ConfigureAwait(false);
         });
 

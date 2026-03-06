@@ -1,11 +1,12 @@
+using Microsoft.Extensions.Caching.Memory;
+using OrasProject.Oras.Registry;
 using OrasProject.Oras.Registry.Remote;
+using OrasProject.Oras.Registry.Remote.Auth;
 
 namespace Oras.Services;
 
 /// <summary>
 /// Registry service implementation using OrasProject.Oras library.
-/// NOTE: This is a stub implementation. The actual OrasProject.Oras v0.5.0 API
-/// needs to be properly integrated once the API surface is documented.
 /// </summary>
 internal class RegistryService : IRegistryService
 {
@@ -24,12 +25,17 @@ internal class RegistryService : IRegistryService
         bool insecure = false,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask.ConfigureAwait(false); // Suppress async warning
-
-        // TODO: Implement actual Registry creation with proper OrasProject.Oras v0.5.0 API
-        throw new NotImplementedException(
-            "Registry creation needs OrasProject.Oras v0.5.0 API integration. " +
-            "The actual constructor signature differs from expected.");
+        var client = await CreateClientAsync(registryHost, username, password, cancellationToken).ConfigureAwait(false);
+        
+        var options = new RepositoryOptions
+        {
+            Client = client,
+            Reference = Reference.Parse(registryHost),
+            PlainHttp = plainHttp
+        };
+        
+        var registry = new Registry(options);
+        return registry;
     }
 
     public async Task<Repository> CreateRepositoryAsync(
@@ -40,11 +46,45 @@ internal class RegistryService : IRegistryService
         bool insecure = false,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask.ConfigureAwait(false); // Suppress async warning
+        var parsedRef = Reference.Parse(reference);
+        var registryHost = parsedRef.Registry;
+        
+        var client = await CreateClientAsync(registryHost, username, password, cancellationToken).ConfigureAwait(false);
+        
+        var options = new RepositoryOptions
+        {
+            Client = client,
+            Reference = parsedRef,
+            PlainHttp = plainHttp
+        };
+        
+        var repository = new Repository(options);
+        return repository;
+    }
 
-        // TODO: Implement actual Repository creation with proper OrasProject.Oras v0.5.0 API
-        throw new NotImplementedException(
-            "Repository creation needs OrasProject.Oras v0.5.0 API integration. " +
-            "The actual API surface differs from expected.");
+    private async Task<IClient> CreateClientAsync(
+        string registryHost,
+        string? username,
+        string? password,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+        {
+            var credential = new Credential(username, password, "", "");
+            var provider = new SingleRegistryCredentialProvider(registryHost, credential);
+            var cache = new Cache(new MemoryCache(new MemoryCacheOptions()));
+            return new Client(new HttpClient(), provider, cache);
+        }
+        
+        var storedCreds = await _credentialService.GetCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
+        if (storedCreds.HasValue && !string.IsNullOrEmpty(storedCreds.Value.Username))
+        {
+            var credential = new Credential(storedCreds.Value.Username, storedCreds.Value.Password ?? "", "", "");
+            var provider = new SingleRegistryCredentialProvider(registryHost, credential);
+            var cache = new Cache(new MemoryCache(new MemoryCacheOptions()));
+            return new Client(new HttpClient(), provider, cache);
+        }
+        
+        return new PlainClient(new HttpClient());
     }
 }

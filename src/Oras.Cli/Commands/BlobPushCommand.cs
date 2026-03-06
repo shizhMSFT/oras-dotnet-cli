@@ -12,6 +12,12 @@ namespace Oras.Commands;
 /// </summary>
 internal static class BlobPushCommand
 {
+    private static string ComputeSha256Digest(byte[] data)
+    {
+        var hash = System.Security.Cryptography.SHA256.HashData(data);
+        return $"sha256:{Convert.ToHexStringLower(hash)}";
+    }
+
     public static Command Create(IServiceProvider serviceProvider)
     {
         var command = new Command("push", "Push a blob to a registry");
@@ -64,6 +70,8 @@ internal static class BlobPushCommand
                 var file = parseResult.GetValue(fileArg)!;
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var mediaType = parseResult.GetValue(mediaTypeOpt);
                 var size = parseResult.GetValue(sizeOpt);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
@@ -77,16 +85,51 @@ internal static class BlobPushCommand
                         "Ensure the file path is correct and the file exists.");
                 }
 
-                // TODO: Implement using IBlobStore.PushAsync()
-                // Returns descriptor with digest and size
-                // For now, stub with NotImplementedException
+                // Create repository
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference, username, password, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Blob push operation not yet implemented. Would push {file} to {reference}");
+                // Read file and compute digest
+                var fileInfo = new FileInfo(file);
+                
+                // Validate size if provided
+                if (size.HasValue && size.Value != fileInfo.Length)
+                {
+                    throw new OrasUsageException(
+                        $"File size mismatch: expected {size.Value} bytes, got {fileInfo.Length} bytes",
+                        "Ensure the file has not been modified since the size was determined.");
+                }
 
-                // Expected output:
-                // Text: "Uploaded <digest> <file>"
-                // JSON: descriptor object { digest, size, mediaType }
+                var fileBytes = await File.ReadAllBytesAsync(file, cancellationToken).ConfigureAwait(false);
+                var digest = ComputeSha256Digest(fileBytes);
+
+                var descriptor = new OrasProject.Oras.Oci.Descriptor
+                {
+                    MediaType = mediaType ?? "application/octet-stream",
+                    Digest = digest,
+                    Size = fileInfo.Length
+                };
+
+                // Push blob
+                await using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+                await repo.Blobs.PushAsync(descriptor, fileStream, cancellationToken).ConfigureAwait(false);
+
+                // Output result
+                if (format == "text")
+                {
+                    AnsiConsole.MarkupLine($"[green]✓[/] Uploaded {Markup.Escape(descriptor.Digest)}");
+                    Console.WriteLine(descriptor.Digest);
+                }
+                else
+                {
+                    formatter.WriteDescriptor(new DescriptorResult(
+                        descriptor.MediaType,
+                        descriptor.Digest,
+                        descriptor.Size,
+                        null));
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

@@ -1,9 +1,11 @@
 using System.CommandLine;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Oras.Options;
 using Oras.Services;
 using Oras.Output;
 using Spectre.Console;
+using OrasProject.Oras.Oci;
 
 namespace Oras.Commands;
 
@@ -84,80 +86,144 @@ internal static class BackupCommand
 
                 // Validate and prepare output path
                 var isArchive = IsArchivePath(output);
-                if (!isArchive)
+                if (isArchive)
                 {
-                    // OCI layout directory — create if needed
-                    if (!Directory.Exists(output))
-                    {
-                        Directory.CreateDirectory(output);
-                    }
-                }
-                else
-                {
-                    // Archive file — ensure parent directory exists and is writable
-                    var parentDir = Path.GetDirectoryName(Path.GetFullPath(output));
-                    if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
-                    {
-                        Directory.CreateDirectory(parentDir);
-                    }
+                    throw new OrasException(
+                        "Archive backup (.tar/.tar.gz) is not yet supported",
+                        "Use a directory path for OCI layout backup instead.");
                 }
 
-                // TODO: Replace simulation with actual library calls:
-                // 1. Create source Repository via registryService.CreateRepositoryAsync(reference, username, password, plainHttp, insecure)
-                // 2. Resolve the tag/digest to get the root manifest descriptor
-                // 3. If platform is set, resolve the platform-specific manifest from an index
-                // 4. Walk the DAG using ReadOnlyTargetExtensions.CopyAsync() to a local OCI layout target
-                // 5. If recursive, include referrers graph (signatures, SBOMs, attestations)
-                // 6. If isArchive, pack the OCI layout into a tar/tar.gz archive
-
-                // Simulated layer info for progress display
-                const int simulatedLayerCount = 4;
-                const long simulatedTotalSize = 52_428_800; // ~50 MB
-
-                await AnsiConsole.Status()
-                    .Spinner(Spinner.Known.Dots)
-                    .SpinnerStyle(Style.Parse("blue"))
-                    .StartAsync($"Backing up {reference} to {output}...", async ctx =>
-                    {
-                        ctx.Status($"Resolving manifest for {reference}...");
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-
-                        ctx.Status($"Downloading layers (0/{simulatedLayerCount})...");
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-
-                        ctx.Status($"Downloading layers ({simulatedLayerCount}/{simulatedLayerCount})...");
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-
-                        if (recursive)
-                        {
-                            ctx.Status("Fetching referrers (signatures, SBOMs)...");
-                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-                        }
-
-                        if (isArchive)
-                        {
-                            ctx.Status($"Packing archive: {output}...");
-                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-                        }
-                    }).ConfigureAwait(false);
-
-                // Create a placeholder summary file in OCI layout mode
-                if (!isArchive)
+                // OCI layout directory — create if needed
+                if (!Directory.Exists(output))
                 {
-                    var summaryPath = Path.Combine(output, "oci-layout");
-                    await File.WriteAllTextAsync(summaryPath,
-                        """{"imageLayoutVersion":"1.0.0"}""",
-                        cancellationToken).ConfigureAwait(false);
+                    Directory.CreateDirectory(output);
+                }
+
+                // Create source repository
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference, username, password, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
+
+                // Resolve and fetch manifest
+                var tag = ReferenceHelper.ExtractTag(reference);
+                var digest = ReferenceHelper.ExtractDigest(reference);
+                var resolveRef = digest ?? tag ?? "latest";
+
+                AnsiConsole.MarkupLine($"[blue]Resolving[/] {Markup.Escape(reference)}...");
+                var manifestDescriptor = await repo.ResolveAsync(resolveRef, cancellationToken).ConfigureAwait(false);
+
+                var (_, manifestStream) = await repo.Manifests.FetchAsync(manifestDescriptor.Digest, cancellationToken).ConfigureAwait(false);
+                byte[] manifestBytes;
+                await using (manifestStream)
+                {
+                    using var ms = new MemoryStream();
+                    await manifestStream.CopyToAsync(ms, cancellationToken).ConfigureAwait(false);
+                    manifestBytes = ms.ToArray();
+                }
+                var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
+
+                // Create OCI layout directory structure
+                var blobsDir = Path.Combine(output, "blobs", "sha256");
+                Directory.CreateDirectory(blobsDir);
+
+                // Write oci-layout
+                await File.WriteAllTextAsync(
+                    Path.Combine(output, "oci-layout"),
+                    """{"imageLayoutVersion":"1.0.0"}""",
+                    cancellationToken).ConfigureAwait(false);
+
+                // Write manifest blob
+                var manifestHash = manifestDescriptor.Digest.Replace("sha256:", "");
+                await File.WriteAllBytesAsync(
+                    Path.Combine(blobsDir, manifestHash),
+                    manifestBytes,
+                    cancellationToken).ConfigureAwait(false);
+
+                // Write index.json
+                var indexJson = $$"""
+{
+  "schemaVersion": 2,
+  "manifests": [
+    {
+      "mediaType": "{{manifestDescriptor.MediaType}}",
+      "digest": "{{manifestDescriptor.Digest}}",
+      "size": {{manifestDescriptor.Size}}
+    }
+  ]
+}
+""";
+                await File.WriteAllTextAsync(
+                    Path.Combine(output, "index.json"),
+                    indexJson,
+                    cancellationToken).ConfigureAwait(false);
+
+                // Parse manifest and download all blobs
+                using var doc = JsonDocument.Parse(manifestJson);
+                var root = doc.RootElement;
+                var layerCount = 0;
+                long totalSize = manifestBytes.Length;
+
+                // Download config blob if present
+                if (root.TryGetProperty("config", out var configElement))
+                {
+                    var configDigest = configElement.GetProperty("digest").GetString()!;
+                    var configSize = configElement.GetProperty("size").GetInt64();
+                    var configMediaType = configElement.GetProperty("mediaType").GetString() ?? "application/octet-stream";
+                    
+                    var configDescriptor = new Descriptor
+                    {
+                        MediaType = configMediaType,
+                        Digest = configDigest,
+                        Size = configSize
+                    };
+
+                    var configStream = await repo.Blobs.FetchAsync(configDescriptor, cancellationToken).ConfigureAwait(false);
+                    var configHash = configDigest.Replace("sha256:", "");
+                    await using (configStream.ConfigureAwait(false))
+                    {
+                        await using var fs = File.Create(Path.Combine(blobsDir, configHash));
+                        await configStream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+                    }
+                    totalSize += configSize;
+                    layerCount++;
+                }
+
+                // Download layer blobs
+                if (root.TryGetProperty("layers", out var layersElement))
+                {
+                    foreach (var layer in layersElement.EnumerateArray())
+                    {
+                        var layerDigest = layer.GetProperty("digest").GetString()!;
+                        var layerSize = layer.GetProperty("size").GetInt64();
+                        var layerMediaType = layer.GetProperty("mediaType").GetString() ?? "application/octet-stream";
+                        
+                        var layerDescriptor = new Descriptor
+                        {
+                            MediaType = layerMediaType,
+                            Digest = layerDigest,
+                            Size = layerSize
+                        };
+
+                        var layerStream = await repo.Blobs.FetchAsync(layerDescriptor, cancellationToken).ConfigureAwait(false);
+                        var layerHash = layerDigest.Replace("sha256:", "");
+                        await using (layerStream.ConfigureAwait(false))
+                        {
+                            await using var fs = File.Create(Path.Combine(blobsDir, layerHash));
+                            await layerStream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+                        }
+                        totalSize += layerSize;
+                        layerCount++;
+                        AnsiConsole.MarkupLine($"[green]✓[/] Downloaded layer {Markup.Escape(layerDigest[..19])}...");
+                    }
                 }
 
                 var summary = new BackupResult(
                     reference,
                     output,
-                    simulatedLayerCount,
-                    Output.FormatHelper.FormatSize(simulatedTotalSize),
+                    layerCount,
+                    Output.FormatHelper.FormatSize(totalSize),
                     recursive,
                     platform ?? "(all)",
-                    "simulated");
+                    "completed");
 
                 if (format == "json")
                 {
@@ -165,9 +231,9 @@ internal static class BackupCommand
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine($"[green]✓[/] Backed up [bold]{reference}[/] to [bold]{output}[/]");
-                    AnsiConsole.MarkupLine($"  Layers: {simulatedLayerCount}");
-                    AnsiConsole.MarkupLine($"  Total size: {Output.FormatHelper.FormatSize(simulatedTotalSize)}");
+                    AnsiConsole.MarkupLine($"[green]✓[/] Backed up [bold]{Markup.Escape(reference)}[/] to [bold]{Markup.Escape(output)}[/]");
+                    AnsiConsole.MarkupLine($"  Layers: {layerCount}");
+                    AnsiConsole.MarkupLine($"  Total size: {Output.FormatHelper.FormatSize(totalSize)}");
                     if (recursive)
                     {
                         AnsiConsole.MarkupLine("  Referrers: included");

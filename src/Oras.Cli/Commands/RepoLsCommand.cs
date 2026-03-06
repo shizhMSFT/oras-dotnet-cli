@@ -48,21 +48,43 @@ internal static class RepoLsCommand
                 var registry = parseResult.GetValue(registryArg)!;
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var last = parseResult.GetValue(lastOpt);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
 
                 var formatter = FormatOptions.CreateFormatter(format);
 
-                // TODO: Implement using IRegistry.ListRepositoriesAsync()
-                // Returns IAsyncEnumerable<string> of repository names
-                // For now, stub with NotImplementedException
+                // Normalize registry
+                registry = ReferenceHelper.NormalizeRegistry(registry);
 
-                throw new NotImplementedException(
-                    $"Repository list operation not yet implemented for registry: {registry}");
+                // Create registry client
+                var registryClient = await registryService.CreateRegistryAsync(
+                    registry,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
-                // Expected output:
-                // Text: one repository name per line
-                // JSON: array of repository names
+                // List repositories
+                var repos = new List<string>();
+                await foreach (var repoName in registryClient.ListRepositoriesAsync(last ?? "", cancellationToken).ConfigureAwait(false))
+                {
+                    repos.Add(repoName);
+                    if (format == "text")
+                    {
+                        Console.WriteLine(repoName);
+                    }
+                }
+
+                // Output as JSON if requested
+                if (format == "json")
+                {
+                    formatter.WriteObject(new ListResult(repos.ToArray()), OutputJsonContext.Default.ListResult);
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

@@ -87,11 +87,14 @@ internal static class PushCommand
                 foreach (var filePath in files)
                 {
                     var fileInfo = new FileInfo(filePath);
-                    await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                    
+                    // Compute digest before pushing
+                    var fileBytes = await File.ReadAllBytesAsync(filePath, cancellationToken).ConfigureAwait(false);
+                    var digest = ComputeSha256Digest(fileBytes);
 
                     var descriptor = new Descriptor
                     {
-                        Digest = string.Empty, // Will be set by library
+                        Digest = digest,
                         MediaType = "application/octet-stream",
                         Size = fileInfo.Length,
                         Annotations = new Dictionary<string, string>
@@ -100,33 +103,45 @@ internal static class PushCommand
                         }
                     };
 
+                    await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                    
                     // Push blob
                     await repo.Blobs.PushAsync(descriptor, fileStream, cancellationToken).ConfigureAwait(false);
 
                     fileDescriptors.Add(descriptor);
-                    AnsiConsole.MarkupLine($"[green]✓[/] Pushed {Path.GetFileName(filePath)}");
+                    AnsiConsole.MarkupLine($"[green]✓[/] Pushed {Markup.Escape(Path.GetFileName(filePath))}");
                 }
 
                 // Pack manifest
-                // TODO: Implement with actual Packer API from OrasProject.Oras v0.5.0
-                artifactType ??= "application/vnd.oras.artifact.v1";
-                // var manifestDescriptor = await Packer.PackManifestAsync(...)
+                artifactType ??= "application/vnd.unknown.artifact.v1";
+                var packOptions = new PackManifestOptions
+                {
+                    Layers = fileDescriptors
+                };
 
-                throw new NotImplementedException(
-                    "Packer.PackManifestAsync needs OrasProject.Oras v0.5.0 API integration. " +
-                    "The actual API signature differs from expected.");
+                if (annotations != null && annotations.Count > 0)
+                {
+                    packOptions.ManifestAnnotations = annotations;
+                }
 
-                // Get tag from reference
-                // var tag = ExtractTag(reference);
-                // if (!string.IsNullOrEmpty(tag))
-                // {
-                //     await repo.TagAsync(manifestDescriptor, tag);
-                // }
+                var manifestDescriptor = await Packer.PackManifestAsync(
+                    repo, 
+                    Packer.ManifestVersion.Version1_1,
+                    artifactType, 
+                    packOptions, 
+                    cancellationToken).ConfigureAwait(false);
 
-                // AnsiConsole.MarkupLine($"[green]✓[/] Pushed {reference}");
-                // AnsiConsole.MarkupLine($"[dim]Digest: {manifestDescriptor.Digest}[/]");
+                // Tag if reference has a tag
+                var tag = ReferenceHelper.ExtractTag(reference);
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    await repo.TagAsync(manifestDescriptor, tag, cancellationToken).ConfigureAwait(false);
+                }
 
-                // return 0;
+                AnsiConsole.MarkupLine($"[green]✓[/] Pushed {Markup.Escape(reference)}");
+                AnsiConsole.MarkupLine($"[dim]Digest: {Markup.Escape(manifestDescriptor.Digest)}[/]");
+
+                return 0;
             }).ConfigureAwait(false);
         });
 
@@ -153,6 +168,12 @@ internal static class PushCommand
         }
 
         return result.Count > 0 ? result : null;
+    }
+
+    private static string ComputeSha256Digest(byte[] data)
+    {
+        var hash = System.Security.Cryptography.SHA256.HashData(data);
+        return $"sha256:{Convert.ToHexStringLower(hash)}";
     }
 
 }

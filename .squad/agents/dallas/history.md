@@ -364,3 +364,23 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 
 **Build Status:** ✅ `dotnet build src\Oras.Cli\oras.csproj --no-restore` (warnings only)
 
+
+### 2026-03-09 — RegistryService Implementation, Output Models, and Package Dependencies
+
+**Key Updates:**
+- Added Microsoft.Extensions.Caching.Memory v9.0.0 to Directory.Packages.props and oras.csproj
+- Implemented RegistryService using OrasProject.Oras v0.5.0 API with proper authentication flow: explicit creds → stored creds → unauthenticated PlainClient
+- Auth implementation uses Cache + MemoryCache for OAuth2 token caching, SingleRegistryCredentialProvider for credentials, and Client/PlainClient for authenticated/unauthenticated access
+- Registry/Repository creation uses RepositoryOptions constructor pattern: RepositoryOptions is a struct with required Client and Reference properties, PlainHttp is set in options before passing to constructor
+- Added 7 output models: PushResult, PullResult, AttachResult, TagResult, ListResult, DiscoverResult, DeleteResult
+- Registered all new output models in OutputJsonContext for AOT-compatible source-generated JSON serialization
+
+**Key Learning:**
+- OrasProject.Oras v0.5.0 RepositoryOptions is a struct (value type) with read-only properties on Registry/Repository
+- Cannot modify RepositoryOptions after construction; must pass complete RepositoryOptions to Registry(options) or Repository(options) constructors
+- Reference.Parse() requires using OrasProject.Oras.Registry namespace (separate from OrasProject.Oras.Registry.Remote)
+- Auth types: Credential record, SingleRegistryCredentialProvider, Client (OAuth2), Cache, PlainClient (no auth)
+- CredentialService returns nullable tuple (string? Username, string? Password)?
+
+**Build Status:** ✅ dotnet build src\Oras.Cli\oras.csproj succeeded with warnings only
+

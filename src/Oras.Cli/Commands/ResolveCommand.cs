@@ -44,21 +44,45 @@ internal static class ResolveCommand
                 var reference = parseResult.GetValue(referenceArg)!;
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var platform = parseResult.GetValue(platformOptions.PlatformOption);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
 
                 var formatter = FormatOptions.CreateFormatter(format);
 
-                // TODO: Implement using IReferenceFetchable.ResolveAsync() or IResolvable.ResolveAsync()
-                // This should return a Descriptor with digest, size, mediaType
-                // For now, stub with NotImplementedException
+                // Create repository
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Resolve operation not yet implemented for reference: {reference}");
+                // Extract tag or digest from reference
+                var digest = ReferenceHelper.ExtractDigest(reference);
+                var tag = digest == null ? ReferenceHelper.ExtractTag(reference) : null;
+                var tagOrDigest = digest ?? tag ?? "latest";
 
-                // Expected output format:
-                // Text: sha256:abc123...
-                // JSON: { "digest": "sha256:...", "mediaType": "...", "size": 1234 }
+                // Resolve the reference
+                var descriptor = await repo.ResolveAsync(tagOrDigest, cancellationToken).ConfigureAwait(false);
+
+                // Output based on format
+                if (format == "json")
+                {
+                    formatter.WriteDescriptor(new DescriptorResult(
+                        descriptor.MediaType,
+                        descriptor.Digest,
+                        descriptor.Size,
+                        descriptor.Annotations as Dictionary<string, string>));
+                }
+                else
+                {
+                    Console.WriteLine(descriptor.Digest);
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

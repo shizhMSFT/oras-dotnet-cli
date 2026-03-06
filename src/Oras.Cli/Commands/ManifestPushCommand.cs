@@ -54,6 +54,8 @@ internal static class ManifestPushCommand
 
                 var reference = parseResult.GetValue(referenceArg)!;
                 var file = parseResult.GetValue(fileArg)!;
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
                 var mediaType = parseResult.GetValue(mediaTypeOpt);
@@ -68,20 +70,60 @@ internal static class ManifestPushCommand
                         "Ensure the file path is correct and the file exists.");
                 }
 
-                // TODO: Implement using IManifestStore.PushAsync() or IReferencePushable.PushAsync()
-                // Read manifest JSON from file, push to registry
-                // Returns descriptor
-                // For now, stub with NotImplementedException
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Manifest push operation not yet implemented. Would push {file} to {reference}");
+                var fileBytes = await File.ReadAllBytesAsync(file, cancellationToken).ConfigureAwait(false);
+                var digest = ComputeSha256Digest(fileBytes);
 
-                // Expected output:
-                // Text: "Pushed manifest to <reference>\nDigest: <digest>"
-                // JSON: descriptor object { digest, mediaType, size }
+                var descriptor = new OrasProject.Oras.Oci.Descriptor
+                {
+                    MediaType = mediaType ?? "application/vnd.oci.image.manifest.v1+json",
+                    Digest = digest,
+                    Size = fileBytes.Length
+                };
+
+                var tag = ReferenceHelper.ExtractTag(reference);
+
+                await using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    await repo.Manifests.PushAsync(descriptor, fileStream, tag, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await repo.Manifests.PushAsync(descriptor, fileStream, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (format == "text")
+                {
+                    AnsiConsole.MarkupLine($"[green]✓[/] Pushed manifest to {Markup.Escape(reference)}");
+                    AnsiConsole.MarkupLine($"[dim]Digest: {Markup.Escape(descriptor.Digest)}[/]");
+                }
+                else
+                {
+                    formatter.WriteDescriptor(new DescriptorResult(
+                        descriptor.MediaType,
+                        descriptor.Digest,
+                        descriptor.Size,
+                        null));
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 
         return command;
+    }
+
+    private static string ComputeSha256Digest(byte[] data)
+    {
+        var hash = System.Security.Cryptography.SHA256.HashData(data);
+        return $"sha256:{Convert.ToHexStringLower(hash)}";
     }
 }

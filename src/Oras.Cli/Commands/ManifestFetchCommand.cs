@@ -66,6 +66,8 @@ internal static class ManifestFetchCommand
                 var registryService = serviceProvider.GetRequiredService<IRegistryService>();
 
                 var reference = parseResult.GetValue(referenceArg)!;
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
                 var platform = parseResult.GetValue(platformOptions.PlatformOption);
@@ -76,18 +78,49 @@ internal static class ManifestFetchCommand
 
                 var formatter = FormatOptions.CreateFormatter(format);
 
-                // TODO: Implement using IManifestStore.FetchAsync() or IReferenceFetchable.FetchAsync()
-                // If descriptorMode: output descriptor JSON
-                // Else: output full manifest JSON
-                // If platform specified: resolve index to platform-specific manifest
-                // For now, stub with NotImplementedException
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference,
+                    username,
+                    password,
+                    plainHttp,
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Manifest fetch operation not yet implemented for reference: {reference}");
+                var tag = ReferenceHelper.ExtractTag(reference);
+                var digest = ReferenceHelper.ExtractDigest(reference);
+                var resolveRef = digest ?? tag ?? "latest";
 
-                // Expected output:
-                // --descriptor: JSON descriptor { digest, mediaType, size }
-                // Normal: Full manifest JSON (optionally pretty-printed)
+                if (descriptorMode)
+                {
+                    var descriptor = await repo.Manifests.ResolveAsync(resolveRef, cancellationToken).ConfigureAwait(false);
+                    formatter.WriteDescriptor(new DescriptorResult(
+                        descriptor.MediaType,
+                        descriptor.Digest,
+                        descriptor.Size,
+                        descriptor.Annotations as Dictionary<string, string>));
+                }
+                else
+                {
+                    var (descriptor, stream) = await repo.Manifests.FetchAsync(resolveRef, cancellationToken).ConfigureAwait(false);
+                    string manifestJson;
+                    await using (stream)
+                    {
+                        using var reader = new StreamReader(stream);
+                        manifestJson = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
+                    if (output != null)
+                    {
+                        await File.WriteAllTextAsync(output, manifestJson, cancellationToken).ConfigureAwait(false);
+                        AnsiConsole.MarkupLine($"[green]✓[/] Saved manifest to {Markup.Escape(output)}");
+                    }
+                    else
+                    {
+                        formatter.WriteJson(manifestJson, pretty);
+                    }
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 

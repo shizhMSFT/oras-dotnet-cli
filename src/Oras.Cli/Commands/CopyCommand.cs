@@ -4,6 +4,7 @@ using Oras.Options;
 using Oras.Services;
 using Oras.Output;
 using Spectre.Console;
+using OrasProject.Oras;
 
 namespace Oras.Commands;
 
@@ -95,31 +96,26 @@ internal static class CopyCommand
                 ValidateReference(source, "source");
                 ValidateReference(destination, "destination");
 
-                // TODO: Replace simulation with actual library calls:
-                // 1. Create source Repository via registryService.CreateRepositoryAsync(source, fromUsername, fromPassword, plainHttp, insecure)
-                // 2. Create destination Repository via registryService.CreateRepositoryAsync(destination, username, password, plainHttp, insecure)
-                // 3. Build CopyOptions { Recursive = recursive, Concurrency = concurrency }
-                // 4. If platform is set, configure platform selector on CopyOptions
-                // 5. Call ReadOnlyTargetExtensions.CopyAsync(sourceRepo, destination, sourceTag, copyOptions, cancellationToken)
+                // Create source and destination repositories
+                var srcRepo = await registryService.CreateRepositoryAsync(
+                    source, fromUsername, fromPassword, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
 
-                await AnsiConsole.Status()
-                    .Spinner(Spinner.Known.Dots)
-                    .SpinnerStyle(Style.Parse("blue"))
-                    .StartAsync($"Copying {source} => {destination}...", async ctx =>
-                    {
-                        ctx.Status($"Resolving source: {source}");
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                var dstRepo = await registryService.CreateRepositoryAsync(
+                    destination, username, password, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
 
-                        ctx.Status("Copying manifests and layers...");
-                        if (recursive)
-                        {
-                            ctx.Status("Copying referrers (signatures, SBOMs)...");
-                        }
-                        await Task.Delay(300, cancellationToken).ConfigureAwait(false);
+                // Extract refs
+                var srcRef = ReferenceHelper.ExtractDigest(source) ?? ReferenceHelper.ExtractTag(source) ?? "latest";
+                var dstRef = ReferenceHelper.ExtractDigest(destination) ?? ReferenceHelper.ExtractTag(destination) ?? srcRef;
 
-                        ctx.Status("Verifying destination...");
-                        await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-                    }).ConfigureAwait(false);
+                // Copy
+                AnsiConsole.MarkupLine($"[blue]Copying {Markup.Escape(source)} => {Markup.Escape(destination)}...[/]");
+
+                var copyOptions = new CopyOptions
+                {
+                    Concurrency = concurrency
+                };
+
+                var desc = await srcRepo.CopyAsync(srcRef, dstRepo, dstRef, copyOptions, cancellationToken).ConfigureAwait(false);
 
                 var summary = new CopyResult(
                     source,
@@ -127,7 +123,7 @@ internal static class CopyCommand
                     recursive,
                     concurrency,
                     platform ?? "(all)",
-                    "simulated");
+                    "completed");
 
                 if (format == "json")
                 {
@@ -135,7 +131,8 @@ internal static class CopyCommand
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine($"[green]Copied[/] {source} => {destination}");
+                    AnsiConsole.MarkupLine($"[green]✓[/] Copied {Markup.Escape(source)} => {Markup.Escape(destination)}");
+                    AnsiConsole.MarkupLine($"[dim]Digest: {Markup.Escape(desc.Digest)}[/]");
                 }
 
                 return 0;

@@ -66,3 +66,38 @@ internal sealed record TreeNodeResult(
     string Label,
     Dictionary<string, string> Metadata,
     TreeNodeResult[] Children);
+
+/// <summary>
+/// Structured output for push command results.
+/// </summary>
+internal sealed record PushResult(string Reference, string Digest, string MediaType, long Size);
+
+/// <summary>
+/// Structured output for pull command results.
+/// </summary>
+internal sealed record PullResult(string Reference, int FileCount, string[] Files);
+
+/// <summary>
+/// Structured output for attach command results.
+/// </summary>
+internal sealed record AttachResult(string Reference, string Subject, string Digest, string ArtifactType);
+
+/// <summary>
+/// Structured output for tag command results.
+/// </summary>
+internal sealed record TagResult(string Source, string[] Tags);
+
+/// <summary>
+/// Structured output for list command results.
+/// </summary>
+internal sealed record ListResult(string[] Items);
+
+/// <summary>
+/// Structured output for discover command results.
+/// </summary>
+internal sealed record DiscoverResult(string Reference, DescriptorResult[] Referrers);
+
+/// <summary>
+/// Structured output for delete command results.
+/// </summary>
+internal sealed record DeleteResult(string Reference, string Status);

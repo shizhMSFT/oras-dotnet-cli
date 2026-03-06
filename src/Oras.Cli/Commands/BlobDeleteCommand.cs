@@ -48,6 +48,8 @@ internal static class BlobDeleteCommand
                 var reference = parseResult.GetValue(referenceArg)!;
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
+                var username = parseResult.GetValue(remoteOptions.UsernameOption);
+                var password = parseResult.GetValue(remoteOptions.PasswordOption);
                 var force = parseResult.GetValue(forceOpt);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
 
@@ -70,15 +72,38 @@ internal static class BlobDeleteCommand
                         "Use --force to confirm deletion or run in an interactive terminal.");
                 }
 
-                // TODO: Implement using IDeletable.DeleteAsync() or IBlobStore.DeleteAsync()
-                // For now, stub with NotImplementedException
+                // Create repository
+                var repo = await registryService.CreateRepositoryAsync(
+                    reference, username, password, plainHttp, insecure, cancellationToken).ConfigureAwait(false);
 
-                throw new NotImplementedException(
-                    $"Blob delete operation not yet implemented for reference: {reference}");
+                // Extract digest from reference
+                var digest = ReferenceHelper.ExtractDigest(reference);
+                if (string.IsNullOrEmpty(digest))
+                {
+                    throw new OrasUsageException(
+                        "Reference must include a digest (@sha256:...)",
+                        "Use format: registry/repository@sha256:digest");
+                }
 
-                // Expected output:
-                // Text: "Deleted <digest>"
-                // JSON: success status
+                // Resolve descriptor
+                var descriptor = await repo.Blobs.ResolveAsync(digest, cancellationToken).ConfigureAwait(false);
+
+                // Delete blob
+                await repo.Blobs.DeleteAsync(descriptor, cancellationToken).ConfigureAwait(false);
+
+                // Output result
+                if (format == "text")
+                {
+                    AnsiConsole.MarkupLine($"[green]✓[/] Deleted {Markup.Escape(descriptor.Digest)}");
+                }
+                else
+                {
+                    formatter.WriteObject(
+                        new DeleteResult(reference, "deleted"),
+                        OutputJsonContext.Default.DeleteResult);
+                }
+
+                return 0;
             }).ConfigureAwait(false);
         });
 
