@@ -75,19 +75,18 @@ internal class Dashboard
     {
         AnsiConsole.Clear();
 
-        // Fancy ASCII art header
-        var logo = new FigletText("ORAS")
-            .LeftJustified()
-            .Color(Color.Cyan1);
-        AnsiConsole.Write(logo);
-
-        var subtitle = new Panel(
-            new Markup($"[bold cyan]OCI Registry As Storage[/]\n[dim grey]Version {GetVersion()} • Interactive Terminal UI[/]"))
-        {
-            Border = BoxBorder.None,
-            Padding = new Padding(0, 0, 0, 1)
-        };
-        AnsiConsole.Write(subtitle);
+        // Hand-crafted Unicode art header
+        var version = GetVersion();
+        AnsiConsole.Markup(
+            "[bold cyan]  ██████╗ [/][bold deepskyblue1]██████╗ [/][bold dodgerblue1] █████╗ [/][bold blue]███████╗[/]\n" +
+            "[bold cyan] ██╔═══██╗[/][bold deepskyblue1]██╔══██╗[/][bold dodgerblue1]██╔══██╗[/][bold blue]██╔════╝[/]\n" +
+            "[bold cyan] ██║   ██║[/][bold deepskyblue1]██████╔╝[/][bold dodgerblue1]███████║[/][bold blue]███████╗[/]\n" +
+            "[bold cyan] ██║   ██║[/][bold deepskyblue1]██╔══██╗[/][bold dodgerblue1]██╔══██║[/][bold blue]╚════██║[/]\n" +
+            "[bold cyan] ╚██████╔╝[/][bold deepskyblue1]██║  ██║[/][bold dodgerblue1]██║  ██║[/][bold blue]███████║[/]\n" +
+            "[bold cyan]  ╚═════╝ [/][bold deepskyblue1]╚═╝  ╚═╝[/][bold dodgerblue1]╚═╝  ╚═╝[/][bold blue]╚══════╝[/]\n");
+        AnsiConsole.Markup(
+            $"[bold cyan] OCI Registry As Storage[/]  [dim grey]│[/]  [dim grey]v{version} • Interactive Terminal UI[/]\n" +
+            "[dim grey] ─────────────────────────────────────────────[/]\n\n");
 
         // Connected registries (auths + credHelpers + credsStore)
         var registries = await _configStore.ListRegistriesAsync(cancellationToken).ConfigureAwait(false);
