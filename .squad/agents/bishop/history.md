@@ -174,4 +174,24 @@
 - `{: .text-yellow-300 }` Kramdown attribute for section header styling in dark mode
 - `text` code fence (not `ansi`) is the reliable choice for terminal output in Jekyll/GitHub Pages — `ansi` fences have no standard rendering support
 
+### Catalog Fallback — Manual Repository Entry for Non-Catalog Registries
+
+**Problem:** Registries like ghcr.io do not support the `/v2/_catalog` API. The TUI browse flow was a dead-end when catalog failed.
+
+**Design decisions:**
+- `FetchRepositoriesAsync` uses null vs empty list semantics: null = catalog unsupported, empty = no repos. This distinction drives different user-facing messages.
+- "Enter repository name..." is always available in the repo selection list — even when catalog succeeds — so users can jump to any repo they know.
+- Unexpected fetch errors are treated as "catalog unavailable" (return null) rather than hard failures, so the user still has a path forward.
+- `BrowseTagsAsync` was made public so Dashboard can invoke it directly for the "Browse Repository Tags" shortcut.
+- Dashboard's new "Browse Repository Tags" action parses `registry/namespace/repo` by splitting on the first `/`, keeping parsing simple and consistent.
+
+**Patterns reinforced:**
+- Always use `Markup.Escape()` for user-provided text in Spectre.Console markup strings.
+- Use `PromptHelper` methods for all interactive prompts — never raw `AnsiConsole.Ask` calls.
+- `const string` for magic option labels like "Back to main menu" to avoid typo bugs.
+
+**Files modified:**
+- `src/Oras.Cli/Tui/RegistryBrowser.cs` — `BrowseRepositoriesAsync`, `FetchRepositoriesAsync`, `BrowseTagsAsync` (now public)
+- `src/Oras.Cli/Tui/Dashboard.cs` — Added "Browse Repository Tags" action and `HandleBrowseRepositoryTagsAsync`
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->

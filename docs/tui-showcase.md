@@ -37,6 +37,7 @@ The main entry point when you run `oras` with no arguments in an interactive ter
 
   Select an action:
   ❯ Browse Registry
+    Browse Repository Tags
     Login
     Push Artifact
     Pull Artifact
@@ -66,7 +67,8 @@ Hierarchical, searchable repository and tag browser. Select a registry from stor
 
   Repositories in ghcr.io (Total: 12):
   Type to search...
-  ❯ myorg/webapp
+  ❯ Enter repository name...
+    myorg/webapp
     myorg/api-service
     myorg/ml-model
     myorg/helm-charts
@@ -78,6 +80,17 @@ Hierarchical, searchable repository and tag browser. Select a registry from stor
     demo/hello-oras
     (Move up and down to reveal more options)
 ```
+
+When a registry doesn't support the catalog API (like ghcr.io, ECR, or Docker Hub's non-public repositories), the registry browser shows a helpful message:
+
+```text
+  ℹ This registry does not support repository listing (e.g., ghcr.io)
+
+  Enter repository name...
+  (Type a repository path like "oras-project/oras")
+```
+
+Even when the catalog is available, you can always select "Enter repository name..." to jump directly to a specific repository without browsing the full list.
 
 After selecting a repository:
 
@@ -104,6 +117,46 @@ oras
 
 # Or jump directly to a registry
 oras --registry ghcr.io
+```
+
+---
+
+## Direct Repository Browse
+{: .text-yellow-300 }
+
+Skip the registry browser and jump straight to a repository's tags. Perfect for browsing specific repositories on registries that don't support the catalog API.
+
+```text
+  Enter full reference (e.g., ghcr.io/oras-project/oras):
+  ghcr.io/oras-project/oras
+```
+
+After entering a full reference:
+
+```text
+  Tags for ghcr.io/oras-project/oras (Total: 15):
+  Type to search...
+  ❯ latest
+    v1.2.1
+    v1.2.0
+    v1.1.0
+    v1.0.5
+    v1.0.0
+    sha-a1b2c3d
+    nightly-20260305
+    (Move up and down to reveal more options)
+```
+
+**How to launch:**
+
+```bash
+# From the dashboard
+oras
+# → Select "Browse Repository Tags"
+# → Enter: ghcr.io/oras-project/oras
+
+# Or jump directly with flags
+oras --registry ghcr.io --repository oras-project/oras
 ```
 
 ---

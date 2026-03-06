@@ -36,6 +36,12 @@ oras --registry ghcr.io --repository myorg/myrepo
 - Tag and manifest exploration
 - Copy reference, pull, attach operations
 - Artifact metadata inspection
+- **Catalog-less registries**: When a registry doesn't support the catalog API (e.g., ghcr.io), the browser shows a clear message. Use "Enter repository name..." to type a repository path directly.
+
+### Direct Repository Browse
+- Jump straight to a repository's tags without browsing the catalog
+- Supports registries that don't have a catalog API
+- Select "Browse Repository Tags" on the dashboard or use `oras --repository <name>`
 
 ### Keyboard Navigation
 - **Arrow keys**: Navigate lists and trees

@@ -101,6 +101,7 @@ internal class Dashboard
         var actions = new[]
         {
             "Browse Registry",
+            "Browse Repository Tags",
             "Login",
             "Push Artifact",
             "Pull Artifact",
@@ -125,6 +126,10 @@ internal class Dashboard
                 case "Browse Registry":
                     var browser = new RegistryBrowser(_serviceProvider);
                     await browser.RunAsync(cancellationToken).ConfigureAwait(false);
+                    return true;
+
+                case "Browse Repository Tags":
+                    await HandleBrowseRepositoryTagsAsync(cancellationToken).ConfigureAwait(false);
                     return true;
 
                 case "Login":
@@ -169,6 +174,40 @@ internal class Dashboard
             PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
             return true;
         }
+    }
+
+    private async Task HandleBrowseRepositoryTagsAsync(CancellationToken cancellationToken)
+    {
+        var reference = PromptHelper.PromptText(
+            "Full reference (e.g., [green]ghcr.io/oras-project/oras[/]):");
+
+        if (string.IsNullOrWhiteSpace(reference))
+        {
+            return;
+        }
+
+        reference = reference.Trim();
+
+        // Parse registry host from the reference (first segment before '/')
+        var slashIndex = reference.IndexOf('/');
+        if (slashIndex < 0)
+        {
+            PromptHelper.ShowError(
+                "Invalid reference format",
+                "Expected format: registry/namespace/repo (e.g., ghcr.io/oras-project/oras)");
+            AnsiConsole.WriteLine();
+            PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+            return;
+        }
+
+        var registryHost = reference[..slashIndex];
+        var repository = reference[(slashIndex + 1)..];
+
+        // Check for credentials
+        var credentials = await _credentialService.GetCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
+
+        var browser = new RegistryBrowser(_serviceProvider);
+        await browser.BrowseTagsAsync(registryHost, repository, credentials, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task HandleLoginAsync(CancellationToken cancellationToken)

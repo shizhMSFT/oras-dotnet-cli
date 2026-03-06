@@ -146,29 +146,61 @@ internal class RegistryBrowser
         (string Username, string Password)? credentials,
         CancellationToken cancellationToken)
     {
+        const string enterRepoOption = "Enter repository name...";
+        const string backOption = "Back to main menu";
+
         while (true)
         {
             // S3-03: Fetch and display repository list
+            // null = catalog API not supported; empty list = no repos found
             var repositories = await FetchRepositoriesAsync(registryHost, credentials, cancellationToken).ConfigureAwait(false);
 
-            if (repositories == null || repositories.Count == 0)
+            var catalogUnsupported = repositories == null;
+            var repoChoices = new List<string>();
+
+            if (catalogUnsupported || repositories!.Count == 0)
             {
-                PromptHelper.ShowInfo("No repositories found in this registry.");
+                // Registry does not support catalog or returned no repos
+                if (catalogUnsupported)
+                {
+                    PromptHelper.ShowInfo($"This registry does not support repository listing (e.g., ghcr.io).");
+                }
+                else
+                {
+                    PromptHelper.ShowInfo("No repositories found in this registry.");
+                }
                 AnsiConsole.WriteLine();
-                PromptHelper.PromptText("Press Enter to go back...", allowEmpty: true);
+
+                repoChoices.Add(enterRepoOption);
+                repoChoices.Add(backOption);
+            }
+            else
+            {
+                repoChoices.AddRange(repositories);
+                repoChoices.Add(enterRepoOption);
+                repoChoices.Add(backOption);
+            }
+
+            var title = catalogUnsupported || repositories == null || repositories.Count == 0
+                ? $"[green]Repositories in {Markup.Escape(registryHost)}:[/]"
+                : $"[green]Repositories in {Markup.Escape(registryHost)} (Total: {repositories.Count}):[/]";
+
+            var selectedRepo = PromptHelper.PromptSelectionWithSearch(title, repoChoices);
+
+            if (selectedRepo == backOption)
+            {
                 return;
             }
 
-            var repoChoices = new List<string>(repositories);
-            repoChoices.Add("Back to main menu");
-
-            var selectedRepo = PromptHelper.PromptSelectionWithSearch(
-                $"[green]Repositories in {registryHost} (Total: {repositories.Count}):[/]",
-                repoChoices);
-
-            if (selectedRepo == "Back to main menu")
+            if (selectedRepo == enterRepoOption)
             {
-                return;
+                var repoPath = PromptHelper.PromptText(
+                    "Repository path (e.g., [green]oras-project/oras[/]):");
+                if (string.IsNullOrWhiteSpace(repoPath))
+                {
+                    continue;
+                }
+                selectedRepo = repoPath.Trim();
             }
 
             // S3-04: Browse tags for selected repository
@@ -176,6 +208,11 @@ internal class RegistryBrowser
         }
     }
 
+    /// <summary>
+    /// Fetches the repository list from the registry catalog API.
+    /// Returns null when the catalog API is not supported (e.g., ghcr.io).
+    /// Returns an empty list when catalog succeeds but no repositories exist.
+    /// </summary>
     private async Task<List<string>?> FetchRepositoriesAsync(
         string registryHost,
         (string Username, string Password)? credentials,
@@ -186,8 +223,10 @@ internal class RegistryBrowser
             {
                 try
                 {
-                    // TODO: Call IRegistry.ListRepositoriesAsync()
-                    // For now, return mock data
+                    // TODO: Replace mock data with IRegistry.ListRepositoriesAsync()
+                    // When the real API is integrated, a 404/405 or NotSupportedException
+                    // from the catalog endpoint should be caught below and return null
+                    // to signal "catalog not supported".
                     await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                     return new List<string>
                     {
@@ -197,15 +236,26 @@ internal class RegistryBrowser
                         "test/demo"
                     };
                 }
+                catch (NotSupportedException)
+                {
+                    // Catalog API not supported by this registry — return null
+                    return null;
+                }
                 catch (Exception ex)
                 {
-                    PromptHelper.ShowError($"Failed to fetch repositories: {ex.Message}");
+                    PromptHelper.ShowError($"Failed to fetch repositories: {Markup.Escape(ex.Message)}");
+                    // Treat unexpected errors as catalog unavailable so the user
+                    // can still enter a repository name manually.
                     return null;
                 }
             }).ConfigureAwait(false);
     }
 
-    private async Task BrowseTagsAsync(
+    /// <summary>
+    /// Browse tags for a given registry and repository. Public so Dashboard
+    /// can invoke it directly for the "Browse Repository Tags" shortcut.
+    /// </summary>
+    public async Task BrowseTagsAsync(
         string registryHost,
         string repository,
         (string Username, string Password)? credentials,
