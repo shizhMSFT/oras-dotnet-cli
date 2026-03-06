@@ -2,6 +2,90 @@
 
 ## Active Decisions
 
+### DEC-PRD-001: Promote `copy` and `resolve` to P0
+
+**Date:** 2026-03-06  
+**Author:** Ripley (Lead/Architect)  
+**Status:** Proposed
+
+**Decision:** `oras copy` and `oras resolve` are P0 (must-have for MVP), not P1.
+
+**Rationale:** Both are essential for CI/CD pipeline workflows (copy between staging→production registries, resolve tags to digests for pinning). Both have direct library API mappings with zero implementation gaps. Low risk, high value.
+
+---
+
+### DEC-PRD-002: Drop `--format go-template` Support
+
+**Date:** 2026-03-06  
+**Author:** Ripley (Lead/Architect)  
+**Status:** Proposed
+
+**Decision:** The .NET CLI will not support `--format go-template`. Only `text` and `json` formats are supported.
+
+**Rationale:** Go templates have no direct .NET equivalent. JSON output covers the machine-readable use case. A template engine (Scriban/Liquid) can be evaluated later if users request it. Shipping without it avoids scope creep and an awkward API mismatch.
+
+---
+
+### DEC-PRD-003: TUI is Sprint 3 — Non-Interactive First
+
+**Date:** 2026-03-06  
+**Author:** Ripley (Lead/Architect)  
+**Status:** Proposed
+
+**Decision:** Interactive TUI mode is Sprint 3 work. Sprints 1–2 focus entirely on non-interactive CLI command parity.
+
+**Rationale:** The TUI builds on top of the command/service layer. If we try to build both simultaneously, we'll compromise the command layer's API surface. CI/CD users (the largest audience) need non-interactive mode first. TUI is a differentiator, not a blocker.
+
+---
+
+### DEC-PRD-004: Integration Tests from Sprint 1
+
+**Date:** 2026-03-06  
+**Author:** Ripley (Lead/Architect)  
+**Status:** Proposed
+
+**Decision:** Integration tests (testcontainers-dotnet + OCI registry) are set up in Sprint 1, not deferred.
+
+**Rationale:** Push/pull/login are network-dependent operations that can't be fully validated with mocks alone. Catching integration issues early avoids costly rework. The test infrastructure investment pays for itself immediately.
+
+---
+
+### DEC-PRD-005: 4-Sprint / 8-Week Timeline
+
+**Date:** 2026-03-06  
+**Author:** Ripley (Lead/Architect)  
+**Status:** Proposed
+
+**Decision:** Work is decomposed into 4 two-week sprints: Foundation → Parity → TUI → Release.
+
+**Rationale:** Two-week sprints provide clear milestones and integration points. Sprint 1 produces a usable (if minimal) CLI. Sprint 2 reaches Go CLI parity. Sprint 3 adds the TUI differentiator. Sprint 4 hardens for release.
+
+---
+
+### DEC-PRD-006: Exit Code Convention — Match Go CLI
+
+**Date:** 2026-03-06  
+**Author:** Ripley (Lead/Architect)  
+**Status:** Proposed
+
+**Decision:** Exit codes follow Go CLI: 0 = success, 1 = general error, 2 = argument error.
+
+**Rationale:** Users switching from Go CLI should not need to update their scripts' exit code handling. This is a compatibility requirement, not just a convention.
+
+---
+
+### User Directive: System.CommandLine 2.x Reference
+
+**Date:** 2026-03-06  
+**Source:** Shiwei Zhang (via Copilot)  
+**Status:** Active
+
+**Directive:** For anything related to System.CommandLine, refer to the official Microsoft documentation: [Overview](https://learn.microsoft.com/en-us/dotnet/standard/commandline/) and [Syntax](https://learn.microsoft.com/en-us/dotnet/standard/commandline/syntax). The latest System.CommandLine is 2.x, which is newer than the version in LLM training data. Always fetch these docs before writing System.CommandLine code.
+
+**Context:** User request — captured for team memory.
+
+---
+
 ### ADR-001: System.CommandLine as CLI Framework
 
 **Date:** 2026-03-06  

@@ -64,3 +64,24 @@
 - All operations async-first (library pattern)
 - Options pattern for command flags (library pattern)
 - ITarget interface polymorphism for multi-target operations
+
+### 2026-03-06 — PRD Authored
+
+**PRD structure**: 7 sections — Product Overview, Command Reference (full parity), Interactive TUI, Non-Functional Requirements, Testing Strategy, CI/CD & Release, Work Breakdown. Written to `docs/prd.md`.
+
+**Priority tiers finalized**:
+- P0 (11 commands): push, pull, login, logout, version, tag, resolve, copy, repo ls, repo tags, manifest fetch — promoted `copy` and `resolve` to P0 (essential for CI/CD workflows; low implementation risk since library has direct API mapping)
+- P1 (8 commands): attach, discover, blob fetch/push/delete, manifest push/delete, manifest fetch-config
+- P2 (2 commands): manifest index create/update — manual `Oci.Index` construction, limited use case
+- Deferred: backup, restore, `--oci-layout` (unchanged from ADR-005/009)
+
+**Key scope calls**:
+- `--format go-template` dropped — no Go template equivalent in .NET; JSON is the machine-readable alternative
+- TUI is Sprint 3, not Sprint 1 — non-interactive CLI must be solid first
+- Credential store is Sprint 1 critical path — login/logout blocks everything that touches registries
+- Integration tests use testcontainers-dotnet from Sprint 1 — not deferred
+- AOT configuration deferred to Sprint 4 but designed-for from day one
+
+**Work breakdown**: 4 sprints, 51 work items. Dallas carries the command implementation load. Bishop owns TUI and output formatting. Hicks owns test infrastructure and cross-platform validation. Vasquez owns CI/CD and AOT.
+
+**Critical path**: S1-01 (project structure) → S1-05 (credentials) → S1-06 (login) → S1-09 (push) → S1-13 (integration tests) → S2-* (all commands) → S4-01 (AOT)
