@@ -115,24 +115,24 @@ internal class Dashboard
             AnsiConsole.WriteLine();
         }
 
-        // Quick actions menu
-        var actions = new[]
-        {
-            "Browse Registry",
-            "Browse Repository Tags",
-            "Login",
-            "Copy Artifact",
-            "Backup Artifact",
-            "Restore Artifact",
-            "Push Artifact",
-            "Pull Artifact",
-            "Tag Artifact",
-            "Quit"
-        };
+        // Quick actions menu with grouped artifact operations
+        var prompt = new SelectionPrompt<string>()
+            .Title("[green]Select an action:[/]")
+            .PageSize(12)
+            .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
+            .AddChoices("Browse Registry", "Browse Repository Tags", "Login")
+            .AddChoiceGroup("Artifacts", new[]
+            {
+                "Push Artifact",
+                "Pull Artifact",
+                "Copy Artifact",
+                "Tag Artifact",
+                "Backup Artifact",
+                "Restore Artifact",
+            })
+            .AddChoices("Quit");
 
-        var action = PromptHelper.PromptSelection(
-            "[green]Select an action:[/]",
-            actions);
+        var action = AnsiConsole.Prompt(prompt);
 
         return await HandleActionAsync(action, registries, cancellationToken).ConfigureAwait(false);
     }
