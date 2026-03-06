@@ -2,6 +2,45 @@
 
 ## Active Decisions
 
+### DEC-REL-001: v0.2.1 Bugfix Release — TUI Robustness & Windows Compatibility
+
+**Date:** 2026-03-06T11:24:00Z  
+**Author:** Coordinator (Lead/DevOps)  
+**Status:** In Progress
+
+**Decision:** Ship v0.2.1 as a patch release addressing 3 critical TUI and platform compatibility bugs discovered post-v0.2.0.
+
+**Bugs Fixed:**
+1. **Markup Injection Vulnerability (PromptHelper.cs)** — User input containing Spectre.Console markup indicators (`[`, `]`) would crash PromptHelper. Escape all markup-unsafe characters.
+2. **Windows UTF-8 Encoding (Program.cs)** — Windows PowerShell terminals default to legacy code page without explicit UTF-8 setup. Set `Console.OutputEncoding = Encoding.UTF8` at startup.
+3. **Banner Alignment (Dashboard.cs)** — ORAS FigletText header centered inconsistently with left-aligned content. Set Justify to Left.
+
+**Release Details:**
+- **Base:** v0.2.0 (tag: v0.2.0)
+- **Target Version:** 0.2.1
+- **Type:** Patch (backward compatible)
+- **Platforms:** 6-architecture matrix (win-x64/arm64, osx-x64/arm64, linux-x64/arm64)
+
+**Commits Merged:**
+- `8091903` (Coordinator) — Escape markup + UTF-8 encoding fix
+- `3289a36` (Coordinator) — Left-align banner
+
+**Status:**
+- ✅ Code fixes landed on main
+- ⏳ Docs update (Vasquez pending)
+- ⏳ Version bump in Directory.Build.props
+- ⏳ Release tag and artifact publishing
+
+**Backward Compatibility:** ✅ Fully backward compatible — all v0.2.0 commands and workflows unchanged.
+
+**Next Steps:**
+1. Update docs (CHANGELOG.md, RELEASE-NOTES.md, README.md)
+2. Bump version 0.2.0 → 0.2.1 in Directory.Build.props
+3. Tag release as v0.2.1 on main
+4. Build and publish 6-platform binaries
+
+---
+
 ### DEC-PRD-001: Promote `copy` and `resolve` to P0
 
 **Date:** 2026-03-06  
