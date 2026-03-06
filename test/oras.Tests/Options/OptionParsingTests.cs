@@ -136,17 +136,9 @@ public sealed class OptionParsingTests
         defaultValue.Should().Be(3, "default concurrency should be 3");
     }
 
-    [Fact]
-    public void TargetOptions_HasTargetOption()
-    {
-        // Arrange & Act
-        var options = new TargetOptions();
-
-        // Assert
-        options.TargetOption.Should().NotBeNull();
-        options.TargetOption.Name.Should().Be("--target");
-        options.TargetOption.Aliases.Should().Contain("-t");
-    }
+    // TargetOptions class was removed from source — test disabled
+    // [Fact]
+    // public void TargetOptions_HasTargetOption() { ... }
 
     [Fact]
     public void FormatOptions_HasFormatOption()
