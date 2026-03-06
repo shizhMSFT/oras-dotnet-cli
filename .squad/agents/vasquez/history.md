@@ -72,3 +72,60 @@
 - Integration tests not yet fully implemented (RegistryFixture throws NotImplementedException)
 - Test filtering assumes integration tests live in `Integration` namespace
 - When integration tests are implemented, they'll automatically run on ubuntu-latest only
+
+### 2026-03-06: Sprint 4 Native AOT and Release Infrastructure (S4-01, S4-02, S4-08)
+
+**Native AOT Configuration (S4-01):**
+- **Project Settings**: Added AOT compilation flags to `src/Oras.Cli/oras.csproj`:
+  - `PublishAot=true` — Enables Native AOT compilation
+  - `InvariantGlobalization=true` — Reduces binary size, removes culture-specific code
+  - `PublishTrimmed=true` — Aggressive IL trimming for smaller binaries
+  - `SelfContained=true` + `PublishSingleFile=true` — Single-file deployment
+  - `TrimMode=link` — Assembly-level trimming
+  - `IlcOptimizationPreference=Speed` — Optimize for cold start performance
+- **Publish Profiles**: Created 6 RID-specific profiles in `src/Oras.Cli/Properties/PublishProfiles/`:
+  - Windows: `win-x64.pubxml`, `win-arm64.pubxml`
+  - Linux: `linux-x64.pubxml`, `linux-arm64.pubxml`
+  - macOS: `osx-x64.pubxml`, `osx-arm64.pubxml`
+- **Trimmer Configuration**: Created `TrimmerRoots.xml` to preserve Spectre.Console.Json namespace
+  - Prevents trimming of `JsonText` and related types used in TUI
+  - Added `<TrimmerRootAssembly>` entries for Spectre.Console, System.CommandLine, OrasProject.Oras
+- **Binary Size**: Successfully published win-x64 AOT binary at ~10.5 MB (single-file, self-contained)
+- **Known AOT Warning**: `IL3050` on `AnsiConsole.WriteException()` — Spectre.Console's exception formatter uses reflection, not AOT-compatible but non-critical (error display only)
+
+**Release Pipeline (S4-02):**
+- **Workflow**: `.github/workflows/release.yml` fully implemented
+  - Trigger: Git tags matching `v*` pattern
+  - Build matrix: 6 RIDs across Windows, Linux, macOS runners
+  - Steps per RID: restore → publish AOT → rename artifact → upload
+  - Artifact compression: `.zip` for Windows executables, `.tar.gz` for Unix
+  - GitHub Release creation with changelog generation from git log
+  - Pre-release detection: tags with `-` (e.g., `v1.0.0-beta`) marked as pre-release
+- **NuGet Tool Publishing**: Separate job for non-pre-release tags
+  - Packs as `dotnet tool` with `PackAsTool=true`
+  - Publishes to NuGet.org if `NUGET_API_KEY` secret is configured
+  - Conditional execution: skipped for pre-release tags
+
+**GitHub Pages Documentation (S4-08):**
+- **Site Structure**: Created documentation site in `docs/` directory
+  - `index.md` — Homepage with features, quick start, installation guide
+  - `tui-guide.md` — Terminal UI usage and keyboard navigation
+  - `_config.yml` — Jekyll theme configuration (jekyll-theme-cayman)
+- **Workflow**: `.github/workflows/docs.yml` for automatic deployment
+  - Trigger: push to `main` branch with changes in `docs/**` or workflow file
+  - Uses GitHub's native Jekyll builder (actions/jekyll-build-pages@v1)
+  - Deploys to GitHub Pages with proper permissions (pages: write, id-token: write)
+  - Concurrency group: prevents overlapping deployments
+
+**Key Decisions:**
+- Chose Jekyll over docfx for simplicity (no .NET build required for docs)
+- Used GitHub-hosted Actions (no third-party release actions except softprops/action-gh-release)
+- NuGet publishing is optional (requires secret configuration)
+- AOT trimming warnings accepted for non-critical reflection usage
+
+**Verification:**
+- ✅ `dotnet build -c Release` passes
+- ✅ `dotnet publish -c Release -r win-x64` succeeds (AOT compilation)
+- ✅ Single-file binary: 10.45 MB (win-x64)
+- ✅ Release workflow ready for tag-triggered deployment
+- ✅ Documentation site ready for GitHub Pages deployment

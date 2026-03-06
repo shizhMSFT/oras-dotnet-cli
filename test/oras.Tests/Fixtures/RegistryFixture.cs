@@ -33,7 +33,7 @@ namespace Oras.Tests.Fixtures;
 /// }
 /// </code>
 /// </remarks>
-internal sealed class RegistryFixture : IAsyncLifetime
+public sealed class RegistryFixture : IAsyncLifetime
 {
     private const string DefaultImage = "ghcr.io/distribution/distribution:3.0.0";
     private const int RegistryPort = 5000;
@@ -47,32 +47,13 @@ internal sealed class RegistryFixture : IAsyncLifetime
     public Uri RegistryUrl { get; private set; } = null!;
 
     /// <summary>
-    /// Creates a new RegistryFixture with default configuration.
-    /// </summary>
-    public RegistryFixture()
-        : this(DefaultImage)
-    {
-    }
-
-    /// <summary>
-    /// Creates a new RegistryFixture with a custom registry image.
-    /// </summary>
-    /// <param name="image">Docker image name (e.g., "ghcr.io/distribution/distribution:3.0.0")</param>
-    public RegistryFixture(string image)
-    {
-        Image = image;
-    }
-
-    private string Image { get; }
-
-    /// <summary>
     /// Starts the registry container and sets RegistryUrl.
     /// Called automatically by xUnit before tests run.
     /// </summary>
     public async Task InitializeAsync()
     {
         _container = new ContainerBuilder()
-            .WithImage(Image)
+            .WithImage(DefaultImage)
             .WithPortBinding(RegistryPort, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r
                 .ForPort(RegistryPort)

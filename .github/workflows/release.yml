@@ -5,10 +5,34 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
-  release:
-    name: Release Build
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            artifact: oras-win-x64.exe
+          - os: windows-latest
+            rid: win-arm64
+            artifact: oras-win-arm64.exe
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: oras-linux-x64
+          - os: ubuntu-latest
+            rid: linux-arm64
+            artifact: oras-linux-arm64
+          - os: macos-latest
+            rid: osx-x64
+            artifact: oras-osx-x64
+          - os: macos-latest
+            rid: osx-arm64
+            artifact: oras-osx-arm64
     
     steps:
       - name: Checkout code
@@ -24,37 +48,109 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       
-      - name: Build release
-        run: dotnet build --no-restore --configuration Release
+      - name: Publish ${{ matrix.rid }}
+        run: dotnet publish src/Oras.Cli/oras.csproj -c Release -r ${{ matrix.rid }} -o publish/${{ matrix.rid }}
       
-      - name: Run tests
-        run: dotnet test --no-build --configuration Release
-      
-      # Placeholder for Sprint 4: Publish self-contained binaries
-      # - name: Publish Linux x64
-      #   run: dotnet publish src/oras/oras.csproj -c Release -r linux-x64 --self-contained -o artifacts/linux-x64
-      #
-      # - name: Publish Windows x64
-      #   run: dotnet publish src/oras/oras.csproj -c Release -r win-x64 --self-contained -o artifacts/win-x64
-      #
-      # - name: Publish macOS x64
-      #   run: dotnet publish src/oras/oras.csproj -c Release -r osx-x64 --self-contained -o artifacts/osx-x64
-      #
-      # - name: Publish macOS arm64
-      #   run: dotnet publish src/oras/oras.csproj -c Release -r osx-arm64 --self-contained -o artifacts/osx-arm64
-      
-      # Placeholder for Sprint 4: Create GitHub Release
-      # - name: Create GitHub Release
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     files: artifacts/**/*
-      #     draft: false
-      #     prerelease: false
-      #     generate_release_notes: true
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Placeholder - Release
+      - name: Prepare artifact (Unix)
+        if: runner.os != 'Windows'
         run: |
-          echo "Release workflow triggered for ${{ github.ref_name }}"
-          echo "Full release publishing will be implemented in Sprint 4"
+          chmod +x publish/${{ matrix.rid }}/oras
+          mv publish/${{ matrix.rid }}/oras publish/${{ matrix.artifact }}
+      
+      - name: Prepare artifact (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Move-Item publish/${{ matrix.rid }}/oras.exe publish/${{ matrix.artifact }}
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: publish/${{ matrix.artifact }}
+          if-no-files-found: error
+  
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Compress artifacts
+        run: |
+          cd artifacts
+          for dir in */; do
+            artifact="${dir%/}"
+            if [[ "$artifact" == *".exe" ]]; then
+              # Windows executables
+              zip "${artifact%.exe}.zip" "$artifact/$artifact"
+            else
+              # Unix executables
+              tar -czf "$artifact.tar.gz" -C "$artifact" "$artifact"
+            fi
+          done
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if git describe --tags --abbrev=0 HEAD^ 2>/dev/null; then
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
+            echo "Changelog from $PREV_TAG to ${{ github.ref_name }}"
+            git log $PREV_TAG..HEAD --oneline --pretty=format:"- %s (%h)" > changelog.txt
+          else
+            echo "Initial release" > changelog.txt
+          fi
+          cat changelog.txt
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/*.zip
+            artifacts/*.tar.gz
+          body_path: changelog.txt
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  nuget:
+    name: Publish NuGet Package
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.ref_name, '-') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      
+      - name: Pack NuGet package
+        run: |
+          dotnet pack src/Oras.Cli/oras.csproj \
+            -c Release \
+            -p:PackAsTool=true \
+            -p:PackageId=oras \
+            -p:ToolCommandName=oras \
+            -p:Version=${{ github.ref_name }} \
+            -o nupkg
+      
+      - name: Push to NuGet.org
+        if: env.NUGET_API_KEY != ''
+        run: dotnet nuget push nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

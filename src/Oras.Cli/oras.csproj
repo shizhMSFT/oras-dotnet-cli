@@ -5,6 +5,19 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Oras</RootNamespace>
     <AssemblyName>oras</AssemblyName>
+    
+    <!-- Native AOT Configuration -->
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PublishTrimmed>true</PublishTrimmed>
+    
+    <!-- Self-contained single-file settings -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    
+    <!-- Trimming settings -->
+    <TrimMode>link</TrimMode>
+    <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +25,18 @@
     <PackageReference Include="Spectre.Console" />
     <PackageReference Include="OrasProject.Oras" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+  
+  <!-- Trimmer root assemblies to preserve reflection-based APIs -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Spectre.Console" />
+    <TrimmerRootAssembly Include="System.CommandLine" />
+    <TrimmerRootAssembly Include="OrasProject.Oras" />
+  </ItemGroup>
+  
+  <!-- Suppress trimmer warnings for known safe reflection usage -->
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="TrimmerRoots.xml" />
   </ItemGroup>
 
 </Project>

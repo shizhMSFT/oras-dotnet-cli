@@ -1,0 +1,7 @@
+theme: jekyll-theme-cayman
+title: ORAS .NET CLI
+description: Cross-platform .NET 10 CLI for managing OCI artifacts
+show_downloads: true
+github:
+  is_project_page: true
+  repository_url: https://github.com/oras-project/oras-dotnet-cli

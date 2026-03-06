@@ -70,4 +70,92 @@
 - Make sure to include `using Spectre.Console.Rendering;` when rendering with ProgressRenderer
 - The stable API is now locked; no breaking changes expected in future 2.x releases
 
+### 2026-03-06 — Sprint 3 TUI Implementation (S3-01 through S3-08)
+
+**Implemented complete interactive TUI mode:**
+- Created TUI infrastructure in `src/Oras.Cli/Tui/` directory with four core components:
+  - `PromptHelper.cs` — Reusable prompt utilities for consistent UX (selections, confirmations, multi-select, secrets)
+  - `Dashboard.cs` — Main TUI entry point with registry overview, quick actions menu, login flow
+  - `RegistryBrowser.cs` — Interactive registry browsing (connect, repo list, tag list)
+  - `ManifestInspector.cs` — Manifest viewer with JSON display, layer tree, config blob preview, and actions menu
+
+**S3-01 TUI Dashboard:**
+- Detects TTY environment (no args + not redirected) to launch interactive mode
+- Shows connected registries from Docker config store with auth status
+- Quick actions menu: Browse, Login, Push, Pull, Copy, Tag, Quit
+- Integrated with Program.cs to route no-args invocation to dashboard
+
+**S3-02 Registry Connection:**
+- Select from stored credentials or enter new registry URL
+- Auth prompt with username/password for registries without stored credentials
+- Validates credentials and stores in Docker config store
+- Connection verification flow with status feedback
+
+**S3-03 Repository List:**
+- Paginated, searchable repository list using `SelectionPrompt` with search enabled
+- Shows total repository count
+- Mock data implementation (TODO: integrate with IRegistry.ListRepositoriesAsync())
+- Seamless navigation back to main menu
+
+**S3-04 Tag List:**
+- Tag list for selected repository with search/filter support
+- Sortable display (mock data, ready for IRepository.ListTagsAsync())
+- Shows tag count
+- Navigation between repositories and manifest inspector
+
+**S3-05 Manifest Inspector:**
+- Menu-driven inspector: View JSON, Layer Tree, Config Blob, Actions
+- JSON display using Spectre.Console Panel with Markup (JsonText not available in v0.50.0)
+- Layer tree view using Spectre.Console Tree widget with config, layers, and referrers nodes
+- Config blob preview with syntax formatting
+- Mock manifest data (TODO: integrate with IManifestStore.FetchAsync())
+
+**S3-06 Browser Actions:**
+- Contextual actions from inspector: Pull, Copy, Tag, Delete
+- Multi-tag input for batch tagging
+- Confirmation prompts for destructive operations (delete) with manifest details
+- Integration points for command services (shows command line equivalents for now)
+
+**S3-07 Enhanced Progress (existing):**
+- ProgressRenderer already implemented with per-layer bars, transfer speed column, ETA support
+- Uses AnsiConsole.Progress() with custom TransferSpeedColumn
+- Real-time updates via Live rendering
+- Plain text fallback for non-TTY
+
+**S3-08 Selection Prompts:**
+- Multi-selection support via MultiSelectionPrompt for batch operations
+- Confirmation dialogs for destructive actions with PromptConfirmation
+- Search/filter in all lists using EnableSearch() on SelectionPrompt
+- Consistent prompt UX across all TUI components via PromptHelper
+
+**Spectre.Console 0.50.0 API patterns learned:**
+- `Rule.Justification` (not Alignment) for rule alignment
+- `Style(foreground: Color.X)` constructor syntax for colored styles
+- `Color.Cyan1`, `Color.Yellow` etc. for predefined colors (not Color.Cyan enum)
+- `JsonText` not available in v0.50.0; use Markup with Escape for JSON display as workaround
+- `SelectionPrompt.EnableSearch()` for searchable lists
+- `MultiSelectionPrompt` for batch selections
+- `Panel`, `Tree`, `Table` widgets for structured TUI layouts
+
+**Integration with existing infrastructure:**
+- Uses ICredentialService for auth operations
+- Uses DockerConfigStore to list connected registries
+- Dashboard.ShouldLaunchTui() checks TTY environment (no redirection)
+- Program.cs routes no-args + TTY to dashboard before creating root command
+- All TUI components designed to integrate with real service implementations (currently use mock data)
+
+**Files created:**
+- `src/Oras.Cli/Tui/PromptHelper.cs` — Reusable prompt utilities
+- `src/Oras.Cli/Tui/Dashboard.cs` — Main TUI dashboard with quick actions
+- `src/Oras.Cli/Tui/RegistryBrowser.cs` — Interactive registry/repo/tag browser
+- `src/Oras.Cli/Tui/ManifestInspector.cs` — Manifest viewer with tree/JSON/actions
+
+**Files modified:**
+- `src/Oras.Cli/Program.cs` — Added TUI detection and dashboard launch logic
+
+**Next steps for TUI completion:**
+- Replace mock data with real OrasProject.Oras library calls once API is properly integrated
+- Integrate command services (PullService, CopyService, TagService) for browser actions
+- Add unit tests for TUI components using Spectre.Console test infrastructure
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
