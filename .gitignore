@@ -52,3 +52,7 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Squad: ignore generated logs
+.squad/orchestration-log/
+.squad/log/
