@@ -107,10 +107,10 @@ oras discover ghcr.io/myuser/myartifact:v1
 
 ## Interactive TUI Mode
 
-Launch the interactive terminal UI with:
+Launch the interactive terminal UI by running `oras` with no arguments:
 
 ```bash
-oras tui
+oras
 ```
 
 The TUI mode provides:
