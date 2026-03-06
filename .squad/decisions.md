@@ -415,6 +415,213 @@
 
 **Rationale:** User request — captured for team memory. For Sprint 2 integration tests with testcontainers-dotnet.
 
+## Sprint 1 Integration Tests
+
+### DEC-TEST-001: Distribution 3.0.0 as Standard Registry
+
+**Date:** 2026-03-06  
+**Author:** Hicks (Tester)  
+**Status:** ✅ Implemented
+
+**Decision:** Use `ghcr.io/distribution/distribution:3.0.0` as the standard OCI registry for integration tests.
+
+**Rationale:**
+- Official OCI Distribution image (rebranded from "Docker Registry")
+- Fully OCI Distribution Spec compliant
+- Maintained by the OCI community
+- Fast startup time (~1-2 seconds)
+- No authentication required for testing (plain HTTP)
+
+---
+
+### DEC-TEST-002: Process-Based CLI Testing (CliRunner)
+
+**Date:** 2026-03-06  
+**Author:** Hicks (Tester)  
+**Status:** ✅ Implemented
+
+**Decision:** Test the compiled oras CLI binary as a separate process rather than invoking commands in-process.
+
+**Rationale:**
+- **End-to-End Reality:** Tests the actual user experience including argument parsing, process lifecycle, environment variables
+- **Complete Coverage:** Catches issues that in-process testing misses
+- **Isolation:** Each test execution is independent with clean process state
+- **CI Compatibility:** Matches how CI/CD pipelines execute the CLI
+
+**Trade-offs:**
+- Slower than in-process testing (~100ms overhead per execution)
+- Requires CLI to be built before tests run
+- More complex failure debugging
+
+**Mitigation:**
+- Unit tests (in-process) for fast feedback on command logic
+- Integration tests (process-based) for realistic validation
+- Clear error messages when CLI binary is not found
+
+---
+
+### DEC-TEST-003: xUnit Collection Fixtures for Registry Sharing
+
+**Date:** 2026-03-06  
+**Author:** Hicks (Tester)  
+**Status:** ✅ Implemented
+
+**Decision:** Use xUnit collection fixtures to share a single registry container across multiple test classes.
+
+**Rationale:**
+- **Performance:** Starting containers is slow (1-2s each); sharing reduces total test time
+- **Resource Efficiency:** One container uses less memory/CPU than N containers
+- **xUnit Pattern:** Collection fixtures are the standard pattern for expensive shared setup
+
+**Implementation Notes:**
+- `RegistryCollectionDefinition` with `[CollectionDefinition("Registry collection")]`
+- Test classes use `[Collection("Registry collection")]` to opt in
+- Each test method uses unique repository names to avoid conflicts
+
+---
+
+### DEC-TEST-004: No xUnit Constructor Overloads for Fixtures
+
+**Date:** 2026-03-06  
+**Author:** Hicks (Tester)  
+**Status:** ✅ Implemented
+
+**Decision:** Collection fixtures must have exactly one public constructor with no parameters.
+
+**Context:** Initial implementation had two constructors, causing xUnit error: "Collection fixture type may only define a single public constructor."
+
+**Resolution:**
+- Removed custom image constructor
+- Hardcoded Distribution 3.0.0 as the only registry image
+- If future tests need different registries, create separate fixture classes
+
+---
+
+### DEC-TEST-005: Test Categorization with Traits
+
+**Date:** 2026-03-06  
+**Author:** Hicks (Tester)  
+**Status:** ✅ Implemented
+
+**Decision:** Use `[Trait("Category", "Integration")]` to mark integration tests.
+
+**Rationale:**
+- **Filtering:** Enables selective test execution (`dotnet test --filter "Category=Integration"`)
+- **CI Pipeline Control:** Can run unit tests and integration tests in separate stages
+- **Documentation:** Clear signal that a test requires external dependencies (Docker, network)
+
+**Additional Traits:**
+- `[Trait("Category", "SkipIfNoCredentialStore")]` — Tests requiring Docker credential helper
+
+**Usage in CI:**
+```bash
+dotnet test --filter "Category=Integration"
+dotnet test --filter "Category!=SkipIfNoCredentialStore"
+```
+
+---
+
+### DEC-TEST-006: Test Naming Convention
+
+**Date:** 2026-03-06  
+**Author:** Hicks (Tester)  
+**Status:** ✅ Implemented
+
+**Decision:** All integration tests follow the pattern `MethodName_Scenario_ExpectedBehavior`.
+
+**Examples:**
+- `PushPull_SingleFile_RoundtripSucceeds`
+- `Push_ToNonexistentRegistry_Fails`
+- `Login_WithValidCredentials_Succeeds`
+
+**Rationale:**
+- Self-documenting test names
+- Clear failure reports
+- Consistent with team's existing unit test patterns
+
+---
+
+### DEC-TEST-007: Temporary File Management
+
+**Date:** 2026-03-06  
+**Author:** Hicks (Tester)  
+**Status:** ✅ Implemented
+
+**Decision:** Tests create temporary files in `Path.GetTempPath()/oras-tests/{guid}` and clean up in finally blocks.
+
+**Rationale:**
+- **Isolation:** Each test gets a unique directory
+- **Cleanup:** Tests are responsible for deleting their own files
+- **Debugging:** Failed tests leave artifacts in temp directory for investigation
+
+**Implementation:**
+- `CreateTestFileAsync()` helper creates files with unique paths
+- `CreateTempDirectory()` helper creates empty directories
+- Finally blocks call `CleanupPath()` for best-effort cleanup
+
+---
+
+## CI Pipeline Decisions
+
+### DEC-CI-001: GitHub Actions CI Workflow Configuration
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** ✅ Implemented
+
+**Decision:** Create GitHub Actions CI pipeline with cross-platform build matrix and conditional integration test execution.
+
+**Scope (`.github/workflows/ci.yml`):**
+- Triggers: Push to main + PR targeting main
+- Build matrix: ubuntu-latest, windows-latest, macos-latest
+- .NET 10 SDK setup via global.json
+- NuGet caching with OS-specific keys
+- Build, unit tests on all platforms
+- Integration tests on ubuntu-latest only (Docker availability)
+- Test results uploaded as artifacts (7-day retention)
+
+**Integration Tests on Ubuntu Only:**
+- **Problem:** Docker not available on Windows/macOS GitHub runners
+- **Solution:** Run integration tests only on ubuntu-latest using xUnit filter `FullyQualifiedName~Integration`
+- **Alternative Considered:** Separate integration test project — rejected; namespace filtering is cleaner
+
+**Format Check Job:**
+- Separate ubuntu-latest job for `dotnet format --verify-no-changes`
+- Fails fast without waiting for build/test matrix
+
+**NuGet Caching Strategy:**
+- Cache key includes both `Directory.Packages.props` and `*.csproj` hashes
+- Per-OS cache keys prevent cross-platform corruption
+- Restore key allows partial cache hits
+
+**Performance Target:** <5 minutes for full CI run
+
+---
+
+### DEC-CI-002: GitHub Actions Release Workflow Structure
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** Stub (Activation Sprint 4)
+
+**Decision:** Create GitHub Actions release workflow with infrastructure for multi-platform binary publishing.
+
+**Trigger:** Tag push matching `v*` pattern
+
+**Current State:** Stub implementation with placeholders
+- Basic build and test validation
+- Commented-out steps for Sprint 4 work:
+  - Publish self-contained binaries (linux-x64, win-x64, osx-x64, osx-arm64)
+  - Create GitHub Release with artifacts via `softprops/action-gh-release@v2`
+
+**Rationale:**
+- Provides structure for release automation
+- Documents expected publish targets (4 platforms)
+- Validates tag-triggered workflow behavior early
+- Defers activation to Sprint 4 (hardening phase)
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus

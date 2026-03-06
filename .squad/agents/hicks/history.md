@@ -8,11 +8,13 @@
 ## Learnings
 
 ### testcontainers-dotnet Patterns (2025-03-06)
-- **Package:** `Testcontainers` v3.10.0 in NuGet provides generic container support (no separate `.Generic` package)
-- **OCI Registry:** Docker Distribution (`registry:2.8.3`) is recommended for integration tests — OCI compliant, lightweight, starts in ~1-2s
-- **Port Binding:** Always use random port binding (`WithPortBinding(port, assignRandomHostPort: true)`) to avoid conflicts in parallel test execution
-- **Wait Strategy:** Use `Wait.ForUnixContainer().UntilHttpRequestIsSucceeded()` with `/v2/` health check endpoint (registry-specific)
-- **Container Types:** No direct `ContainerBuilder` type in Testcontainers.NET base package; use reflection or project-specific wrappers for now
+- **Package:** `Testcontainers` v3.10.0 in NuGet provides generic container support
+- **OCI Registry:** Docker Distribution 3.0.0 (`ghcr.io/distribution/distribution:3.0.0`) is the official image
+- **Container Builder:** Use `ContainerBuilder` fluent API from `DotNet.Testcontainers.Builders`
+- **Port Binding:** Always use random port binding (`WithPortBinding(port, true)`) to avoid conflicts
+- **Wait Strategy:** Use `Wait.ForUnixContainer().UntilHttpRequestIsSucceeded()` with path and port
+- **xUnit Integration:** Collection fixtures require exactly ONE public constructor (no overloads)
+- **Process Execution:** CliRunner pattern for end-to-end CLI testing via Process.Start()
 
 ### xUnit Fixture Patterns
 - **IAsyncLifetime:** Required for async container startup/cleanup (replaces `IDisposable` for async work)
@@ -54,7 +56,32 @@
 - **Directory Structure:** Created Commands/, Services/, Credentials/, Options/, Helpers/ test directories
 - **Documentation:** Added comprehensive README.md to test project
 
-### System.CommandLine API Compatibility Issues
+### Sprint 1 Integration Test Infrastructure (S1-13) — 2026-03-06
+- **Status:** Integration test infrastructure complete and working
+- **Registry Fixture:** Implemented using testcontainers-dotnet with Distribution 3.0.0
+  - Uses `ghcr.io/distribution/distribution:3.0.0` (NOT registry:2)
+  - Random port binding for parallel test execution
+  - HTTP health check on `/v2/` endpoint
+  - xUnit IAsyncLifetime for proper container lifecycle management
+  - Collection fixture pattern for shared registry across test classes
+- **CliRunner Helper:** Process-based CLI execution helper
+  - Executes compiled oras binary as separate process
+  - Captures stdout, stderr, and exit codes
+  - Timeout handling (default 30s)
+  - Environment variable support
+  - Auto-discovery of CLI executable in build output
+- **Integration Tests Implemented:**
+  - `VersionCommandTests` — 3 smoke tests (version, help, general help) ✓ PASSING
+  - `PushPullTests` — 5 tests for push/pull roundtrip, error cases
+  - `LoginLogoutTests` — 5 tests for credential store integration
+- **Test Organization:**
+  - `Integration/` directory with per-command test files
+  - `RegistryIntegrationTestBase` for common test functionality
+  - Test naming: `MethodName_Scenario_ExpectedBehavior`
+  - Trait-based categorization: `[Trait("Category", "Integration")]`
+- **Documentation:** Comprehensive Integration/README.md covering infrastructure, patterns, and troubleshooting
+
+### testcontainers-dotnet Patterns (2025-03-06)
 - **Problem:** Dallas's code uses System.CommandLine 2.0.0-beta4 but with API patterns from a different version
 - **Symptoms:** 
   - `Option<T>` constructor doesn't accept `aliases:` named parameter
