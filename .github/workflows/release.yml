@@ -49,7 +49,15 @@ jobs:
         run: dotnet restore
       
       - name: Publish ${{ matrix.rid }}
-        run: dotnet publish src/Oras.Cli/oras.csproj -c Release -r ${{ matrix.rid }} -o publish/${{ matrix.rid }}
+        run: >-
+          dotnet publish src/Oras.Cli/oras.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:PublishTrimmed=false
+          -p:PublishAot=false
+          -o publish/${{ matrix.rid }}
       
       - name: Prepare artifact (Unix)
         if: runner.os != 'Windows'
