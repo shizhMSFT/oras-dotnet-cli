@@ -146,3 +146,35 @@
 - ✅ Build passes locally with version set
 - ✅ Tag push triggered Release workflow (run #22754009025)
 - ✅ NuGet job correctly skipped (tag contains `-`)
+
+### 2026-03-06: v0.1.2 Release — Catalog-Less Registry Support
+
+**Release Event:** Shipped v0.1.2 with catalog-less registry fallback feature (Bishop's TUI work).
+
+**Changes Made:**
+- **Version bumped:** 0.1.1 → 0.1.2 in `Directory.Build.props`
+- **Docs Updated:**
+  - `docs/tui-showcase.md` — Added "Direct Repository Browse" section showing "Browse Repository Tags" action with ghcr.io example
+  - `docs/tui-guide.md` — Added subsection on Direct Repository Browse, noted catalog-less registry support
+  - `docs/index.md` — Updated Quick Start "Launch the TUI" section with tip about direct repo browsing for catalog-less registries
+  - `docs/installation.md` — Updated all download URLs: v0.1.0 → v0.1.2 (7 occurrences across Windows/macOS/Linux sections), updated version output expectation to 0.1.2
+  - `docs/tui-showcase.md` Dashboard section — Added "Browse Repository Tags" menu option
+- **Dashboard Menu Updated:** New "Browse Repository Tags" quick action added between "Browse Registry" and "Login"
+- **Commit:** `3466e6c` with message including catalog-less registry fallback and Browse Repository Tags feature
+- **Tag & Release:**
+  - Tag: `v0.1.2` pushed to origin
+  - Release workflow triggered automatically
+  - GitHub Release created with full release notes (markdown format)
+  - Release notes cover: catalog-less registry detection, manual entry flow, new dashboard shortcut, example usage, download links, and changelog
+
+**Key Decisions:**
+- Release notes use friendly emoji and clear examples (e.g., ghcr.io as concrete use case)
+- Documentation consolidated across 4 key files for user-facing visibility
+- Version number follows SemVer minor bump (0.1.1 → 0.1.2) for feature addition
+
+**Verification:**
+- ✅ All docs updated with version 0.1.2 download URLs
+- ✅ TUI showcase reflects new "Browse Repository Tags" option in dashboard
+- ✅ Release workflow completed successfully within ~2 minutes
+- ✅ GitHub Release created and notes applied via `gh release edit`
+- ✅ Release is visible in `gh release list`
