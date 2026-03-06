@@ -45,7 +45,7 @@ internal static class ManifestPushCommand
         };
         command.Add(mediaTypeOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

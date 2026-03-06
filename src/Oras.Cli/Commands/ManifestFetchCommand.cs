@@ -58,7 +58,7 @@ internal static class ManifestFetchCommand
         };
         command.Add(prettyOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

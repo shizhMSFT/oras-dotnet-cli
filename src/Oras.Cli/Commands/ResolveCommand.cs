@@ -34,7 +34,7 @@ internal static class ResolveCommand
         var formatOptions = new FormatOptions();
         formatOptions.ApplyTo(command);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

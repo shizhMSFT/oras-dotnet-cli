@@ -53,7 +53,7 @@ internal static class BlobPushCommand
         };
         command.Add(sizeOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

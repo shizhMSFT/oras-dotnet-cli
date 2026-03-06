@@ -46,7 +46,7 @@ internal static class BlobFetchCommand
         };
         command.Add(descriptorOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

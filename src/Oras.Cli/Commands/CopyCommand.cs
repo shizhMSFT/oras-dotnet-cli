@@ -69,7 +69,7 @@ internal static class CopyCommand
         };
         command.Add(concurrencyOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
@@ -108,17 +108,17 @@ internal static class CopyCommand
                     .StartAsync($"Copying {source} => {destination}...", async ctx =>
                     {
                         ctx.Status($"Resolving source: {source}");
-                        await Task.Delay(200).ConfigureAwait(false);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
 
                         ctx.Status("Copying manifests and layers...");
                         if (recursive)
                         {
                             ctx.Status("Copying referrers (signatures, SBOMs)...");
                         }
-                        await Task.Delay(300).ConfigureAwait(false);
+                        await Task.Delay(300, cancellationToken).ConfigureAwait(false);
 
                         ctx.Status("Verifying destination...");
-                        await Task.Delay(100).ConfigureAwait(false);
+                        await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                     }).ConfigureAwait(false);
 
                 var summary = new CopyResult(

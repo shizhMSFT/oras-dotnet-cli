@@ -38,7 +38,7 @@ internal static class BlobDeleteCommand
         };
         command.Add(forceOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

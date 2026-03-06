@@ -42,7 +42,7 @@ internal static class ManifestFetchConfigCommand
         };
         command.Add(outputOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

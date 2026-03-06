@@ -25,7 +25,7 @@ internal static class LoginCommand
         var remoteOptions = new RemoteOptions();
         remoteOptions.ApplyTo(command);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
@@ -45,7 +45,7 @@ internal static class LoginCommand
                 // Get credentials
                 if (passwordStdin)
                 {
-                    password = await Console.In.ReadLineAsync().ConfigureAwait(false);
+                    password = await Console.In.ReadLineAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 if (string.IsNullOrEmpty(username))
@@ -79,14 +79,14 @@ internal static class LoginCommand
                         password,
                         plainHttp,
                         insecure,
-                        CancellationToken.None).ConfigureAwait(false);
+                        cancellationToken).ConfigureAwait(false);
 
                     // Store credentials
                     await credentialService.StoreCredentialsAsync(
                         registry,
                         username,
                         password,
-                        CancellationToken.None).ConfigureAwait(false);
+                        cancellationToken).ConfigureAwait(false);
 
                     AnsiConsole.MarkupLine($"[green]✓[/] Login succeeded for {registry}");
                     return 0;

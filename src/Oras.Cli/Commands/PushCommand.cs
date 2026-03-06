@@ -37,7 +37,7 @@ internal static class PushCommand
         remoteOptions.ApplyTo(command);
         packerOptions.ApplyTo(command);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
@@ -79,7 +79,8 @@ internal static class PushCommand
                     username,
                     password,
                     plainHttp,
-                    insecure).ConfigureAwait(false);
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
                 // Create descriptors for files
                 var fileDescriptors = new List<Descriptor>();
@@ -100,7 +101,7 @@ internal static class PushCommand
                     };
 
                     // Push blob
-                    await repo.Blobs.PushAsync(descriptor, fileStream).ConfigureAwait(false);
+                    await repo.Blobs.PushAsync(descriptor, fileStream, cancellationToken).ConfigureAwait(false);
 
                     fileDescriptors.Add(descriptor);
                     AnsiConsole.MarkupLine($"[green]✓[/] Pushed {Path.GetFileName(filePath)}");

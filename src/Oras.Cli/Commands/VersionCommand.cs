@@ -15,7 +15,7 @@ internal static class VersionCommand
     {
         var command = new Command("version", "Show version information");
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

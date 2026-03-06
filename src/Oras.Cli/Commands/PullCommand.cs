@@ -48,7 +48,7 @@ internal static class PullCommand
         };
         command.Add(concurrencyOption);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
@@ -78,7 +78,8 @@ internal static class PullCommand
                     username,
                     password,
                     plainHttp,
-                    insecure).ConfigureAwait(false);
+                    insecure,
+                    cancellationToken).ConfigureAwait(false);
 
                 // Resolve the tag or digest
                 var tag = ExtractTag(reference);
@@ -91,7 +92,7 @@ internal static class PullCommand
                 }
                 else if (!string.IsNullOrEmpty(tag))
                 {
-                    manifestDescriptor = await repo.ResolveAsync(tag).ConfigureAwait(false);
+                    manifestDescriptor = await repo.ResolveAsync(tag, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {

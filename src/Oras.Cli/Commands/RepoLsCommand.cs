@@ -38,7 +38,7 @@ internal static class RepoLsCommand
         };
         command.Add(lastOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

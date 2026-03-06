@@ -33,7 +33,7 @@ internal static class TagCommand
         var remoteOptions = new RemoteOptions();
         remoteOptions.ApplyTo(command);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

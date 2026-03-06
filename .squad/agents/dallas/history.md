@@ -349,3 +349,9 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 
 **Build Status:** ✅ `dotnet build src\Oras.Cli\oras.csproj --no-restore` (warnings only)
 
+### 2026-03-08 — CancellationToken Propagation
+
+**Key Updates:**
+- `CommandExtensions.SetAction` must accept `CancellationToken` and forward it into command handlers.
+- Command handlers should pass the cancellation token to service calls, credential operations, and async file/timeout operations.
+

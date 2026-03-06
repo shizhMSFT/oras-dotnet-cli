@@ -38,7 +38,7 @@ internal static class DiscoverCommand
         };
         command.Add(artifactTypeOpt);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {

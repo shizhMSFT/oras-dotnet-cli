@@ -20,7 +20,7 @@ internal static class LogoutCommand
         };
         command.Add(registryArg);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
@@ -33,7 +33,7 @@ internal static class LogoutCommand
                 registry = NormalizeRegistry(registry);
 
                 // Remove credentials
-                await credentialService.RemoveCredentialsAsync(registry, CancellationToken.None).ConfigureAwait(false);
+                await credentialService.RemoveCredentialsAsync(registry, cancellationToken).ConfigureAwait(false);
 
                 AnsiConsole.MarkupLine($"[green]✓[/] Logout succeeded for {registry}");
                 return 0;

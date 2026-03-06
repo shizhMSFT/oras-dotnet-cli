@@ -59,7 +59,7 @@ internal static class BackupCommand
         var formatOptions = new FormatOptions();
         formatOptions.ApplyTo(command);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
@@ -120,24 +120,24 @@ internal static class BackupCommand
                     .StartAsync($"Backing up {reference} to {output}...", async ctx =>
                     {
                         ctx.Status($"Resolving manifest for {reference}...");
-                        await Task.Delay(200).ConfigureAwait(false);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
 
                         ctx.Status($"Downloading layers (0/{simulatedLayerCount})...");
-                        await Task.Delay(200).ConfigureAwait(false);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
 
                         ctx.Status($"Downloading layers ({simulatedLayerCount}/{simulatedLayerCount})...");
-                        await Task.Delay(200).ConfigureAwait(false);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
 
                         if (recursive)
                         {
                             ctx.Status("Fetching referrers (signatures, SBOMs)...");
-                            await Task.Delay(100).ConfigureAwait(false);
+                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                         }
 
                         if (isArchive)
                         {
                             ctx.Status($"Packing archive: {output}...");
-                            await Task.Delay(100).ConfigureAwait(false);
+                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                         }
                     }).ConfigureAwait(false);
 
@@ -146,7 +146,8 @@ internal static class BackupCommand
                 {
                     var summaryPath = Path.Combine(output, "oci-layout");
                     await File.WriteAllTextAsync(summaryPath,
-                        """{"imageLayoutVersion":"1.0.0"}""").ConfigureAwait(false);
+                        """{"imageLayoutVersion":"1.0.0"}""",
+                        cancellationToken).ConfigureAwait(false);
                 }
 
                 var summary = new BackupResult(

@@ -54,7 +54,7 @@ internal static class RestoreCommand
         var formatOptions = new FormatOptions();
         formatOptions.ApplyTo(command);
 
-        command.SetAction(async parseResult =>
+        command.SetAction(async (parseResult, cancellationToken) =>
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
@@ -113,23 +113,23 @@ internal static class RestoreCommand
                         if (isArchive)
                         {
                             ctx.Status($"Extracting archive: {path}...");
-                            await Task.Delay(200).ConfigureAwait(false);
+                            await Task.Delay(200, cancellationToken).ConfigureAwait(false);
                         }
 
                         ctx.Status("Reading OCI layout...");
-                        await Task.Delay(200).ConfigureAwait(false);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
 
                         ctx.Status($"Pushing layers to {reference}...");
-                        await Task.Delay(300).ConfigureAwait(false);
+                        await Task.Delay(300, cancellationToken).ConfigureAwait(false);
 
                         if (recursive)
                         {
                             ctx.Status("Pushing referrers (signatures, SBOMs)...");
-                            await Task.Delay(100).ConfigureAwait(false);
+                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                         }
 
                         ctx.Status("Verifying...");
-                        await Task.Delay(100).ConfigureAwait(false);
+                        await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                     }).ConfigureAwait(false);
 
                 var summary = new RestoreResult(
