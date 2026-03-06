@@ -6,7 +6,7 @@ namespace Oras.Output;
 /// <summary>
 /// Progress renderer for push/pull operations using Spectre.Console with plain text fallback
 /// </summary>
-public sealed class ProgressRenderer : IDisposable
+internal sealed class ProgressRenderer : IDisposable
 {
     private readonly IAnsiConsole _console;
     private readonly bool _isInteractive;
@@ -219,7 +219,7 @@ internal sealed class TransferSpeedColumn : ProgressColumn
 /// <summary>
 /// Callback interface for hooking into copy operations
 /// </summary>
-public interface IProgressCallback
+internal interface IProgressCallback
 {
     void OnLayerStart(string digest, string? filename, long size);
     void OnLayerProgress(string digest, long bytesTransferred, long totalBytes);
@@ -229,7 +229,7 @@ public interface IProgressCallback
 /// <summary>
 /// Adapter to connect ProgressRenderer to library copy callbacks
 /// </summary>
-public sealed class ProgressCallbackAdapter : IProgressCallback
+internal sealed class ProgressCallbackAdapter : IProgressCallback
 {
     private readonly ProgressRenderer _renderer;
 

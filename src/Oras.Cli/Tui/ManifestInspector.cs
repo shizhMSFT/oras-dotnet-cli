@@ -5,7 +5,7 @@ namespace Oras.Tui;
 /// <summary>
 /// Manifest inspector with syntax-highlighted JSON, layer tree, and config preview.
 /// </summary>
-public class ManifestInspector
+internal class ManifestInspector
 {
     private readonly IServiceProvider _serviceProvider;
 
@@ -20,7 +20,7 @@ public class ManifestInspector
         CancellationToken cancellationToken = default)
     {
         // Fetch manifest
-        var manifest = await FetchManifestAsync(reference, credentials, cancellationToken);
+        var manifest = await FetchManifestAsync(reference, credentials, cancellationToken).ConfigureAwait(false);
         if (manifest == null)
         {
             return;
@@ -29,7 +29,7 @@ public class ManifestInspector
         while (true)
         {
             Console.Clear();
-            
+
             // Header
             var header = new Rule($"[yellow]Manifest Inspector: {reference}[/]")
             {
@@ -52,7 +52,7 @@ public class ManifestInspector
                 "[green]Select an option:[/]",
                 actions);
 
-            var shouldExit = await HandleInspectorActionAsync(action, reference, manifest, credentials, cancellationToken);
+            var shouldExit = await HandleInspectorActionAsync(action, reference, manifest, credentials, cancellationToken).ConfigureAwait(false);
             if (shouldExit)
             {
                 return;
@@ -80,12 +80,12 @@ public class ManifestInspector
                 return false;
 
             case "View Config Blob":
-                await ShowConfigBlobAsync(manifest, credentials, cancellationToken);
+                await ShowConfigBlobAsync(manifest, credentials, cancellationToken).ConfigureAwait(false);
                 PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
                 return false;
 
             case "Actions (Pull/Copy/Delete)":
-                await ShowActionsMenuAsync(reference, manifest, credentials, cancellationToken);
+                await ShowActionsMenuAsync(reference, manifest, credentials, cancellationToken).ConfigureAwait(false);
                 return false;
 
             case "Back to tag list":
@@ -99,7 +99,7 @@ public class ManifestInspector
     private void ShowManifestJson(ManifestData manifest)
     {
         Console.Clear();
-        
+
         // Format JSON with color (simple approach without JsonText if it's not available)
         var panel = new Panel(new Markup($"[dim]{Markup.Escape(manifest.Json)}[/]"))
         {
@@ -107,7 +107,7 @@ public class ManifestInspector
             Border = BoxBorder.Rounded,
             BorderStyle = new Style(foreground: Color.Yellow)
         };
-        
+
         AnsiConsole.Write(panel);
         AnsiConsole.WriteLine();
     }
@@ -115,14 +115,14 @@ public class ManifestInspector
     private void ShowLayerTree(ManifestData manifest)
     {
         Console.Clear();
-        
+
         // Build tree structure
         var tree = new Tree($"[yellow]Manifest ({manifest.MediaType})[/]");
-        
+
         // Config node
         var configNode = tree.AddNode($"[cyan]config[/] ({manifest.ConfigMediaType})");
         configNode.AddNode($"[dim]{manifest.ConfigDigest} ({FormatSize(manifest.ConfigSize)})[/]");
-        
+
         // Layers node
         var layersNode = tree.AddNode($"[cyan]layers[/] ({manifest.Layers.Count} total)");
         for (int i = 0; i < manifest.Layers.Count; i++)
@@ -131,7 +131,7 @@ public class ManifestInspector
             var layerNode = layersNode.AddNode($"[green][{i}][/] {layer.MediaType}");
             layerNode.AddNode($"[dim]{layer.Digest} ({FormatSize(layer.Size)})[/]");
         }
-        
+
         // Referrers (if any)
         if (manifest.Referrers.Count > 0)
         {
@@ -142,14 +142,14 @@ public class ManifestInspector
                 refNode.AddNode($"[dim]{referrer.Digest} ({FormatSize(referrer.Size)})[/]");
             }
         }
-        
+
         var panel = new Panel(tree)
         {
             Header = new PanelHeader("[yellow]Layer Tree[/]"),
             Border = BoxBorder.Rounded,
             BorderStyle = new Style(Color.Yellow)
         };
-        
+
         AnsiConsole.Write(panel);
         AnsiConsole.WriteLine();
     }
@@ -160,9 +160,9 @@ public class ManifestInspector
         CancellationToken cancellationToken)
     {
         Console.Clear();
-        
-        var configJson = await FetchConfigBlobAsync(manifest.ConfigDigest, credentials, cancellationToken);
-        
+
+        var configJson = await FetchConfigBlobAsync(manifest.ConfigDigest, credentials, cancellationToken).ConfigureAwait(false);
+
         if (configJson != null)
         {
             var panel = new Panel(new Markup($"[dim]{Markup.Escape(configJson)}[/]"))
@@ -171,14 +171,14 @@ public class ManifestInspector
                 Border = BoxBorder.Rounded,
                 BorderStyle = new Style(foreground: Color.Yellow)
             };
-            
+
             AnsiConsole.Write(panel);
         }
         else
         {
             PromptHelper.ShowError("Failed to fetch config blob");
         }
-        
+
         AnsiConsole.WriteLine();
     }
 
@@ -201,7 +201,7 @@ public class ManifestInspector
             "[green]Select an action:[/]",
             actions);
 
-        await ExecuteBrowserActionAsync(action, reference, manifest, cancellationToken);
+        await ExecuteBrowserActionAsync(action, reference, manifest, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task ExecuteBrowserActionAsync(
@@ -223,11 +223,11 @@ public class ManifestInspector
                 break;
 
             case "Tag with additional tags":
-                await HandleTagActionAsync(reference, cancellationToken);
+                await HandleTagActionAsync(reference, cancellationToken).ConfigureAwait(false);
                 break;
 
             case "Delete manifest":
-                await HandleDeleteActionAsync(reference, manifest, cancellationToken);
+                await HandleDeleteActionAsync(reference, manifest, cancellationToken).ConfigureAwait(false);
                 break;
 
             case "Cancel":
@@ -255,8 +255,8 @@ public class ManifestInspector
 
         PromptHelper.ShowInfo($"Tag command: oras tag {reference} {string.Join(" ", tags)}");
         PromptHelper.ShowInfo("Use the command line to tag artifacts.");
-        
-        await Task.CompletedTask;
+
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     private async Task HandleDeleteActionAsync(
@@ -283,8 +283,8 @@ public class ManifestInspector
         {
             PromptHelper.ShowInfo("Delete operation cancelled.");
         }
-        
-        await Task.CompletedTask;
+
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     private async Task<ManifestData?> FetchManifestAsync(
@@ -299,8 +299,8 @@ public class ManifestInspector
                 {
                     // TODO: Call IManifestStore.FetchAsync()
                     // For now, return mock data
-                    await Task.Delay(500, cancellationToken);
-                    
+                    await Task.Delay(500, cancellationToken).ConfigureAwait(false);
+
                     return new ManifestData
                     {
                         Json = CreateMockManifestJson(),
@@ -326,7 +326,7 @@ public class ManifestInspector
                     PromptHelper.ShowError($"Failed to fetch manifest: {ex.Message}");
                     return null;
                 }
-            });
+            }).ConfigureAwait(false);
     }
 
     private async Task<string?> FetchConfigBlobAsync(
@@ -340,8 +340,8 @@ public class ManifestInspector
                 try
                 {
                     // TODO: Call IBlobStore.FetchAsync()
-                    await Task.Delay(300, cancellationToken);
-                    
+                    await Task.Delay(300, cancellationToken).ConfigureAwait(false);
+
                     return @"{
   ""architecture"": ""amd64"",
   ""os"": ""linux"",
@@ -356,7 +356,7 @@ public class ManifestInspector
                     PromptHelper.ShowError($"Failed to fetch config: {ex.Message}");
                     return null;
                 }
-            });
+            }).ConfigureAwait(false);
     }
 
     private static string CreateMockManifestJson()

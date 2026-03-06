@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Copy command implementation - copy artifacts between registries.
 /// </summary>
-public static class CopyCommand
+internal static class CopyCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -77,7 +77,7 @@ public static class CopyCommand
                 // TODO: Implement using ReadOnlyTargetExtensions.CopyAsync() with CopyOptions
                 // This needs both source and destination ITarget instances
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Copy operation not yet implemented. Would copy {source} to {destination} " +
                     $"(recursive: {recursive}, concurrency: {concurrency})");
@@ -85,7 +85,7 @@ public static class CopyCommand
                 // Expected output:
                 // Text: "Copying 3a1bc987ef01 hello.txt\nCopied  3a1bc987ef01 hello.txt\nCopied [registry] src => dst"
                 // JSON: descriptor object
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

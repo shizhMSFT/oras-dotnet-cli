@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Discover command implementation - discover referrers of a manifest.
 /// </summary>
-public static class DiscoverCommand
+internal static class DiscoverCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -56,7 +56,7 @@ public static class DiscoverCommand
                 // TODO: Implement using IRepository.FetchReferrersAsync() or IPredecessorFindable.PredecessorsAsync()
                 // Returns descriptors of artifacts that reference this manifest
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Discover operation not yet implemented for reference: {reference}");
 
@@ -68,7 +68,7 @@ public static class DiscoverCommand
                 //   └── application/vnd.example.signature
                 //       └── sha256:789abc... (256 B)
                 // JSON: array of referrer descriptors
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

@@ -5,7 +5,7 @@ namespace Oras.Options;
 /// <summary>
 /// Options for packing operations (push, attach).
 /// </summary>
-public class PackerOptions
+internal class PackerOptions
 {
     public Option<string?> ArtifactTypeOption { get; }
     public Option<string[]?> AnnotationOption { get; }

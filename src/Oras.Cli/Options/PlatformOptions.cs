@@ -5,7 +5,7 @@ namespace Oras.Options;
 /// <summary>
 /// Options for platform selection (os/arch/variant).
 /// </summary>
-public class PlatformOptions
+internal class PlatformOptions
 {
     public Option<string?> PlatformOption { get; }
 

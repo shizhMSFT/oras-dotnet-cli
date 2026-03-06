@@ -5,7 +5,7 @@ namespace Oras.Services;
 /// <summary>
 /// Service for pushing artifacts to OCI registries.
 /// </summary>
-public interface IPushService
+internal interface IPushService
 {
     /// <summary>
     /// Push files to a registry reference.

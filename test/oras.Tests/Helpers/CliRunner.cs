@@ -144,7 +144,7 @@ public sealed class CliRunner
         // Try to find the compiled CLI binary in the build output directory
         var assemblyLocation = typeof(CliRunner).Assembly.Location;
         var assemblyDir = Path.GetDirectoryName(assemblyLocation)!;
-        
+
         // Navigate up to find the CLI project output
         var solutionRoot = FindSolutionRoot(assemblyDir);
         if (solutionRoot != null)
@@ -155,7 +155,7 @@ public sealed class CliRunner
                 var exeName = OperatingSystem.IsWindows() ? "oras.exe" : "oras";
                 var cliExe = Directory.GetFiles(cliProjectPath, exeName, SearchOption.AllDirectories)
                     .FirstOrDefault();
-                
+
                 if (cliExe != null)
                 {
                     return cliExe;
@@ -166,7 +166,7 @@ public sealed class CliRunner
         // Fallback to PATH
         var exeFileName = OperatingSystem.IsWindows() ? "oras.exe" : "oras";
         var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
-        
+
         foreach (var dir in pathDirs)
         {
             var fullPath = Path.Combine(dir, exeFileName);

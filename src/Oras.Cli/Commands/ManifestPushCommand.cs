@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Manifest push command - push a manifest to a registry.
 /// </summary>
-public static class ManifestPushCommand
+internal static class ManifestPushCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -72,14 +72,14 @@ public static class ManifestPushCommand
                 // Read manifest JSON from file, push to registry
                 // Returns descriptor
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Manifest push operation not yet implemented. Would push {file} to {reference}");
 
                 // Expected output:
                 // Text: "Pushed manifest to <reference>\nDigest: <digest>"
                 // JSON: descriptor object { digest, mediaType, size }
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

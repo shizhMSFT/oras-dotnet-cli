@@ -8,7 +8,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Login command implementation.
 /// </summary>
-public static class LoginCommand
+internal static class LoginCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -45,7 +45,7 @@ public static class LoginCommand
                 // Get credentials
                 if (passwordStdin)
                 {
-                    password = await Console.In.ReadLineAsync();
+                    password = await Console.In.ReadLineAsync().ConfigureAwait(false);
                 }
 
                 if (string.IsNullOrEmpty(username))
@@ -79,14 +79,14 @@ public static class LoginCommand
                         password,
                         plainHttp,
                         insecure,
-                        CancellationToken.None);
+                        CancellationToken.None).ConfigureAwait(false);
 
                     // Store credentials
                     await credentialService.StoreCredentialsAsync(
                         registry,
                         username,
                         password,
-                        CancellationToken.None);
+                        CancellationToken.None).ConfigureAwait(false);
 
                     AnsiConsole.MarkupLine($"[green]✓[/] Login succeeded for {registry}");
                     return 0;
@@ -97,7 +97,7 @@ public static class LoginCommand
                         $"Authentication failed for {registry}: {ex.Message}",
                         "Check your username and password, or use --password-stdin for secure input.");
                 }
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;
@@ -107,7 +107,7 @@ public static class LoginCommand
     {
         // Remove protocol if present
         registry = registry.Replace("https://", "").Replace("http://", "");
-        
+
         // Remove trailing slash
         registry = registry.TrimEnd('/');
 

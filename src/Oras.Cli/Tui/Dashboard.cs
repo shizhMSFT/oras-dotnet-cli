@@ -8,7 +8,7 @@ namespace Oras.Tui;
 /// <summary>
 /// Main TUI dashboard entry point.
 /// </summary>
-public class Dashboard
+internal class Dashboard
 {
     private readonly ICredentialService _credentialService;
     private readonly IServiceProvider _serviceProvider;
@@ -42,7 +42,7 @@ public class Dashboard
         {
             while (true)
             {
-                if (!await ShowDashboardAsync(cancellationToken))
+                if (!await ShowDashboardAsync(cancellationToken).ConfigureAwait(false))
                 {
                     break;
                 }
@@ -59,7 +59,7 @@ public class Dashboard
     private async Task<bool> ShowDashboardAsync(CancellationToken cancellationToken)
     {
         Console.Clear();
-        
+
         // Header
         var headerPanel = new Panel(
             new Markup($"[bold cyan]oras[/] — OCI Registry As Storage\n[dim]Version {GetVersion()}[/]"))
@@ -71,9 +71,9 @@ public class Dashboard
         AnsiConsole.WriteLine();
 
         // Connected registries
-        var config = await _configStore.LoadAsync(cancellationToken);
+        var config = await _configStore.LoadAsync(cancellationToken).ConfigureAwait(false);
         var registries = config.Auths.Keys.ToList();
-        
+
         if (registries.Any())
         {
             var registryTable = new Table()
@@ -83,7 +83,7 @@ public class Dashboard
 
             foreach (var registry in registries)
             {
-                var hasCredentials = await _credentialService.GetCredentialsAsync(registry, cancellationToken) != null;
+                var hasCredentials = await _credentialService.GetCredentialsAsync(registry, cancellationToken).ConfigureAwait(false) != null;
                 var status = hasCredentials ? "[green]● logged in[/]" : "[grey]○ not authenticated[/]";
                 registryTable.AddRow($"{registry} {status}");
             }
@@ -113,7 +113,7 @@ public class Dashboard
             "[green]Select an action:[/]",
             actions);
 
-        return await HandleActionAsync(action, registries, cancellationToken);
+        return await HandleActionAsync(action, registries, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<bool> HandleActionAsync(string action, List<string> registries, CancellationToken cancellationToken)
@@ -124,11 +124,11 @@ public class Dashboard
             {
                 case "Browse Registry":
                     var browser = new RegistryBrowser(_serviceProvider);
-                    await browser.RunAsync(cancellationToken);
+                    await browser.RunAsync(cancellationToken).ConfigureAwait(false);
                     return true;
 
                 case "Login":
-                    await HandleLoginAsync(cancellationToken);
+                    await HandleLoginAsync(cancellationToken).ConfigureAwait(false);
                     return true;
 
                 case "Push Artifact":
@@ -187,11 +187,11 @@ public class Dashboard
         try
         {
             var isValid = await _credentialService.ValidateCredentialsAsync(
-                registry, username, password, false, false, cancellationToken);
+                registry, username, password, false, false, cancellationToken).ConfigureAwait(false);
 
             if (isValid)
             {
-                await _credentialService.StoreCredentialsAsync(registry, username, password, cancellationToken);
+                await _credentialService.StoreCredentialsAsync(registry, username, password, cancellationToken).ConfigureAwait(false);
                 PromptHelper.ShowSuccess($"Login succeeded for {registry}");
             }
             else

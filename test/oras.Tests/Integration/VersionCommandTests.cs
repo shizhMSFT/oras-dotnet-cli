@@ -17,7 +17,7 @@ public sealed class VersionCommandTests
         var cli = new Helpers.CliRunner();
 
         // Act
-        var result = await cli.ExecuteAsync("version").ConfigureAwait(false);
+        var result = await cli.ExecuteAsync("version");
 
         // Assert
         result.ExitCode.Should().Be(0, "version command should succeed");
@@ -32,7 +32,7 @@ public sealed class VersionCommandTests
         var cli = new Helpers.CliRunner();
 
         // Act
-        var result = await cli.ExecuteAsync("version --help").ConfigureAwait(false);
+        var result = await cli.ExecuteAsync("version --help");
 
         // Assert
         result.ExitCode.Should().Be(0, "help should succeed");
@@ -47,7 +47,7 @@ public sealed class VersionCommandTests
         var cli = new Helpers.CliRunner();
 
         // Act
-        var result = await cli.ExecuteAsync("--help").ConfigureAwait(false);
+        var result = await cli.ExecuteAsync("--help");
 
         // Assert
         result.ExitCode.Should().Be(0, "help should succeed");

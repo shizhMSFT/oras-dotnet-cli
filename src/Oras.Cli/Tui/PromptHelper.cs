@@ -5,7 +5,7 @@ namespace Oras.Tui;
 /// <summary>
 /// Reusable prompt helpers for consistent TUI interactions.
 /// </summary>
-public static class PromptHelper
+internal static class PromptHelper
 {
     public static string PromptText(string prompt, string? defaultValue = null, bool allowEmpty = false)
     {

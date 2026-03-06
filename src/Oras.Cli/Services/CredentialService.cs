@@ -3,7 +3,7 @@ namespace Oras.Services;
 /// <summary>
 /// Credential service implementation using Docker config store.
 /// </summary>
-public class CredentialService : ICredentialService
+internal class CredentialService : ICredentialService
 {
     private readonly Credentials.DockerConfigStore _configStore;
 
@@ -30,7 +30,7 @@ public class CredentialService : ICredentialService
                 password,
                 plainHttp,
                 insecure,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             // Try to ping the registry (this will trigger authentication)
             // Note: OrasProject.Oras 0.5.0 may not have a ping method,
@@ -49,20 +49,20 @@ public class CredentialService : ICredentialService
         string password,
         CancellationToken cancellationToken = default)
     {
-        await _configStore.StoreCredentialsAsync(registryHost, username, password, cancellationToken);
+        await _configStore.StoreCredentialsAsync(registryHost, username, password, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task RemoveCredentialsAsync(
         string registryHost,
         CancellationToken cancellationToken = default)
     {
-        await _configStore.RemoveCredentialsAsync(registryHost, cancellationToken);
+        await _configStore.RemoveCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<(string? Username, string? Password)?> GetCredentialsAsync(
         string registryHost,
         CancellationToken cancellationToken = default)
     {
-        return await _configStore.GetCredentialsAsync(registryHost, cancellationToken);
+        return await _configStore.GetCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
     }
 }

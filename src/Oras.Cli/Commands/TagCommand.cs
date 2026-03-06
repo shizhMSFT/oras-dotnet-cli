@@ -8,7 +8,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Tag command implementation - create tags for existing manifests.
 /// </summary>
-public static class TagCommand
+internal static class TagCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -53,7 +53,7 @@ public static class TagCommand
                 // TODO: Implement actual tagging using oras-dotnet library
                 // This requires IRepository.TagAsync() or ITaggable.TagAsync()
                 // For now, stub with NotImplementedException
-                
+
                 foreach (var targetTag in targetTags)
                 {
                     // TODO: Call library API
@@ -63,7 +63,7 @@ public static class TagCommand
                 }
 
                 return 0;
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

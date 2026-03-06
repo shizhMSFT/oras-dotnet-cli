@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Manifest delete command - delete a manifest from a registry.
 /// </summary>
-public static class ManifestDeleteCommand
+internal static class ManifestDeleteCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -72,14 +72,14 @@ public static class ManifestDeleteCommand
 
                 // TODO: Implement using IDeletable.DeleteAsync() or IManifestStore.DeleteAsync()
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Manifest delete operation not yet implemented for reference: {reference}");
 
                 // Expected output:
                 // Text: "Deleted <reference>"
                 // JSON: success status
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

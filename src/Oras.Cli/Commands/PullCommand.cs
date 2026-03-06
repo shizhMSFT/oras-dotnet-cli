@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Pull command implementation.
 /// </summary>
-public static class PullCommand
+internal static class PullCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -78,7 +78,7 @@ public static class PullCommand
                     username,
                     password,
                     plainHttp,
-                    insecure);
+                    insecure).ConfigureAwait(false);
 
                 // Resolve the tag or digest
                 var tag = ExtractTag(reference);
@@ -91,7 +91,7 @@ public static class PullCommand
                 }
                 else if (!string.IsNullOrEmpty(tag))
                 {
-                    manifestDescriptor = await repo.ResolveAsync(tag);
+                    manifestDescriptor = await repo.ResolveAsync(tag).ConfigureAwait(false);
                 }
                 else
                 {
@@ -118,7 +118,7 @@ public static class PullCommand
 
                 // AnsiConsole.MarkupLine($"[green]✓[/] Pulled {reference}");
                 // return 0;
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

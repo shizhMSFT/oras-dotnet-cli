@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Resolve command implementation - resolve a tag to its digest.
 /// </summary>
-public static class ResolveCommand
+internal static class ResolveCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -52,14 +52,14 @@ public static class ResolveCommand
                 // TODO: Implement using IReferenceFetchable.ResolveAsync() or IResolvable.ResolveAsync()
                 // This should return a Descriptor with digest, size, mediaType
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Resolve operation not yet implemented for reference: {reference}");
 
                 // Expected output format:
                 // Text: sha256:abc123...
                 // JSON: { "digest": "sha256:...", "mediaType": "...", "size": 1234 }
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

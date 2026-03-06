@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Manifest fetch command - fetch a manifest from a registry.
 /// </summary>
-public static class ManifestFetchCommand
+internal static class ManifestFetchCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -81,14 +81,14 @@ public static class ManifestFetchCommand
                 // Else: output full manifest JSON
                 // If platform specified: resolve index to platform-specific manifest
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Manifest fetch operation not yet implemented for reference: {reference}");
 
                 // Expected output:
                 // --descriptor: JSON descriptor { digest, mediaType, size }
                 // Normal: Full manifest JSON (optionally pretty-printed)
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

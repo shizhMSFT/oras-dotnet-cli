@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 
@@ -6,7 +7,7 @@ namespace Oras.Credentials;
 /// <summary>
 /// Docker config.json credential store.
 /// </summary>
-public class DockerConfigStore
+internal class DockerConfigStore
 {
     private readonly string _configPath;
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -26,6 +27,8 @@ public class DockerConfigStore
         return Path.Combine(home, ".docker", "config.json");
     }
 
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
     public async Task<DockerConfig> LoadAsync(CancellationToken cancellationToken = default)
     {
         if (!File.Exists(_configPath))
@@ -35,7 +38,7 @@ public class DockerConfigStore
 
         try
         {
-            var json = await File.ReadAllTextAsync(_configPath, cancellationToken);
+            var json = await File.ReadAllTextAsync(_configPath, cancellationToken).ConfigureAwait(false);
             return JsonSerializer.Deserialize<DockerConfig>(json, JsonOptions) ?? new DockerConfig();
         }
         catch
@@ -44,6 +47,8 @@ public class DockerConfigStore
         }
     }
 
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public async Task SaveAsync(DockerConfig config, CancellationToken cancellationToken = default)
     {
         var directory = Path.GetDirectoryName(_configPath);
@@ -53,25 +58,25 @@ public class DockerConfigStore
         }
 
         var json = JsonSerializer.Serialize(config, JsonOptions);
-        await File.WriteAllTextAsync(_configPath, json, cancellationToken);
+        await File.WriteAllTextAsync(_configPath, json, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<(string? Username, string? Password)?> GetCredentialsAsync(
         string serverAddress,
         CancellationToken cancellationToken = default)
     {
-        var config = await LoadAsync(cancellationToken);
+        var config = await LoadAsync(cancellationToken).ConfigureAwait(false);
 
         // Check if there's a specific credential helper for this registry
         if (config.CredHelpers?.TryGetValue(serverAddress, out var helper) == true)
         {
-            return await GetCredentialsFromHelperAsync(helper, serverAddress, cancellationToken);
+            return await GetCredentialsFromHelperAsync(helper, serverAddress, cancellationToken).ConfigureAwait(false);
         }
 
         // Check if there's a global credential store
         if (!string.IsNullOrEmpty(config.CredsStore))
         {
-            return await GetCredentialsFromHelperAsync(config.CredsStore, serverAddress, cancellationToken);
+            return await GetCredentialsFromHelperAsync(config.CredsStore, serverAddress, cancellationToken).ConfigureAwait(false);
         }
 
         // Fall back to auths section
@@ -110,13 +115,13 @@ public class DockerConfigStore
         string password,
         CancellationToken cancellationToken = default)
     {
-        var config = await LoadAsync(cancellationToken);
+        var config = await LoadAsync(cancellationToken).ConfigureAwait(false);
 
         // Check if there's a credential helper configured
         var helper = config.CredHelpers?.GetValueOrDefault(serverAddress) ?? config.CredsStore;
         if (!string.IsNullOrEmpty(helper))
         {
-            await StoreCredentialsInHelperAsync(helper, serverAddress, username, password, cancellationToken);
+            await StoreCredentialsInHelperAsync(helper, serverAddress, username, password, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -127,26 +132,26 @@ public class DockerConfigStore
             Auth = authString
         };
 
-        await SaveAsync(config, cancellationToken);
+        await SaveAsync(config, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task RemoveCredentialsAsync(
         string serverAddress,
         CancellationToken cancellationToken = default)
     {
-        var config = await LoadAsync(cancellationToken);
+        var config = await LoadAsync(cancellationToken).ConfigureAwait(false);
 
         // Check if there's a credential helper configured
         var helper = config.CredHelpers?.GetValueOrDefault(serverAddress) ?? config.CredsStore;
         if (!string.IsNullOrEmpty(helper))
         {
-            await RemoveCredentialsFromHelperAsync(helper, serverAddress, cancellationToken);
+            await RemoveCredentialsFromHelperAsync(helper, serverAddress, cancellationToken).ConfigureAwait(false);
             return;
         }
 
         // Remove from auths section
         config.Auths.Remove(serverAddress);
-        await SaveAsync(config, cancellationToken);
+        await SaveAsync(config, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<(string Username, string Password)?> GetCredentialsFromHelperAsync(
@@ -155,7 +160,7 @@ public class DockerConfigStore
         CancellationToken cancellationToken)
     {
         var credHelper = new NativeCredentialHelper(helper);
-        return await credHelper.GetAsync(serverAddress, cancellationToken);
+        return await credHelper.GetAsync(serverAddress, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task StoreCredentialsInHelperAsync(
@@ -166,7 +171,7 @@ public class DockerConfigStore
         CancellationToken cancellationToken)
     {
         var credHelper = new NativeCredentialHelper(helper);
-        await credHelper.StoreAsync(serverAddress, username, password, cancellationToken);
+        await credHelper.StoreAsync(serverAddress, username, password, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task RemoveCredentialsFromHelperAsync(
@@ -175,6 +180,6 @@ public class DockerConfigStore
         CancellationToken cancellationToken)
     {
         var credHelper = new NativeCredentialHelper(helper);
-        await credHelper.EraseAsync(serverAddress, cancellationToken);
+        await credHelper.EraseAsync(serverAddress, cancellationToken).ConfigureAwait(false);
     }
 }

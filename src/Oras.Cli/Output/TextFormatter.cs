@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Spectre.Console;
 
@@ -6,7 +7,7 @@ namespace Oras.Output;
 /// <summary>
 /// Text-based formatter using Spectre.Console for TTY output with fallback to plain text
 /// </summary>
-public sealed class TextFormatter : IOutputFormatter
+internal sealed class TextFormatter : IOutputFormatter
 {
     private readonly IAnsiConsole _console;
 
@@ -49,6 +50,8 @@ public sealed class TextFormatter : IOutputFormatter
         }
     }
 
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public void WriteDescriptor(object descriptor)
     {
         var json = JsonSerializer.Serialize(descriptor, new JsonSerializerOptions
@@ -100,6 +103,8 @@ public sealed class TextFormatter : IOutputFormatter
         }
     }
 
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public void WriteJson(string json, bool pretty = false)
     {
         if (_console.Profile.Capabilities.Ansi)
@@ -133,6 +138,7 @@ public sealed class TextFormatter : IOutputFormatter
         }
     }
 
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public void WriteObject(object obj)
     {
         var json = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });

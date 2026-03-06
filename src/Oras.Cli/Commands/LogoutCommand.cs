@@ -7,7 +7,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Logout command implementation.
 /// </summary>
-public static class LogoutCommand
+internal static class LogoutCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -33,11 +33,11 @@ public static class LogoutCommand
                 registry = NormalizeRegistry(registry);
 
                 // Remove credentials
-                await credentialService.RemoveCredentialsAsync(registry, CancellationToken.None);
+                await credentialService.RemoveCredentialsAsync(registry, CancellationToken.None).ConfigureAwait(false);
 
                 AnsiConsole.MarkupLine($"[green]✓[/] Logout succeeded for {registry}");
                 return 0;
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;
@@ -47,7 +47,7 @@ public static class LogoutCommand
     {
         // Remove protocol if present
         registry = registry.Replace("https://", "").Replace("http://", "");
-        
+
         // Remove trailing slash
         registry = registry.TrimEnd('/');
 

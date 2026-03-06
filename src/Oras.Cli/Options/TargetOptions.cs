@@ -5,7 +5,7 @@ namespace Oras.Options;
 /// <summary>
 /// Options for specifying target reference (registry/repository:tag).
 /// </summary>
-public class TargetOptions
+internal class TargetOptions
 {
     public Option<string?> TargetOption { get; }
 

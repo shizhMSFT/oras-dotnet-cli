@@ -7,7 +7,7 @@ namespace Oras.Options;
 /// <summary>
 /// Options for output formatting.
 /// </summary>
-public class FormatOptions
+internal class FormatOptions
 {
     public Option<string> FormatOption { get; }
     public Option<bool> PrettyOption { get; }

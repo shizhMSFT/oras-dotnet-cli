@@ -10,7 +10,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Push command implementation.
 /// </summary>
-public static class PushCommand
+internal static class PushCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -79,7 +79,7 @@ public static class PushCommand
                     username,
                     password,
                     plainHttp,
-                    insecure);
+                    insecure).ConfigureAwait(false);
 
                 // Create descriptors for files
                 var fileDescriptors = new List<Descriptor>();
@@ -87,7 +87,7 @@ public static class PushCommand
                 {
                     var fileInfo = new FileInfo(filePath);
                     var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-                    
+
                     var descriptor = new Descriptor
                     {
                         Digest = string.Empty, // Will be set by library
@@ -100,9 +100,9 @@ public static class PushCommand
                     };
 
                     // Push blob
-                    await repo.Blobs.PushAsync(descriptor, fileStream);
+                    await repo.Blobs.PushAsync(descriptor, fileStream).ConfigureAwait(false);
                     fileStream.Close();
-                    
+
                     fileDescriptors.Add(descriptor);
                     AnsiConsole.MarkupLine($"[green]✓[/] Pushed {Path.GetFileName(filePath)}");
                 }
@@ -111,7 +111,7 @@ public static class PushCommand
                 // TODO: Implement with actual Packer API from OrasProject.Oras v0.5.0
                 artifactType ??= "application/vnd.oras.artifact.v1";
                 // var manifestDescriptor = await Packer.PackManifestAsync(...)
-                
+
                 throw new NotImplementedException(
                     "Packer.PackManifestAsync needs OrasProject.Oras v0.5.0 API integration. " +
                     "The actual API signature differs from expected.");
@@ -127,7 +127,7 @@ public static class PushCommand
                 // AnsiConsole.MarkupLine($"[dim]Digest: {manifestDescriptor.Digest}[/]");
 
                 // return 0;
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;
@@ -159,7 +159,7 @@ public static class PushCommand
     {
         var colonIndex = reference.LastIndexOf(':');
         var slashIndex = reference.LastIndexOf('/');
-        
+
         if (colonIndex > slashIndex && colonIndex >= 0)
         {
             return reference[(colonIndex + 1)..];

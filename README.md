@@ -1,6 +1,6 @@
 # oras - OCI Registry As Storage CLI
 
-[![Build Status](https://github.com/oras-project/oras-dotnet-cli/workflows/build/badge.svg)](https://github.com/oras-project/oras-dotnet-cli/actions)
+[![Build Status](https://github.com/shizhMSFT/oras-dotnet-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/shizhMSFT/oras-dotnet-cli/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 

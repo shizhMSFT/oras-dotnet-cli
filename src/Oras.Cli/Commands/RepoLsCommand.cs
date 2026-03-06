@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Repository ls command - list repositories in a registry.
 /// </summary>
-public static class RepoLsCommand
+internal static class RepoLsCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -56,14 +56,14 @@ public static class RepoLsCommand
                 // TODO: Implement using IRegistry.ListRepositoriesAsync()
                 // Returns IAsyncEnumerable<string> of repository names
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Repository list operation not yet implemented for registry: {registry}");
 
                 // Expected output:
                 // Text: one repository name per line
                 // JSON: array of repository names
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

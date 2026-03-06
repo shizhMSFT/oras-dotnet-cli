@@ -8,7 +8,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Version command implementation.
 /// </summary>
-public static class VersionCommand
+internal static class VersionCommand
 {
     public static Command Create()
     {
@@ -18,8 +18,8 @@ public static class VersionCommand
         {
             return await ErrorHandler.HandleAsync(async () =>
             {
-                await Task.CompletedTask; // Make it async compatible
-                
+                await Task.CompletedTask.ConfigureAwait(false); // Make it async compatible
+
                 var assembly = Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version?.ToString() ?? "0.0.0";
                 var informationalVersion = assembly
@@ -31,7 +31,7 @@ public static class VersionCommand
 
                 // Get .NET runtime version
                 var runtimeVersion = RuntimeInformation.FrameworkDescription;
-                
+
                 // Get OS/Platform
                 var platform = RuntimeInformation.OSDescription;
                 var architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
@@ -45,16 +45,16 @@ public static class VersionCommand
                 table.AddRow("Library Version", GetLibraryVersion());
                 table.AddRow(".NET Runtime", runtimeVersion);
                 table.AddRow("Platform", $"{platform} ({architecture})");
-                
+
                 if (!string.IsNullOrEmpty(commitSha))
                 {
                     table.AddRow("Commit", commitSha);
                 }
 
                 AnsiConsole.Write(table);
-                
+
                 return 0;
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;
@@ -66,7 +66,7 @@ public static class VersionCommand
         {
             var orasAssembly = AppDomain.CurrentDomain.GetAssemblies()
                 .FirstOrDefault(a => a.GetName().Name == "OrasProject.Oras");
-            
+
             if (orasAssembly != null)
             {
                 var version = orasAssembly.GetName().Version?.ToString() ?? "unknown";

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 
@@ -8,7 +9,7 @@ namespace Oras.Credentials;
 /// Native credential helper implementation following docker-credential-helpers protocol.
 /// Protocol spec: https://github.com/docker/docker-credential-helpers
 /// </summary>
-public class NativeCredentialHelper
+internal class NativeCredentialHelper
 {
     private readonly string _helperName;
 
@@ -19,13 +20,15 @@ public class NativeCredentialHelper
             : $"docker-credential-{helperName}";
     }
 
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
     public async Task<(string Username, string Password)?> GetAsync(
         string serverAddress,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var output = await RunHelperAsync("get", serverAddress, cancellationToken);
+            var output = await RunHelperAsync("get", serverAddress, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(output))
             {
                 return null;
@@ -45,6 +48,8 @@ public class NativeCredentialHelper
         return null;
     }
 
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public async Task StoreAsync(
         string serverAddress,
         string username,
@@ -58,14 +63,14 @@ public class NativeCredentialHelper
             Secret = password
         });
 
-        await RunHelperAsync("store", input, cancellationToken);
+        await RunHelperAsync("store", input, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task EraseAsync(
         string serverAddress,
         CancellationToken cancellationToken = default)
     {
-        await RunHelperAsync("erase", serverAddress, cancellationToken);
+        await RunHelperAsync("erase", serverAddress, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<string> RunHelperAsync(
@@ -85,7 +90,7 @@ public class NativeCredentialHelper
         };
 
         using var process = new Process { StartInfo = startInfo };
-        
+
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
 
@@ -109,11 +114,11 @@ public class NativeCredentialHelper
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        await process.StandardInput.WriteAsync(input);
-        await process.StandardInput.FlushAsync(cancellationToken);
+        await process.StandardInput.WriteAsync(input).ConfigureAwait(false);
+        await process.StandardInput.FlushAsync(cancellationToken).ConfigureAwait(false);
         process.StandardInput.Close();
 
-        await process.WaitForExitAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
         if (process.ExitCode != 0)
         {

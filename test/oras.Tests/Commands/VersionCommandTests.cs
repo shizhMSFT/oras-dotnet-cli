@@ -16,7 +16,7 @@ public sealed class VersionCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await runner.ExecuteAsync("version").ConfigureAwait(false);
+        var result = await runner.ExecuteAsync("version");
 
         // Assert
         result.ExitCode.Should().Be(0, "version command should succeed");
@@ -29,7 +29,7 @@ public sealed class VersionCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await runner.ExecuteAsync("version").ConfigureAwait(false);
+        var result = await runner.ExecuteAsync("version");
 
         // Assert
         result.StandardOutput.Should().Contain("CLI Version", "should show CLI version");
@@ -45,7 +45,7 @@ public sealed class VersionCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await runner.ExecuteAsync("version").ConfigureAwait(false);
+        var result = await runner.ExecuteAsync("version");
 
         // Assert
         result.StandardOutput.Should().NotBeNullOrWhiteSpace("version output should not be empty");

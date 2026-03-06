@@ -5,7 +5,7 @@ namespace Oras.Options;
 /// <summary>
 /// Common options available across all commands.
 /// </summary>
-public class CommonOptions
+internal class CommonOptions
 {
     public Option<bool> DebugOption { get; }
     public Option<bool> VerboseOption { get; }
@@ -27,7 +27,7 @@ public class CommonOptions
     {
         command.Add(DebugOption);
         command.Add(VerboseOption);
-        
+
         // Apply recursively to subcommands
         if (recursive)
         {

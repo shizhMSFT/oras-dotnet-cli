@@ -3,7 +3,7 @@ namespace Oras.Services;
 /// <summary>
 /// Service for pulling artifacts from OCI registries.
 /// </summary>
-public interface IPullService
+internal interface IPullService
 {
     /// <summary>
     /// Pull artifact layers to output directory.

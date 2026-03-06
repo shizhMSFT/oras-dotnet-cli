@@ -3,7 +3,7 @@ namespace Oras.Services;
 /// <summary>
 /// Service for managing registry credentials.
 /// </summary>
-public interface ICredentialService
+internal interface ICredentialService
 {
     /// <summary>
     /// Validate credentials against a registry.

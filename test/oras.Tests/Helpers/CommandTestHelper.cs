@@ -44,12 +44,12 @@ public sealed class CommandTestHelper
     {
         var originalOut = Console.Out;
         var originalError = Console.Error;
-        
+
         try
         {
             Console.SetOut(_standardOutput);
             Console.SetError(_standardError);
-            
+
             ExitCode = await command.Parse(args).InvokeAsync().ConfigureAwait(false);
         }
         finally
@@ -69,12 +69,12 @@ public sealed class CommandTestHelper
     {
         var originalOut = Console.Out;
         var originalError = Console.Error;
-        
+
         try
         {
             Console.SetOut(_standardOutput);
             Console.SetError(_standardError);
-            
+
             ExitCode = await rootCommand.Parse(args).InvokeAsync().ConfigureAwait(false);
         }
         finally

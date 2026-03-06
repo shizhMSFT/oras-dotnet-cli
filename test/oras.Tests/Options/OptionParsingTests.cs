@@ -127,7 +127,7 @@ public sealed class OptionParsingTests
         var options = new PackerOptions();
         var command = new RootCommand();
         options.ApplyTo(command);
-        
+
         // Act
         var parseResult = command.Parse("");
         var defaultValue = parseResult.GetValue(options.ConcurrencyOption);
@@ -167,7 +167,7 @@ public sealed class OptionParsingTests
         var options = new FormatOptions();
         var command = new RootCommand();
         options.ApplyTo(command);
-        
+
         // Act
         var parseResult = command.Parse("");
         var defaultValue = parseResult.GetValue(options.FormatOption);

@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Repository tags command - list tags in a repository.
 /// </summary>
-public static class RepoTagsCommand
+internal static class RepoTagsCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -56,14 +56,14 @@ public static class RepoTagsCommand
                 // TODO: Implement using IRepository.TagsAsync() or ITagListable.TagsAsync()
                 // Returns IAsyncEnumerable<string> of tag names
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Tag list operation not yet implemented for reference: {reference}");
 
                 // Expected output:
                 // Text: one tag per line
                 // JSON: array of tag names
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

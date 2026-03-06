@@ -5,7 +5,7 @@ namespace Oras.Services;
 /// <summary>
 /// Extension methods for registering services with DI container.
 /// </summary>
-public static class ServiceCollectionExtensions
+internal static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Add ORAS CLI services to the service collection.
@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRegistryService, RegistryService>();
         services.AddTransient<IPushService, PushService>();
         services.AddTransient<IPullService, PullService>();
-        
+
         return services;
     }
 }

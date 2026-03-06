@@ -5,7 +5,7 @@ namespace Oras.Credentials;
 /// <summary>
 /// Docker config.json file structure.
 /// </summary>
-public class DockerConfig
+internal class DockerConfig
 {
     [JsonPropertyName("auths")]
     public Dictionary<string, DockerAuth> Auths { get; set; } = new();
@@ -20,7 +20,7 @@ public class DockerConfig
 /// <summary>
 /// Docker authentication entry.
 /// </summary>
-public class DockerAuth
+internal class DockerAuth
 {
     [JsonPropertyName("auth")]
     public string? Auth { get; set; }

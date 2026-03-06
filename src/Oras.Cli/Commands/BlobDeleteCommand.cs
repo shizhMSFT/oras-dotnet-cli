@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Blob delete command - delete a blob from a registry.
 /// </summary>
-public static class BlobDeleteCommand
+internal static class BlobDeleteCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -72,14 +72,14 @@ public static class BlobDeleteCommand
 
                 // TODO: Implement using IDeletable.DeleteAsync() or IBlobStore.DeleteAsync()
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Blob delete operation not yet implemented for reference: {reference}");
 
                 // Expected output:
                 // Text: "Deleted <digest>"
                 // JSON: success status
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

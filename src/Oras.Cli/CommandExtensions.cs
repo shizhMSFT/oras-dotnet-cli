@@ -6,7 +6,7 @@ namespace Oras;
 /// <summary>
 /// Extension methods for System.CommandLine 2.x compatibility.
 /// </summary>
-public static class CommandExtensions
+internal static class CommandExtensions
 {
     /// <summary>
     /// Sets the action for a command using ParseResult.

@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Attach command implementation - attach files as a referrer artifact.
 /// </summary>
-public static class AttachCommand
+internal static class AttachCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -78,7 +78,7 @@ public static class AttachCommand
                 // 2. Create manifest with subject field pointing to parent
                 // 3. Push blobs and manifest
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Attach operation not yet implemented. Would attach {files.Length} files to {reference} " +
                     $"with artifact type {artifactType}");
@@ -86,7 +86,7 @@ public static class AttachCommand
                 // Expected output:
                 // Text: referrer manifest descriptor
                 // JSON: descriptor object with subject information
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

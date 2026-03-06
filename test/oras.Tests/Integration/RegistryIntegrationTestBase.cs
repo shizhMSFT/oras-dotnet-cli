@@ -46,10 +46,10 @@ public abstract class RegistryIntegrationTestBase : IAsyncLifetime
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "oras-tests", Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
-        
+
         var filePath = Path.Combine(tempDir, fileName ?? "test-file.txt");
         await File.WriteAllTextAsync(filePath, content).ConfigureAwait(false);
-        
+
         return filePath;
     }
 

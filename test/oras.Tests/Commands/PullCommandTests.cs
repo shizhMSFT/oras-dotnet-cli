@@ -16,7 +16,7 @@ public sealed class PullCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await new CliRunner().ExecuteAsync("pull").ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync("pull");
 
         // Assert
         result.ExitCode.Should().NotBe(0, "pull without arguments should fail");
@@ -27,7 +27,7 @@ public sealed class PullCommandTests
     public async Task Pull_WithReferenceOnly_UsesCurrentDirectory()
     {
         // Arrange & Act
-        var result = await new CliRunner().ExecuteAsync("pull localhost:5000/test:v1").ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync("pull localhost:5000/test:v1");
 
         // Assert
         // Will fail due to NotImplementedException, but parsing should work
@@ -45,7 +45,7 @@ public sealed class PullCommandTests
             var args = $"pull localhost:5000/test:v1 -o {tempDir}";
 
             // Act
-            var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+            var result = await new CliRunner().ExecuteAsync(args);
 
             // Assert
             // Will fail due to NotImplementedException, but parsing should work
@@ -67,7 +67,7 @@ public sealed class PullCommandTests
         var args = "pull localhost:5000/test:v1 --platform linux/amd64";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         // Will fail due to NotImplementedException, but parsing should work
@@ -81,7 +81,7 @@ public sealed class PullCommandTests
         var args = "pull localhost:5000/test:v1 --keep-old-files";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         // Will fail due to NotImplementedException, but parsing should work
@@ -95,7 +95,7 @@ public sealed class PullCommandTests
         var args = "pull localhost:5000/test:v1 --include-subject";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         // Will fail due to NotImplementedException, but parsing should work
@@ -113,7 +113,7 @@ public sealed class PullCommandTests
             var args = $"pull localhost:5000/test:v1 -o {tempDir} --platform linux/amd64 --keep-old-files --include-subject";
 
             // Act
-            var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+            var result = await new CliRunner().ExecuteAsync(args);
 
             // Assert
             // All options should parse correctly

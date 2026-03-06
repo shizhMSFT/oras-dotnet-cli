@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Spectre.Console;
 
@@ -7,7 +8,7 @@ namespace Oras.Output;
 /// JSON-based formatter for machine-readable output (--format json)
 /// Each command outputs one JSON object per line
 /// </summary>
-public sealed class JsonFormatter : IOutputFormatter
+internal sealed class JsonFormatter : IOutputFormatter
 {
     private readonly IAnsiConsole _console;
     private readonly JsonSerializerOptions _options;
@@ -74,6 +75,8 @@ public sealed class JsonFormatter : IOutputFormatter
         _console.WriteLine(json);
     }
 
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public void WriteObject(object obj)
     {
         var json = JsonSerializer.Serialize(obj, _options);

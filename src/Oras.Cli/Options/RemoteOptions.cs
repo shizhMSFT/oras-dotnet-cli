@@ -5,7 +5,7 @@ namespace Oras.Options;
 /// <summary>
 /// Options for interacting with remote registries (authentication and transport).
 /// </summary>
-public class RemoteOptions
+internal class RemoteOptions
 {
     public Option<bool> PlainHttpOption { get; }
     public Option<bool> InsecureOption { get; }

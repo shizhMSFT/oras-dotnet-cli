@@ -16,7 +16,7 @@ public sealed class PushCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await new CliRunner().ExecuteAsync("push").ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync("push");
 
         // Assert
         result.ExitCode.Should().NotBe(0, "push without arguments should fail");
@@ -30,7 +30,7 @@ public sealed class PushCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await new CliRunner().ExecuteAsync("push localhost:5000/test:v1").ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync("push localhost:5000/test:v1");
 
         // Assert
         result.ExitCode.Should().NotBe(0, "push without files should fail");
@@ -45,7 +45,7 @@ public sealed class PushCommandTests
         var args = "push localhost:5000/test:v1 nonexistent-file.txt";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         result.ExitCode.Should().Be(2, "push with nonexistent file should return usage error");
@@ -62,7 +62,7 @@ public sealed class PushCommandTests
             var args = $"push localhost:5000/test:v1 {testFile} --artifact-type application/vnd.test";
 
             // Act
-            var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+            var result = await new CliRunner().ExecuteAsync(args);
 
             // Assert
             // Will fail due to NotImplementedException, but parsing should work
@@ -88,7 +88,7 @@ public sealed class PushCommandTests
             var args = $"push localhost:5000/test:v1 {testFile} --annotation key1=value1 --annotation key2=value2";
 
             // Act
-            var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+            var result = await new CliRunner().ExecuteAsync(args);
 
             // Assert
             // Will fail due to NotImplementedException, but parsing should work
@@ -113,7 +113,7 @@ public sealed class PushCommandTests
             var args = $"push localhost:5000/test:v1 {testFile} --concurrency 5";
 
             // Act
-            var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+            var result = await new CliRunner().ExecuteAsync(args);
 
             // Assert
             // Will fail due to NotImplementedException, but parsing should work
@@ -139,7 +139,7 @@ public sealed class PushCommandTests
             var args = $"push localhost:5000/test:v1 {file1} {file2}";
 
             // Act
-            var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+            var result = await new CliRunner().ExecuteAsync(args);
 
             // Assert
             // Will fail due to NotImplementedException, but should parse both files
@@ -148,8 +148,15 @@ public sealed class PushCommandTests
         }
         finally
         {
-            if (File.Exists(file1)) File.Delete(file1);
-            if (File.Exists(file2)) File.Delete(file2);
+            if (File.Exists(file1))
+            {
+                File.Delete(file1);
+            }
+
+            if (File.Exists(file2))
+            {
+                File.Delete(file2);
+            }
         }
     }
 }

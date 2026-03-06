@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Blob push command - push a blob to a registry.
 /// </summary>
-public static class BlobPushCommand
+internal static class BlobPushCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -80,14 +80,14 @@ public static class BlobPushCommand
                 // TODO: Implement using IBlobStore.PushAsync()
                 // Returns descriptor with digest and size
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Blob push operation not yet implemented. Would push {file} to {reference}");
 
                 // Expected output:
                 // Text: "Uploaded <digest> <file>"
                 // JSON: descriptor object { digest, size, mediaType }
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

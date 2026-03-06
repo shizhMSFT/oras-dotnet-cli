@@ -3,7 +3,7 @@ namespace Oras;
 /// <summary>
 /// Base exception for ORAS CLI errors with user-friendly messages.
 /// </summary>
-public class OrasException : Exception
+internal class OrasException : Exception
 {
     public string? Recommendation { get; }
 
@@ -18,15 +18,23 @@ public class OrasException : Exception
     {
         Recommendation = recommendation;
     }
+
+    public OrasException()
+    {
+    }
 }
 
 /// <summary>
 /// Exception for authentication/credential errors.
 /// </summary>
-public class OrasAuthenticationException : OrasException
+internal class OrasAuthenticationException : OrasException
 {
     public OrasAuthenticationException(string message, string? recommendation = null)
         : base(message, recommendation ?? "Check your credentials or run 'oras login' to authenticate.")
+    {
+    }
+
+    public OrasAuthenticationException()
     {
     }
 }
@@ -34,10 +42,14 @@ public class OrasAuthenticationException : OrasException
 /// <summary>
 /// Exception for network/connectivity errors.
 /// </summary>
-public class OrasNetworkException : OrasException
+internal class OrasNetworkException : OrasException
 {
     public OrasNetworkException(string message, Exception innerException, string? recommendation = null)
         : base(message, innerException, recommendation ?? "Check your network connection and registry address.")
+    {
+    }
+
+    public OrasNetworkException()
     {
     }
 }
@@ -45,10 +57,14 @@ public class OrasNetworkException : OrasException
 /// <summary>
 /// Exception for command usage errors.
 /// </summary>
-public class OrasUsageException : OrasException
+internal class OrasUsageException : OrasException
 {
     public OrasUsageException(string message, string? recommendation = null)
         : base(message, recommendation)
+    {
+    }
+
+    public OrasUsageException()
     {
     }
 }

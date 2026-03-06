@@ -16,7 +16,7 @@ public sealed class LogoutCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await new CliRunner().ExecuteAsync("logout").ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync("logout");
 
         // Assert
         result.ExitCode.Should().NotBe(0, "logout without registry should fail");
@@ -30,7 +30,7 @@ public sealed class LogoutCommandTests
         var args = "logout localhost:5000";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         result.ExitCode.Should().Be(0, "logout should succeed even without prior login");
@@ -44,7 +44,7 @@ public sealed class LogoutCommandTests
         var args = "logout docker.io";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         result.ExitCode.Should().Be(0, "logout should succeed");
@@ -58,7 +58,7 @@ public sealed class LogoutCommandTests
         var args = "logout https://registry.example.com";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         result.ExitCode.Should().Be(0, "logout should succeed");
@@ -72,8 +72,8 @@ public sealed class LogoutCommandTests
         var args = "logout localhost:5000";
 
         // Act
-        var result1 = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
-        var result2 = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result1 = await new CliRunner().ExecuteAsync(args);
+        var result2 = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         result1.ExitCode.Should().Be(0, "first logout should succeed");

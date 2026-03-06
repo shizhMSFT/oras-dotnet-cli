@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Manifest fetch-config command - fetch the config blob referenced by a manifest.
 /// </summary>
-public static class ManifestFetchConfigCommand
+internal static class ManifestFetchConfigCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -63,13 +63,13 @@ public static class ManifestFetchConfigCommand
                 // 2. Extract config descriptor from manifest
                 // 3. Fetch config blob using IBlobStore.FetchAsync(config descriptor)
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Manifest fetch-config operation not yet implemented for reference: {reference}");
 
                 // Expected output:
                 // Config blob JSON to stdout or file
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

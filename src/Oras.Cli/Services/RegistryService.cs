@@ -7,7 +7,7 @@ namespace Oras.Services;
 /// NOTE: This is a stub implementation. The actual OrasProject.Oras v0.5.0 API
 /// needs to be properly integrated once the API surface is documented.
 /// </summary>
-public class RegistryService : IRegistryService
+internal class RegistryService : IRegistryService
 {
     private readonly ICredentialService _credentialService;
 
@@ -24,8 +24,8 @@ public class RegistryService : IRegistryService
         bool insecure = false,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask; // Suppress async warning
-        
+        await Task.CompletedTask.ConfigureAwait(false); // Suppress async warning
+
         // TODO: Implement actual Registry creation with proper OrasProject.Oras v0.5.0 API
         throw new NotImplementedException(
             "Registry creation needs OrasProject.Oras v0.5.0 API integration. " +
@@ -40,8 +40,8 @@ public class RegistryService : IRegistryService
         bool insecure = false,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask; // Suppress async warning
-        
+        await Task.CompletedTask.ConfigureAwait(false); // Suppress async warning
+
         // TODO: Implement actual Repository creation with proper OrasProject.Oras v0.5.0 API
         throw new NotImplementedException(
             "Repository creation needs OrasProject.Oras v0.5.0 API integration. " +

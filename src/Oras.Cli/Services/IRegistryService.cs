@@ -5,7 +5,7 @@ namespace Oras.Services;
 /// <summary>
 /// Service for interacting with OCI registries.
 /// </summary>
-public interface IRegistryService
+internal interface IRegistryService
 {
     /// <summary>
     /// Create a registry client with the provided credentials.

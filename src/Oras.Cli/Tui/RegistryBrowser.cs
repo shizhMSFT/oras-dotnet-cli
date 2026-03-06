@@ -7,7 +7,7 @@ namespace Oras.Tui;
 /// <summary>
 /// Interactive registry browser for exploring repositories, tags, and manifests.
 /// </summary>
-public class RegistryBrowser
+internal class RegistryBrowser
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ICredentialService _credentialService;
@@ -24,22 +24,22 @@ public class RegistryBrowser
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         // S3-02: Registry connection
-        var registryHost = await SelectOrEnterRegistryAsync(cancellationToken);
+        var registryHost = await SelectOrEnterRegistryAsync(cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrEmpty(registryHost))
         {
             return;
         }
 
         // Check authentication
-        var credentials = await _credentialService.GetCredentialsAsync(registryHost, cancellationToken);
+        var credentials = await _credentialService.GetCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
         if (credentials == null)
         {
             PromptHelper.ShowWarning($"No credentials found for {registryHost}");
             var shouldLogin = PromptHelper.PromptConfirmation("Would you like to login?", true);
-            
+
             if (shouldLogin)
             {
-                credentials = await PromptForCredentialsAsync(registryHost, cancellationToken);
+                credentials = await PromptForCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
                 if (credentials == null)
                 {
                     return;
@@ -48,18 +48,18 @@ public class RegistryBrowser
         }
 
         // Verify connection with /v2/ endpoint
-        if (!await VerifyRegistryConnectionAsync(registryHost, credentials, cancellationToken))
+        if (!await VerifyRegistryConnectionAsync(registryHost, credentials, cancellationToken).ConfigureAwait(false))
         {
             return;
         }
 
         // S3-03: Browse repositories
-        await BrowseRepositoriesAsync(registryHost, credentials, cancellationToken);
+        await BrowseRepositoriesAsync(registryHost, credentials, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<string?> SelectOrEnterRegistryAsync(CancellationToken cancellationToken)
     {
-        var config = await _configStore.LoadAsync(cancellationToken);
+        var config = await _configStore.LoadAsync(cancellationToken).ConfigureAwait(false);
         var registries = config.Auths.Keys.ToList();
 
         var choices = new List<string>(registries);
@@ -95,11 +95,11 @@ public class RegistryBrowser
         try
         {
             var isValid = await _credentialService.ValidateCredentialsAsync(
-                registryHost, username, password, false, false, cancellationToken);
+                registryHost, username, password, false, false, cancellationToken).ConfigureAwait(false);
 
             if (isValid)
             {
-                await _credentialService.StoreCredentialsAsync(registryHost, username, password, cancellationToken);
+                await _credentialService.StoreCredentialsAsync(registryHost, username, password, cancellationToken).ConfigureAwait(false);
                 PromptHelper.ShowSuccess("Login succeeded");
                 return (username, password);
             }
@@ -128,17 +128,17 @@ public class RegistryBrowser
                 {
                     // TODO: Call /v2/ endpoint to verify connectivity
                     // For now, simulate connection check
-                    await Task.Delay(500, cancellationToken);
+                    await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                     PromptHelper.ShowSuccess($"Connected to {registryHost}");
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    PromptHelper.ShowError($"Failed to connect: {ex.Message}", 
+                    PromptHelper.ShowError($"Failed to connect: {ex.Message}",
                         "Check network connectivity and registry URL.");
                     return false;
                 }
-            });
+            }).ConfigureAwait(false);
     }
 
     private async Task BrowseRepositoriesAsync(
@@ -149,8 +149,8 @@ public class RegistryBrowser
         while (true)
         {
             // S3-03: Fetch and display repository list
-            var repositories = await FetchRepositoriesAsync(registryHost, credentials, cancellationToken);
-            
+            var repositories = await FetchRepositoriesAsync(registryHost, credentials, cancellationToken).ConfigureAwait(false);
+
             if (repositories == null || repositories.Count == 0)
             {
                 PromptHelper.ShowInfo("No repositories found in this registry.");
@@ -172,7 +172,7 @@ public class RegistryBrowser
             }
 
             // S3-04: Browse tags for selected repository
-            await BrowseTagsAsync(registryHost, selectedRepo, credentials, cancellationToken);
+            await BrowseTagsAsync(registryHost, selectedRepo, credentials, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -188,7 +188,7 @@ public class RegistryBrowser
                 {
                     // TODO: Call IRegistry.ListRepositoriesAsync()
                     // For now, return mock data
-                    await Task.Delay(500, cancellationToken);
+                    await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                     return new List<string>
                     {
                         "example/app",
@@ -202,7 +202,7 @@ public class RegistryBrowser
                     PromptHelper.ShowError($"Failed to fetch repositories: {ex.Message}");
                     return null;
                 }
-            });
+            }).ConfigureAwait(false);
     }
 
     private async Task BrowseTagsAsync(
@@ -214,8 +214,8 @@ public class RegistryBrowser
         while (true)
         {
             // S3-04: Fetch and display tags
-            var tags = await FetchTagsAsync(registryHost, repository, credentials, cancellationToken);
-            
+            var tags = await FetchTagsAsync(registryHost, repository, credentials, cancellationToken).ConfigureAwait(false);
+
             if (tags == null || tags.Count == 0)
             {
                 PromptHelper.ShowInfo($"No tags found for {repository}.");
@@ -239,7 +239,7 @@ public class RegistryBrowser
             // S3-05: Show manifest inspector
             var reference = $"{registryHost}/{repository}:{selectedTag}";
             var inspector = new ManifestInspector(_serviceProvider);
-            await inspector.InspectAsync(reference, credentials, cancellationToken);
+            await inspector.InspectAsync(reference, credentials, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -256,7 +256,7 @@ public class RegistryBrowser
                 {
                     // TODO: Call IRepository.ListTagsAsync()
                     // For now, return mock data
-                    await Task.Delay(500, cancellationToken);
+                    await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                     return new List<string>
                     {
                         "latest",
@@ -271,6 +271,6 @@ public class RegistryBrowser
                     PromptHelper.ShowError($"Failed to fetch tags: {ex.Message}");
                     return null;
                 }
-            });
+            }).ConfigureAwait(false);
     }
 }

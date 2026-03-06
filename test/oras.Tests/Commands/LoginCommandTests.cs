@@ -16,7 +16,7 @@ public sealed class LoginCommandTests
         var runner = new CliRunner();
 
         // Act
-        var result = await new CliRunner().ExecuteAsync("login").ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync("login");
 
         // Assert
         result.ExitCode.Should().NotBe(0, "login without registry should fail");
@@ -30,7 +30,7 @@ public sealed class LoginCommandTests
         var args = "login localhost:5000 -u testuser -p testpass";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         // Command will fail due to NotImplementedException, but parsing should work
@@ -47,8 +47,8 @@ public sealed class LoginCommandTests
 
         // This test requires providing input via stdin, which is not feasible in automated tests
         // The CLI correctly waits for password input from stdin when --password-stdin is specified
-        
-        await Task.CompletedTask.ConfigureAwait(false);
+
+        await Task.CompletedTask;
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public sealed class LoginCommandTests
         var args = "login localhost:5000 -u test -p pass --plain-http";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         // Should parse option correctly even if command fails
@@ -72,7 +72,7 @@ public sealed class LoginCommandTests
         var args = "login localhost:5000 -u test -p pass --insecure";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         // Should parse option correctly even if command fails
@@ -86,7 +86,7 @@ public sealed class LoginCommandTests
         var args = "login localhost:5000 -u testuser -p testpass --plain-http --insecure";
 
         // Act
-        var result = await new CliRunner().ExecuteAsync(args).ConfigureAwait(false);
+        var result = await new CliRunner().ExecuteAsync(args);
 
         // Assert
         // All options should parse without argument errors

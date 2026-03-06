@@ -3,7 +3,7 @@ namespace Oras.Output;
 /// <summary>
 /// Abstraction for formatting command output in different modes (text, JSON, etc.)
 /// </summary>
-public interface IOutputFormatter
+internal interface IOutputFormatter
 {
     /// <summary>
     /// Write a status message (e.g., "Login Succeeded", "Pulled image...")
@@ -49,7 +49,7 @@ public interface IOutputFormatter
 /// <summary>
 /// Represents a node in a tree structure for hierarchical output
 /// </summary>
-public sealed class TreeNode
+internal sealed class TreeNode
 {
     public string Label { get; set; } = string.Empty;
     public List<TreeNode> Children { get; set; } = new();

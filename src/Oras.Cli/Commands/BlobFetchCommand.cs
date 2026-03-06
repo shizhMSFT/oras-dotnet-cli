@@ -9,7 +9,7 @@ namespace Oras.Commands;
 /// <summary>
 /// Blob fetch command - fetch a blob by digest.
 /// </summary>
-public static class BlobFetchCommand
+internal static class BlobFetchCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
@@ -66,14 +66,14 @@ public static class BlobFetchCommand
                 // If descriptorMode: output descriptor JSON
                 // Else: stream blob to stdout or file
                 // For now, stub with NotImplementedException
-                
+
                 throw new NotImplementedException(
                     $"Blob fetch operation not yet implemented for reference: {reference}");
 
                 // Expected output:
                 // --descriptor: JSON descriptor { digest, size, mediaType }
                 // Normal: raw blob content to stdout or file
-            });
+            }).ConfigureAwait(false);
         });
 
         return command;

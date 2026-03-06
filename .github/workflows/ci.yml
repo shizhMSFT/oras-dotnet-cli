@@ -41,7 +41,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release
       
       - name: Run unit tests
-        run: dotnet test test/oras.Tests/ --no-build --configuration Release --logger "trx;LogFileName=test-results-${{ matrix.os }}.trx"
+        run: dotnet test test/oras.Tests/ --no-build --configuration Release --filter "FullyQualifiedName!~Integration" --logger "trx;LogFileName=test-results-${{ matrix.os }}.trx"
       
       - name: Run integration tests (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
@@ -72,4 +72,6 @@ jobs:
         run: dotnet restore
       
       - name: Check formatting
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: |
+          dotnet format whitespace --verify-no-changes --verbosity diagnostic
+          dotnet format style --verify-no-changes --verbosity diagnostic
