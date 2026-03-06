@@ -44,13 +44,23 @@ A cross-platform .NET 10 CLI for managing OCI artifacts in container registries 
 
 ---
 
+## 🎉 v0.4.0 — All Commands Fully Functional!
+{: .text-center .text-purple-000 }
+
+**All 21 commands now work with real OCI registries!** Previous versions had only 3 working commands (login, logout, version). v0.4.0 implements all artifact, manifest, blob, and repository operations with the official OrasProject.Oras library.
+
+{: .note }
+> Try `oras push`, `oras pull`, `oras attach`, `oras discover`, `oras copy`, `oras backup`, `oras restore`, and more — all fully functional!
+
+---
+
 ## 🚀 Quick Start
 
 ### Install
 
 ```bash
 # Option 1: Download pre-built binary (Linux x64 example)
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.3.0/oras-linux-x64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.4.0/oras-linux-x64.tar.gz
 tar -xzf oras-linux-x64.tar.gz && chmod +x oras-linux-x64
 sudo mv oras-linux-x64 /usr/local/bin/oras
 
@@ -121,7 +131,7 @@ oras
 
 | Guide | Description |
 |:------|:------------|
-| [Command Reference](commands/) | Complete reference for all 20 commands and options |
+| [Command Reference](commands/) | Complete reference for all 21 commands and options |
 | [Installation Guide](installation) | Platform-specific installation instructions |
 | [Migration Guide](migration) | Switching from the Go oras CLI to the .NET CLI |
 | [TUI Guide](tui-guide) | Using the interactive terminal UI dashboard |

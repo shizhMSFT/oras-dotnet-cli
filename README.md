@@ -12,7 +12,7 @@ The oras .NET CLI is a production-ready command-line tool for managing OCI artif
 
 ## Features
 
-✨ **Full Go CLI Parity** — 20+ commands covering all artifact operations  
+✨ **All 21 Commands Fully Implemented** — Every command works with real OCI registry operations (v0.4.0+)  
 🖥️ **Interactive TUI Mode** — v0.3.0 dashboard with Unicode block art banner, brand-colored ORAS logo, artifacts sub-menu, cyclic navigation, and fully interactive workflows  
 🌐 **Cross-Platform** — Works on Windows, macOS, and Linux  
 🚀 **Native AOT Ready** — Fast startup and low memory footprint  
