@@ -1,0 +1,23 @@
+{
+  "universe_usage_history": [
+    {
+      "universe": "Alien",
+      "assigned_at": "2026-03-06T04:14:00Z",
+      "repo": "oras-dotnet-cli"
+    }
+  ],
+  "assignment_cast_snapshots": {
+    "oras-dotnet-cli-2026-03-06": {
+      "assignment_id": "oras-dotnet-cli-2026-03-06",
+      "universe": "Alien",
+      "agents": {
+        "ripley": "Lead",
+        "dallas": "Core Dev",
+        "bishop": "TUI Dev",
+        "hicks": "Tester",
+        "vasquez": "DevOps"
+      },
+      "created_at": "2026-03-06T04:14:00Z"
+    }
+  }
+}
