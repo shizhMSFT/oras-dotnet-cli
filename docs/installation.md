@@ -38,7 +38,7 @@ Download self-contained single-file binaries from [GitHub Releases](https://gith
 
 ```powershell
 # Download and extract
-Invoke-WebRequest -Uri "https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.0/oras-win-x64.zip" -OutFile "oras-win-x64.zip"
+Invoke-WebRequest -Uri "https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.1/oras-win-x64.zip" -OutFile "oras-win-x64.zip"
 Expand-Archive oras-win-x64.zip -DestinationPath .
 
 # Move to a directory in your PATH
@@ -58,7 +58,7 @@ if ($userPath -notlike "*$env:USERPROFILE\bin*") {
 <summary><strong>Windows ARM64</strong></summary>
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.0/oras-win-arm64.zip" -OutFile "oras-win-arm64.zip"
+Invoke-WebRequest -Uri "https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.1/oras-win-arm64.zip" -OutFile "oras-win-arm64.zip"
 Expand-Archive oras-win-arm64.zip -DestinationPath .
 Move-Item oras-win-arm64.exe "$env:USERPROFILE\bin\oras.exe" -Force
 ```
@@ -72,7 +72,7 @@ Move-Item oras-win-arm64.exe "$env:USERPROFILE\bin\oras.exe" -Force
 
 ```bash
 # Download and extract
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.0/oras-osx-arm64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.1/oras-osx-arm64.tar.gz
 tar -xzf oras-osx-arm64.tar.gz
 
 # Install
@@ -89,7 +89,7 @@ sudo xattr -d com.apple.quarantine /usr/local/bin/oras
 <summary><strong>macOS Intel (x64)</strong></summary>
 
 ```bash
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.0/oras-osx-x64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.1/oras-osx-x64.tar.gz
 tar -xzf oras-osx-x64.tar.gz
 chmod +x oras-osx-x64
 sudo mv oras-osx-x64 /usr/local/bin/oras
@@ -105,7 +105,7 @@ sudo xattr -d com.apple.quarantine /usr/local/bin/oras
 
 ```bash
 # Download and extract
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.0/oras-linux-x64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.1/oras-linux-x64.tar.gz
 tar -xzf oras-linux-x64.tar.gz
 
 # Install
@@ -119,7 +119,7 @@ sudo mv oras-linux-x64 /usr/local/bin/oras
 <summary><strong>Linux ARM64</strong></summary>
 
 ```bash
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.0/oras-linux-arm64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.1/oras-linux-arm64.tar.gz
 tar -xzf oras-linux-arm64.tar.gz
 chmod +x oras-linux-arm64
 sudo mv oras-linux-arm64 /usr/local/bin/oras
@@ -177,7 +177,7 @@ oras version
 Expected output:
 
 ```text
-Version:          0.2.0
+Version:          0.2.1
 OrasProject.Oras: 0.5.0
 .NET Runtime:     10.0.0
 Platform:         linux-x64

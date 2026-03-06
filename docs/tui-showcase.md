@@ -52,10 +52,11 @@ The main entry point when you run `oras` with no arguments in an interactive ter
   (Move up and down to reveal more options)
 ```
 
-**Version 0.2.0 TUI Redesign:**
-- **FigletText Header** — Iconic ASCII art ORAS logo for visual impact
+**Version 0.2.1 Bug-Fix Update:**
+- **FigletText Header** — Left-aligned ASCII art ORAS logo (changed from centered for consistent terminal rendering)
 - **Rich Color Scheme** — Cyan headers, green success indicators, yellow warnings
-- **ASCII-Safe Status Indicators** — Unicode symbols replaced with `[+]`, `[ ]` for universal terminal compatibility
+- **ASCII-Safe Status Indicators** — `[+]`, `[i]`, `[!]`, `[X]` are properly escaped so Spectre.Console never parses them as markup style tags
+- **UTF-8 Output** — Console output encoding explicitly set to UTF-8 to prevent garbled characters
 - **Dashboard Quick-Actions** — All artifact operations (copy, backup, restore, push, pull, tag) accessible from main menu
 - **In-Memory Caching** — Fast repeat operations with cache indicators
 - **Fully Interactive Workflows** — No more "use CLI" messages; all operations have complete TUI flows

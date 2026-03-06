@@ -9,7 +9,7 @@ description: "Using the interactive Terminal UI for registry exploration"
 
 > Using the interactive Terminal UI for registry exploration and artifact management
 
-The ORAS .NET CLI v0.2.0 includes a powerful terminal user interface (TUI) with elegant visual design, context menus, in-memory caching, and fully interactive workflows for exploring container registries and managing artifacts.
+The ORAS .NET CLI v0.2.1 includes a powerful terminal user interface (TUI) with elegant visual design, context menus, in-memory caching, and fully interactive workflows for exploring container registries and managing artifacts.
 
 ## Launching the TUI
 
@@ -27,10 +27,11 @@ oras --registry ghcr.io --repository myorg/myrepo
 ## Features
 
 ### Dashboard View
-- FigletText ASCII art "ORAS" header for visual impact
-- Credential store status and statistics with ASCII-safe indicators (`[+]` logged in, `[ ]` not authenticated)
+- FigletText ASCII art "ORAS" header, left-aligned for consistent terminal rendering
+- Credential store status and statistics with ASCII-safe indicators (`[+]` logged in, `[ ]` not authenticated) — properly escaped for Spectre.Console
 - Quick actions for all artifact operations
 - In-memory caching with "(cached)" indicators for fast repeat operations
+- UTF-8 output encoding ensures correct rendering on all platforms
 
 ### Registry Browser
 - Hierarchical repository navigation with live search
@@ -92,7 +93,7 @@ oras --registry ghcr.io --repository myorg/myrepo
 
 ## ASCII-Safe Indicators
 
-All status symbols are ASCII-safe for universal terminal compatibility — no Unicode symbols:
+All status symbols are ASCII-safe for universal terminal compatibility — no Unicode symbols. Since v0.2.1 these indicators are properly escaped (`[[+]]`, `[[i]]`, etc.) so Spectre.Console never misinterprets them as markup tags:
 
 - `[+]` — Success, logged-in status
 - `[i]` — Informational messages

@@ -50,7 +50,7 @@ A cross-platform .NET 10 CLI for managing OCI artifacts in container registries 
 
 ```bash
 # Option 1: Download pre-built binary (Linux x64 example)
-curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.0/oras-linux-x64.tar.gz
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.2.1/oras-linux-x64.tar.gz
 tar -xzf oras-linux-x64.tar.gz && chmod +x oras-linux-x64
 sudo mv oras-linux-x64 /usr/local/bin/oras
 
