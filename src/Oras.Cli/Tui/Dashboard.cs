@@ -116,6 +116,7 @@ internal class Dashboard
             };
 
             AnsiConsole.Write(registryPanel);
+            AnsiConsole.WriteLine();
         }
         else
         {
@@ -126,6 +127,7 @@ internal class Dashboard
                 Padding = new Padding(1, 0, 1, 0)
             };
             AnsiConsole.Write(infoPanel);
+            AnsiConsole.WriteLine();
         }
 
         // Quick actions menu
