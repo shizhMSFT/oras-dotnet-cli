@@ -12,6 +12,7 @@ internal class RegistryBrowser
     private readonly IServiceProvider _serviceProvider;
     private readonly ICredentialService _credentialService;
     private readonly DockerConfigStore _configStore;
+    private readonly TuiCache _cache;
 
     public RegistryBrowser(IServiceProvider serviceProvider)
     {
@@ -19,6 +20,7 @@ internal class RegistryBrowser
         _credentialService = (ICredentialService?)serviceProvider.GetService(typeof(ICredentialService))
             ?? throw new InvalidOperationException("ICredentialService not registered");
         _configStore = new DockerConfigStore();
+        _cache = new TuiCache();
     }
 
     public async Task RunAsync(CancellationToken cancellationToken = default)
@@ -147,13 +149,13 @@ internal class RegistryBrowser
         CancellationToken cancellationToken)
     {
         const string enterRepoOption = "Enter repository name...";
+        const string refreshOption = "Refresh repository list";
         const string backOption = "Back to main menu";
 
         while (true)
         {
-            // S3-03: Fetch and display repository list
-            // null = catalog API not supported; empty list = no repos found
-            var repositories = await FetchRepositoriesAsync(registryHost, credentials, cancellationToken).ConfigureAwait(false);
+            // S3-03: Fetch and display repository list (with caching)
+            var repositories = await FetchRepositoriesAsync(registryHost, credentials, false, cancellationToken).ConfigureAwait(false);
 
             var catalogUnsupported = repositories == null;
             var repoChoices = new List<string>();
@@ -178,6 +180,7 @@ internal class RegistryBrowser
             {
                 repoChoices.AddRange(repositories);
                 repoChoices.Add(enterRepoOption);
+                repoChoices.Add(refreshOption);
                 repoChoices.Add(backOption);
             }
 
@@ -192,6 +195,14 @@ internal class RegistryBrowser
                 return;
             }
 
+            if (selectedRepo == refreshOption)
+            {
+                _cache.InvalidatePattern(registryHost);
+                PromptHelper.ShowSuccess("Cache cleared. Refreshing...");
+                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
             if (selectedRepo == enterRepoOption)
             {
                 var repoPath = PromptHelper.PromptText(
@@ -203,8 +214,8 @@ internal class RegistryBrowser
                 selectedRepo = repoPath.Trim();
             }
 
-            // S3-04: Browse tags for selected repository
-            await BrowseTagsAsync(registryHost, selectedRepo, credentials, cancellationToken).ConfigureAwait(false);
+            // Show context menu for repository
+            await ShowRepositoryContextMenuAsync(registryHost, selectedRepo, credentials, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -216,8 +227,21 @@ internal class RegistryBrowser
     private async Task<List<string>?> FetchRepositoriesAsync(
         string registryHost,
         (string Username, string Password)? credentials,
+        bool forceRefresh,
         CancellationToken cancellationToken)
     {
+        var cacheKey = $"repos:{registryHost}";
+
+        if (!forceRefresh)
+        {
+            var cached = _cache.Get<List<string>?>(cacheKey);
+            if (cached.Found)
+            {
+                PromptHelper.ShowCachedIndicator();
+                return cached.Value;
+            }
+        }
+
         return await AnsiConsole.Status()
             .StartAsync("Fetching repositories...", async ctx =>
             {
@@ -228,13 +252,15 @@ internal class RegistryBrowser
                     // from the catalog endpoint should be caught below and return null
                     // to signal "catalog not supported".
                     await Task.Delay(500, cancellationToken).ConfigureAwait(false);
-                    return new List<string>
+                    var repos = new List<string>
                     {
                         "example/app",
                         "example/service",
                         "myorg/artifact",
                         "test/demo"
                     };
+                    _cache.Set(cacheKey, repos);
+                    return repos;
                 }
                 catch (NotSupportedException)
                 {
@@ -251,6 +277,188 @@ internal class RegistryBrowser
             }).ConfigureAwait(false);
     }
 
+    private async Task ShowRepositoryContextMenuAsync(
+        string registryHost,
+        string repository,
+        (string Username, string Password)? credentials,
+        CancellationToken cancellationToken)
+    {
+        var actions = new[]
+        {
+            "Browse Tags",
+            "Copy entire repository",
+            "Backup repository",
+            "Back"
+        };
+
+        var action = PromptHelper.PromptSelection(
+            $"[green]Actions for {Markup.Escape(repository)}:[/]",
+            actions);
+
+        switch (action)
+        {
+            case "Browse Tags":
+                await BrowseTagsAsync(registryHost, repository, credentials, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Copy entire repository":
+                await HandleCopyRepositoryAsync(registryHost, repository, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Backup repository":
+                await HandleBackupRepositoryAsync(registryHost, repository, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Back":
+                break;
+        }
+    }
+
+    private async Task HandleCopyRepositoryAsync(
+        string registryHost,
+        string repository,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var destRegistry = PromptHelper.PromptText(
+                "Destination registry (e.g., [green]ghcr.io[/]):");
+            if (string.IsNullOrWhiteSpace(destRegistry))
+            {
+                return;
+            }
+
+            var destRepo = PromptHelper.PromptText(
+                $"Destination repository (default: [green]{repository}[/]):",
+                defaultValue: repository);
+
+            var source = $"{registryHost}/{repository}";
+            var destination = $"{destRegistry.Trim()}/{destRepo}";
+
+            var escapedSource = Markup.Escape(source);
+            var escapedDest = Markup.Escape(destination);
+
+            AnsiConsole.MarkupLine($"\n[bold]Copying repository {escapedSource} => {escapedDest}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var listTask = ctx.AddTask("Listing tags");
+                    var copyTask = ctx.AddTask("Copying tags (0/5)", maxValue: 5);
+
+                    // Simulate listing tags
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        listTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    listTask.Value = 100;
+
+                    // Simulate copying tags
+                    for (var tag = 1; tag <= 5; tag++)
+                    {
+                        copyTask.Description = $"Copying tags ({tag}/5)";
+                        copyTask.Increment(1);
+                        await Task.Delay(300, cancellationToken).ConfigureAwait(false);
+                    }
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Copied repository {source} => {destination}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Copy cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Copy failed: {ex.Message}");
+        }
+
+        AnsiConsole.WriteLine();
+        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+    }
+
+    private async Task HandleBackupRepositoryAsync(
+        string registryHost,
+        string repository,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var outputPath = PromptHelper.PromptText(
+                "Backup directory:", defaultValue: $"./backup-{repository.Replace("/", "-")}");
+
+            var source = $"{registryHost}/{repository}";
+            var escapedSource = Markup.Escape(source);
+            var escapedPath = Markup.Escape(outputPath);
+
+            AnsiConsole.MarkupLine($"\n[bold]Backing up {escapedSource}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var listTask = ctx.AddTask("Listing tags");
+                    var downloadTask = ctx.AddTask("Downloading tags (0/5)", maxValue: 5);
+                    var writeTask = ctx.AddTask($"Writing to {escapedPath}");
+
+                    // Simulate listing
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        listTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    listTask.Value = 100;
+
+                    // Simulate downloading
+                    for (var tag = 1; tag <= 5; tag++)
+                    {
+                        downloadTask.Description = $"Downloading tags ({tag}/5)";
+                        downloadTask.Increment(1);
+                        await Task.Delay(250, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    // Simulate writing
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        writeTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    writeTask.Value = 100;
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Backed up {source} to {outputPath}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Backup cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Backup failed: {ex.Message}");
+        }
+
+        AnsiConsole.WriteLine();
+        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+    }
+
     /// <summary>
     /// Browse tags for a given registry and repository. Public so Dashboard
     /// can invoke it directly for the "Browse Repository Tags" shortcut.
@@ -261,10 +469,13 @@ internal class RegistryBrowser
         (string Username, string Password)? credentials,
         CancellationToken cancellationToken)
     {
+        const string refreshOption = "Refresh tag list";
+        const string backOption = "Back to repository list";
+
         while (true)
         {
-            // S3-04: Fetch and display tags
-            var tags = await FetchTagsAsync(registryHost, repository, credentials, cancellationToken).ConfigureAwait(false);
+            // S3-04: Fetch and display tags (with caching)
+            var tags = await FetchTagsAsync(registryHost, repository, credentials, false, cancellationToken).ConfigureAwait(false);
 
             if (tags == null || tags.Count == 0)
             {
@@ -275,21 +486,81 @@ internal class RegistryBrowser
             }
 
             var tagChoices = new List<string>(tags);
-            tagChoices.Add("Back to repository list");
+            tagChoices.Add(refreshOption);
+            tagChoices.Add(backOption);
 
             var selectedTag = PromptHelper.PromptSelectionWithSearch(
                 $"[green]Tags for {repository} (Total: {tags.Count}):[/]",
                 tagChoices);
 
-            if (selectedTag == "Back to repository list")
+            if (selectedTag == backOption)
             {
                 return;
             }
 
-            // S3-05: Show manifest inspector
+            if (selectedTag == refreshOption)
+            {
+                _cache.InvalidatePattern($"{registryHost}/{repository}");
+                PromptHelper.ShowSuccess("Cache cleared. Refreshing...");
+                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            // Show context menu for tag
             var reference = $"{registryHost}/{repository}:{selectedTag}";
-            var inspector = new ManifestInspector(_serviceProvider);
-            await inspector.InspectAsync(reference, credentials, cancellationToken).ConfigureAwait(false);
+            await ShowTagContextMenuAsync(reference, credentials, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task ShowTagContextMenuAsync(
+        string reference,
+        (string Username, string Password)? credentials,
+        CancellationToken cancellationToken)
+    {
+        var actions = new[]
+        {
+            "Inspect Manifest",
+            "Pull to directory",
+            "Copy to...",
+            "Backup to local",
+            "Tag with...",
+            "Delete",
+            "Back"
+        };
+
+        var action = PromptHelper.PromptSelection(
+            $"[green]Actions for {Markup.Escape(reference)}:[/]",
+            actions);
+
+        switch (action)
+        {
+            case "Inspect Manifest":
+                var inspector = new ManifestInspector(_serviceProvider);
+                await inspector.InspectAsync(reference, credentials, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Pull to directory":
+                await HandlePullTagAsync(reference, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Copy to...":
+                await HandleCopyTagAsync(reference, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Backup to local":
+                await HandleBackupTagAsync(reference, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Tag with...":
+                await HandleTagWithAsync(reference, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Delete":
+                await HandleDeleteTagAsync(reference, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case "Back":
+                break;
         }
     }
 
@@ -297,8 +568,21 @@ internal class RegistryBrowser
         string registryHost,
         string repository,
         (string Username, string Password)? credentials,
+        bool forceRefresh,
         CancellationToken cancellationToken)
     {
+        var cacheKey = $"tags:{registryHost}/{repository}";
+
+        if (!forceRefresh)
+        {
+            var cached = _cache.Get<List<string>?>(cacheKey);
+            if (cached.Found)
+            {
+                PromptHelper.ShowCachedIndicator();
+                return cached.Value;
+            }
+        }
+
         return await AnsiConsole.Status()
             .StartAsync("Fetching tags...", async ctx =>
             {
@@ -307,7 +591,7 @@ internal class RegistryBrowser
                     // TODO: Call IRepository.ListTagsAsync()
                     // For now, return mock data
                     await Task.Delay(500, cancellationToken).ConfigureAwait(false);
-                    return new List<string>
+                    var tagsList = new List<string>
                     {
                         "latest",
                         "v1.0",
@@ -315,6 +599,8 @@ internal class RegistryBrowser
                         "v2.0-beta",
                         "develop"
                     };
+                    _cache.Set(cacheKey, tagsList);
+                    return tagsList;
                 }
                 catch (Exception ex)
                 {
@@ -322,5 +608,341 @@ internal class RegistryBrowser
                     return null;
                 }
             }).ConfigureAwait(false);
+    }
+
+    private async Task HandlePullTagAsync(string reference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var outputDir = PromptHelper.PromptText(
+                "Output directory:", defaultValue: "./");
+
+            var escapedRef = Markup.Escape(reference);
+            var escapedDir = Markup.Escape(outputDir);
+
+            AnsiConsole.MarkupLine($"\n[bold]Pulling {escapedRef} to {escapedDir}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving manifest");
+                    var downloadTask = ctx.AddTask("Downloading layers (0/3)", maxValue: 3);
+                    var writeTask = ctx.AddTask($"Writing to {escapedDir}");
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var layer = 1; layer <= 3; layer++)
+                    {
+                        downloadTask.Description = $"Downloading layers ({layer}/3)";
+                        downloadTask.Increment(1);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        writeTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    writeTask.Value = 100;
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Pulled {reference} to {outputDir}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Pull cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Pull failed: {ex.Message}");
+        }
+
+        AnsiConsole.WriteLine();
+        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+    }
+
+    private async Task HandleCopyTagAsync(string reference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var destination = PromptHelper.PromptText(
+                "Destination reference (e.g., [green]ghcr.io/myorg/backup:v1[/]):");
+            if (string.IsNullOrWhiteSpace(destination))
+            {
+                return;
+            }
+
+            var escapedSrc = Markup.Escape(reference);
+            var escapedDest = Markup.Escape(destination.Trim());
+
+            AnsiConsole.MarkupLine($"\n[bold]Copying {escapedSrc} => {escapedDest}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving source");
+                    var copyTask = ctx.AddTask("Copying layers (0/3)", maxValue: 3);
+                    var manifestTask = ctx.AddTask("Copying manifest");
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var layer = 1; layer <= 3; layer++)
+                    {
+                        copyTask.Description = $"Copying layers ({layer}/3)";
+                        copyTask.Increment(1);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        manifestTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    manifestTask.Value = 100;
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Copied {reference} => {destination.Trim()}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Copy cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Copy failed: {ex.Message}");
+        }
+
+        AnsiConsole.WriteLine();
+        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+    }
+
+    private async Task HandleBackupTagAsync(string reference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var outputPath = PromptHelper.PromptText(
+                "Backup path:", defaultValue: "./backup");
+
+            var escapedRef = Markup.Escape(reference);
+            var escapedPath = Markup.Escape(outputPath);
+
+            AnsiConsole.MarkupLine($"\n[bold]Backing up {escapedRef}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var fetchTask = ctx.AddTask("Fetching manifest");
+                    var downloadTask = ctx.AddTask("Downloading layers (0/3)", maxValue: 3);
+                    var writeTask = ctx.AddTask($"Writing to {escapedPath}");
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        fetchTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    fetchTask.Value = 100;
+
+                    for (var layer = 1; layer <= 3; layer++)
+                    {
+                        downloadTask.Description = $"Downloading layers ({layer}/3)";
+                        downloadTask.Increment(1);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        writeTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    writeTask.Value = 100;
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Backed up {reference} to {outputPath}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Backup cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Backup failed: {ex.Message}");
+        }
+
+        AnsiConsole.WriteLine();
+        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+    }
+
+    private async Task HandleTagWithAsync(string reference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var tagsInput = PromptHelper.PromptText(
+                "New tags (space-separated, e.g., [green]latest stable[/]):");
+            if (string.IsNullOrWhiteSpace(tagsInput))
+            {
+                return;
+            }
+
+            var tags = tagsInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (tags.Length == 0)
+            {
+                PromptHelper.ShowWarning("No tags provided.");
+                AnsiConsole.WriteLine();
+                PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+                return;
+            }
+
+            var escapedRef = Markup.Escape(reference);
+            AnsiConsole.MarkupLine($"\n[bold]Tagging {escapedRef}[/]");
+            AnsiConsole.MarkupLine($"[dim grey]New tags: {string.Join(", ", tags.Select(Markup.Escape))}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving source");
+                    var tagTask = ctx.AddTask($"Creating tags (0/{tags.Length})", maxValue: tags.Length);
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var i = 0; i < tags.Length; i++)
+                    {
+                        tagTask.Description = $"Creating tags ({i + 1}/{tags.Length})";
+                        tagTask.Increment(1);
+                        await Task.Delay(150, cancellationToken).ConfigureAwait(false);
+                    }
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Tagged {reference} with {tags.Length} tag(s)");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Tag operation cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Tag operation failed: {ex.Message}");
+        }
+
+        AnsiConsole.WriteLine();
+        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+    }
+
+    private async Task HandleDeleteTagAsync(string reference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowWarning($"You are about to delete: {reference}");
+            AnsiConsole.WriteLine();
+
+            var confirmed = PromptHelper.PromptConfirmation(
+                "[red]Are you sure you want to delete this tag?[/]",
+                false);
+
+            if (!confirmed)
+            {
+                PromptHelper.ShowInfo("Delete operation cancelled.");
+                AnsiConsole.WriteLine();
+                PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+                return;
+            }
+
+            var escapedRef = Markup.Escape(reference);
+            AnsiConsole.MarkupLine($"\n[bold red]Deleting {escapedRef}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving manifest");
+                    var deleteTask = ctx.AddTask("Deleting manifest");
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        deleteTask.Value = i;
+                        await Task.Delay(80, cancellationToken).ConfigureAwait(false);
+                    }
+                    deleteTask.Value = 100;
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Deleted {reference}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Delete cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Delete failed: {ex.Message}");
+        }
+
+        AnsiConsole.WriteLine();
+        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
     }
 }

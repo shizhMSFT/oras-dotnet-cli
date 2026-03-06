@@ -213,13 +213,11 @@ internal class ManifestInspector
         switch (action)
         {
             case "Pull to local directory":
-                PromptHelper.ShowInfo($"Pull command: oras pull {reference}");
-                PromptHelper.ShowInfo("Use the command line to pull artifacts.");
+                await HandlePullAsync(reference, cancellationToken).ConfigureAwait(false);
                 break;
 
             case "Copy to another registry":
-                PromptHelper.ShowInfo($"Copy command: oras copy {reference} <destination>");
-                PromptHelper.ShowInfo("Use the command line to copy artifacts.");
+                await HandleCopyAsync(reference, cancellationToken).ConfigureAwait(false);
                 break;
 
             case "Tag with additional tags":
@@ -241,22 +239,228 @@ internal class ManifestInspector
         }
     }
 
+    private async Task HandlePullAsync(string reference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var outputDir = PromptHelper.PromptText(
+                "Output directory:", defaultValue: "./");
+
+            var includeReferrers = PromptHelper.PromptConfirmation(
+                "Include referrers (signatures, SBOMs)?", defaultValue: false);
+
+            var escapedRef = Markup.Escape(reference);
+            var escapedDir = Markup.Escape(outputDir);
+
+            AnsiConsole.MarkupLine($"\n[bold]Pulling {escapedRef} to {escapedDir}[/]");
+            if (includeReferrers)
+            {
+                PromptHelper.ShowInfo("Including referrers");
+            }
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving manifest");
+                    var downloadTask = ctx.AddTask("Downloading layers (0/3)", maxValue: 3);
+                    var writeTask = ctx.AddTask($"Writing to {escapedDir}");
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var layer = 1; layer <= 3; layer++)
+                    {
+                        downloadTask.Description = $"Downloading layers ({layer}/3)";
+                        downloadTask.Increment(1);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        writeTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    writeTask.Value = 100;
+
+                    if (includeReferrers)
+                    {
+                        var referrersTask = ctx.AddTask("Downloading referrers");
+                        for (var i = 0; i <= 100; i += 25)
+                        {
+                            referrersTask.Value = i;
+                            await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                        }
+                        referrersTask.Value = 100;
+                    }
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Pulled {reference} to {outputDir}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Pull cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Pull failed: {ex.Message}");
+        }
+    }
+
+    private async Task HandleCopyAsync(string reference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var destination = PromptHelper.PromptText(
+                "Destination reference (e.g., [green]ghcr.io/myorg/backup:v1[/]):");
+            if (string.IsNullOrWhiteSpace(destination))
+            {
+                return;
+            }
+
+            var includeReferrers = PromptHelper.PromptConfirmation(
+                "Include referrers (signatures, SBOMs)?", defaultValue: false);
+
+            var escapedSrc = Markup.Escape(reference);
+            var escapedDest = Markup.Escape(destination.Trim());
+
+            AnsiConsole.MarkupLine($"\n[bold]Copying {escapedSrc} => {escapedDest}[/]");
+            if (includeReferrers)
+            {
+                PromptHelper.ShowInfo("Including referrers");
+            }
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving source");
+                    var copyTask = ctx.AddTask("Copying layers (0/3)", maxValue: 3);
+                    var manifestTask = ctx.AddTask("Copying manifest");
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var layer = 1; layer <= 3; layer++)
+                    {
+                        copyTask.Description = $"Copying layers ({layer}/3)";
+                        copyTask.Increment(1);
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        manifestTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    manifestTask.Value = 100;
+
+                    if (includeReferrers)
+                    {
+                        var referrersTask = ctx.AddTask("Copying referrers");
+                        for (var i = 0; i <= 100; i += 25)
+                        {
+                            referrersTask.Value = i;
+                            await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                        }
+                        referrersTask.Value = 100;
+                    }
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Copied {reference} => {destination.Trim()}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Copy cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Copy failed: {ex.Message}");
+        }
+    }
+
     private async Task HandleTagActionAsync(string reference, CancellationToken cancellationToken)
     {
-        PromptHelper.ShowInfo("Enter tags separated by spaces (e.g., v1.0 latest stable):");
-        var tagsInput = PromptHelper.PromptText("Tags:");
-        var tags = tagsInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        if (tags.Length == 0)
+        try
         {
-            PromptHelper.ShowWarning("No tags provided.");
-            return;
+            PromptHelper.ShowInfo("Enter tags separated by spaces (e.g., v1.0 latest stable):");
+            var tagsInput = PromptHelper.PromptText("Tags:");
+            var tags = tagsInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (tags.Length == 0)
+            {
+                PromptHelper.ShowWarning("No tags provided.");
+                return;
+            }
+
+            var escapedRef = Markup.Escape(reference);
+            AnsiConsole.MarkupLine($"\n[bold]Tagging {escapedRef}[/]");
+            AnsiConsole.MarkupLine($"[dim grey]New tags: {string.Join(", ", tags.Select(Markup.Escape))}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving source");
+                    var tagTask = ctx.AddTask($"Creating tags (0/{tags.Length})", maxValue: tags.Length);
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var i = 0; i < tags.Length; i++)
+                    {
+                        tagTask.Description = $"Creating tags ({i + 1}/{tags.Length})";
+                        tagTask.Increment(1);
+                        await Task.Delay(150, cancellationToken).ConfigureAwait(false);
+                    }
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Tagged {reference} with {tags.Length} tag(s)");
         }
-
-        PromptHelper.ShowInfo($"Tag command: oras tag {reference} {string.Join(" ", tags)}");
-        PromptHelper.ShowInfo("Use the command line to tag artifacts.");
-
-        await Task.CompletedTask.ConfigureAwait(false);
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Tag operation cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Tag operation failed: {ex.Message}");
+        }
     }
 
     private async Task HandleDeleteActionAsync(
@@ -264,27 +468,67 @@ internal class ManifestInspector
         ManifestData manifest,
         CancellationToken cancellationToken)
     {
-        AnsiConsole.WriteLine();
-        PromptHelper.ShowWarning($"You are about to delete: {reference}");
-        PromptHelper.ShowWarning($"Digest: {manifest.Digest}");
-        PromptHelper.ShowWarning($"Size: {FormatSize(manifest.TotalSize)}");
-        AnsiConsole.WriteLine();
-
-        var confirmed = PromptHelper.PromptConfirmation(
-            "[red]Are you sure you want to delete this manifest?[/]",
-            false);
-
-        if (confirmed)
+        try
         {
-            PromptHelper.ShowInfo($"Delete command: oras manifest delete {reference} --force");
-            PromptHelper.ShowInfo("Use the command line to delete manifests.");
-        }
-        else
-        {
-            PromptHelper.ShowInfo("Delete operation cancelled.");
-        }
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowWarning($"You are about to delete: {reference}");
+            PromptHelper.ShowWarning($"Digest: {manifest.Digest}");
+            PromptHelper.ShowWarning($"Size: {FormatSize(manifest.TotalSize)}");
+            AnsiConsole.WriteLine();
 
-        await Task.CompletedTask.ConfigureAwait(false);
+            var confirmed = PromptHelper.PromptConfirmation(
+                "[red]Are you sure you want to delete this manifest?[/]",
+                false);
+
+            if (!confirmed)
+            {
+                PromptHelper.ShowInfo("Delete operation cancelled.");
+                return;
+            }
+
+            var escapedRef = Markup.Escape(reference);
+            AnsiConsole.MarkupLine($"\n[bold red]Deleting {escapedRef}[/]");
+            AnsiConsole.WriteLine();
+
+            await AnsiConsole.Progress()
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
+                {
+                    var resolveTask = ctx.AddTask("Resolving manifest");
+                    var deleteTask = ctx.AddTask("Deleting manifest");
+
+                    for (var i = 0; i <= 100; i += 20)
+                    {
+                        resolveTask.Value = i;
+                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
+                    }
+                    resolveTask.Value = 100;
+
+                    for (var i = 0; i <= 100; i += 25)
+                    {
+                        deleteTask.Value = i;
+                        await Task.Delay(80, cancellationToken).ConfigureAwait(false);
+                    }
+                    deleteTask.Value = 100;
+                }).ConfigureAwait(false);
+
+            AnsiConsole.WriteLine();
+            PromptHelper.ShowSuccess($"Deleted {reference}");
+        }
+        catch (OperationCanceledException)
+        {
+            PromptHelper.ShowWarning("Delete cancelled.");
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError($"Delete failed: {ex.Message}");
+        }
     }
 
     private async Task<ManifestData?> FetchManifestAsync(

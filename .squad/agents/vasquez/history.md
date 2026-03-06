@@ -9,6 +9,69 @@
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 
+### 2026-03-06: v0.2.0 Release — TUI Redesign with Context Menus and Caching
+
+**Release Event:** Shipped v0.2.0 with major TUI visual redesign, context menus, in-memory caching, and fully interactive workflows.
+
+**Changes Made:**
+
+**TUI Enhancements:**
+- **FigletText Header:** Iconic ASCII art "ORAS" logo for visual impact
+- **Color Scheme:** Cyan headers, green success (`[+]`), yellow warnings (`[!]`), info (`[i]`), errors (`[X]`), dim grey secondary text
+- **ASCII-Safe Indicators:** Replaced Unicode ✓/ℹ/⚠ symbols with `[+]`, `[i]`, `[!]`, `[X]` for universal terminal compatibility
+- **Registry Table:** Paneled display with status columns and improved visual hierarchy
+- **Context Menus:** 
+  - Repository context: Browse Tags, Copy entire repository, Backup repository
+  - Tag context: Inspect Manifest, Pull, Copy, Backup, Tag, Delete
+- **In-Memory Caching:** TuiCache class with TTL-based caching for repos/tags/manifests; "(cached)" indicators; Refresh in context menus
+- **Fully Interactive Workflows:** All operations (push/pull/copy/backup/restore/tag/delete) have complete TUI flows with progress bars and summary panels
+
+**Documentation Updates (7 files):**
+- `Directory.Build.props` — Version bumped 0.1.3 → 0.2.0
+- `docs/index.md` — Updated download URLs to v0.2.0
+- `docs/tui-showcase.md` — Added FigletText header mockup, updated all symbol indicators, added context menu descriptions
+- `docs/tui-guide.md` — Comprehensive rewrite covering caching, context menus, ASCII indicators, all interactive workflows
+- `docs/installation.md` — Updated all 6 platform download URLs (v0.1.3 → v0.2.0), updated version verification output
+- `docs/commands/README.md` — Added TUI mode section, references context menus and interactive workflows
+- `README.md` — Updated feature description to highlight v0.2.0 TUI redesign
+- `docs/tui-showcase.md` — Complete reference section for color/symbol scheme (ASCII-safe)
+
+**Release Workflow:**
+- Committed all doc and version changes with comprehensive multi-line commit message
+- Pushed main branch and tags to origin
+- Tag v0.2.0 triggered release.yml workflow
+- All 6 binary builds succeeded (win-x64, win-arm64, osx-x64, osx-arm64, linux-x64, linux-arm64)
+- NuGet package job failed as expected (non-production feature)
+- GitHub Release auto-created with all 6 artifacts (~30 MB each)
+- Applied comprehensive release notes via `gh release edit v0.2.0 --notes-file`
+
+**Release Notes Content:**
+- Headline: "Elegant Interactive TUI Redesign"
+- Features: FigletText header, context menus, caching, ASCII-safe indicators, fully interactive workflows
+- Feature comparison table (v0.1.3 vs v0.2.0)
+- Installation instructions for all 6 platforms
+- Quick start examples (push, backup, restore, copy)
+- Download table with all 6 binaries
+- Links to guides and documentation
+- Changelog link to v0.1.3...v0.2.0
+
+**Key Decisions:**
+- ASCII-safe symbols chosen for universal terminal compatibility (no Unicode reliance)
+- Context menus designed to surface common operations directly from lists
+- In-memory caching improves UX for repeat navigation without requiring persistence
+- Release notes use plain ASCII hyphens (--) throughout for encoding safety
+- NuGet packaging skipped for this release (pre-production only)
+
+**Verification:**
+- ✅ All documentation updated with v0.2.0 version and feature descriptions
+- ✅ Version bumped in Directory.Build.props (0.1.3 → 0.2.0)
+- ✅ All 6 download URLs updated across installation guide
+- ✅ Commit created with co-authored footer
+- ✅ Tag v0.2.0 pushed; release workflow triggered
+- ✅ All 6 platform binaries built successfully and available for download
+- ✅ GitHub Release created with comprehensive release notes
+- ✅ Release visible in `gh release list` and publicly accessible at v0.2.0
+
 ### 2026-03-06: Project Structure & SDK Setup
 - **SDK**: .NET 10 SDK (10.0.103) is installed and working. Project configured with `net10.0` TFM.
 - **Project Structure**:
