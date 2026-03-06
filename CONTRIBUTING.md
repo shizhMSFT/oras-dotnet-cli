@@ -2,6 +2,33 @@
 
 Thank you for your interest in contributing to the oras .NET CLI! This document provides guidelines and information for contributors.
 
+## Project Origin
+
+This project was bootstrapped with [Squad](https://github.com/bradygaster/squad) — an AI team orchestrator for GitHub Copilot. The following prompt was used to initialize the repository and generate the initial design review, PRD, sprint plan, and implementation:
+
+<details>
+<summary>Original project prompt</summary>
+
+> I'm building `oras` — a cross-platform CLI tool for managing OCI artifacts in container registries, reimagined in .NET 10 with a fancy TUI. This is the .NET equivalent of https://github.com/oras-project/oras (the Go CLI), but built on top of the oras-dotnet library (https://github.com/oras-project/oras-dotnet, NuGet: OrasProject.Oras).
+>
+> Stack: .NET 10, C#, System.CommandLine, Spectre.Console, OrasProject.Oras.
+>
+> Key requirements:
+> - Full command parity with the oras Go CLI (push, pull, attach, discover, copy, manifest/blob/repo/tag operations, login/logout, resolve)
+> - All registry interactions go through the oras-dotnet library — no direct HTTP/REST API calls
+> - Non-interactive mode: traditional CLI with flags/arguments for scripting and CI/CD
+> - Interactive mode: running `oras` with no arguments launches a rich TUI dashboard (Spectre.Console) for browsing registries, viewing manifest trees, pushing/pulling with live progress
+> - Fancy TUI throughout: progress bars, tree views, styled tables, syntax-highlighted JSON, selection prompts, live displays
+> - xUnit tests with testcontainers-dotnet for integration testing against a local OCI registry
+> - Cross-platform (Windows, macOS, Linux)
+> - GitHub repo hygiene: GitHub Actions for PR gates (build, test, lint), release pipelines (binaries to GitHub Releases), and GitHub Pages deployment; issue templates (bug, feature, question), PR template; in-repo docs (README, CONTRIBUTING.md, architecture overview) plus a GitHub Pages site (getting started, command reference, interactive mode walkthrough, installation)
+>
+> Set up the team. Across all work — code AND GitHub workflows — prioritize performance, cost efficiency, security, and quality. Start with a design review, then a PRD, then sprint planning, then build it — full parallel fan-out.
+
+</details>
+
+The AI team produced the design review (`docs/design-review.md`), PRD (`docs/prd.md`), and sprint plan before building the implementation. See `.squad/decisions.md` for the full decision log.
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
