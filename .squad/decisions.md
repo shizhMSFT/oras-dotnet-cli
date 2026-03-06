@@ -622,6 +622,183 @@ dotnet test --filter "Category!=SkipIfNoCredentialStore"
 
 ---
 
+### DEC-TUI-001: Sprint 3 TUI Implementation Architecture
+
+**Date:** 2026-03-06  
+**Author:** Bishop (TUI Dev)  
+**Status:** ✅ Implemented
+
+**Decision:** Implement TUI as four separate, focused classes in `src/Oras.Cli/Tui/`:
+- `PromptHelper` — Reusable prompt utilities
+- `Dashboard` — Main entry point
+- `RegistryBrowser` — Browse flow
+- `ManifestInspector` — Manifest viewer
+
+**Rationale:**
+- Clear separation of concerns
+- Reusable prompt patterns via PromptHelper
+- Each component has a single, well-defined responsibility
+- Easy to test and maintain independently
+
+**TTY Detection in Program.cs:**
+Check `Dashboard.ShouldLaunchTui(args)` before creating root command. Criteria:
+- No command-line arguments
+- stdout not redirected (`!Console.IsOutputRedirected`)
+- stderr not redirected (`!Console.IsErrorRedirected`)
+
+**Spectre.Console API Adaptations:**
+- Use `Markup` with `Escape()` for JSON display instead of `JsonText` (not available in v0.50.0)
+- `Rule.Justification` instead of `Alignment`
+- `Style(foreground: Color.Cyan1)` constructor syntax
+- `SelectionPrompt.EnableSearch()` for searchable lists
+
+**Browser Actions:**
+Show command-line equivalents instead of executing directly (services not fully integrated yet).
+
+**Progressive Disclosure in Manifest Inspector:**
+Use menu-driven navigation instead of showing all views at once (keeps screen uncluttered, works in smaller terminals).
+
+**Reusable PromptHelper Patterns:**
+Centralize all prompts in static class with consistent signatures for uniform UX across all TUI components.
+
+**Implementation Notes:**
+- Build passes with 0 errors
+- All TUI components follow file-scoped namespace pattern
+- Uses existing ICredentialService and DockerConfigStore
+- No breaking changes to existing command infrastructure
+
+---
+
+### DEC-REL-001: Native AOT Configuration Strategy
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** ✅ Implemented
+
+**Decision:** Configure AOT at project level with publish profiles per RID, not via Directory.Build.props
+
+**Rationale:**
+- Project-level configuration keeps AOT settings isolated to the CLI app (not test projects)
+- Publish profiles provide RID-specific overrides without complex MSBuild conditions
+- Easier to maintain and understand than conditional properties in Directory.Build.props
+
+**Configuration:**
+```xml
+<PublishAot>true</PublishAot>
+<InvariantGlobalization>true</InvariantGlobalization>
+<PublishTrimmed>true</PublishTrimmed>
+<SelfContained>true</SelfContained>
+<PublishSingleFile>true</PublishSingleFile>
+<TrimMode>link</TrimMode>
+<IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+```
+
+---
+
+### DEC-REL-002: Trimmer Preservation Strategy
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** ✅ Implemented
+
+**Decision:** Use `TrimmerRoots.xml` descriptor file + `<TrimmerRootAssembly>` elements for trimming control
+
+**Rationale:**
+- Spectre.Console.Json namespace was being trimmed, causing compilation errors
+- TrimmerRoots.xml provides fine-grained control (namespace-level preservation)
+- TrimmerRootAssembly provides coarse-grained safety net (entire assemblies)
+- Both approaches together ensure AOT compatibility
+
+**Preserved Types:**
+- `Spectre.Console.Json` namespace (used by ManifestInspector and TextFormatter)
+- Entire assemblies: Spectre.Console, System.CommandLine, OrasProject.Oras
+
+**Known Warning:**
+- `IL3050` on `AnsiConsole.WriteException()` — Spectre.Console's exception formatter uses reflection
+- Accepted as non-critical (only affects error display formatting)
+
+---
+
+### DEC-REL-003: Release Pipeline Architecture
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** ✅ Implemented
+
+**Decision:** Multi-job GitHub Actions workflow with build matrix and separate NuGet job
+
+**Workflow Structure:**
+1. **Build job**: Matrix across 6 RIDs → publish → compress → upload artifacts
+2. **Release job**: Download all artifacts → create GitHub Release with changelog
+3. **NuGet job**: Pack as `dotnet tool` → push to NuGet.org (only for stable releases)
+
+**Compression Strategy:**
+- Windows: `.zip` (standard for Windows users)
+- Unix: `.tar.gz` (preserves execute permissions, better compression)
+
+**Rationale:**
+- Build matrix parallelizes RID builds across appropriate runners
+- Separate NuGet job prevents accidental pre-release tool publishing
+- GitHub-hosted runners provide clean environments
+
+---
+
+### DEC-REL-004: GitHub Pages Documentation Approach
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** ✅ Implemented
+
+**Decision:** Use Jekyll (GitHub's native generator) with Cayman theme, not docfx
+
+**Rationale:**
+- Jekyll is GitHub Pages' native generator (no build step required, automatic deployment)
+- Cayman theme is clean, professional, and works well with technical documentation
+- Simpler than docfx (no .NET build, no separate CI step for docs)
+- Markdown-first approach matches existing docs structure
+
+**Site Structure:**
+```
+docs/
+├── index.md           # Homepage
+├── installation.md    # Installation guide (existing)
+├── tui-guide.md      # TUI guide (new)
+├── commands/         # Command reference (existing)
+└── _config.yml       # Jekyll configuration
+```
+
+**Workflow:**
+- Trigger: Push to `main` with `docs/**` changes
+- Uses `actions/jekyll-build-pages@v1` for consistency with GitHub's Jekyll environment
+- Deploys via `actions/deploy-pages@v4` with proper permissions
+
+---
+
+### DEC-REL-005: NuGet Tool Publishing Conditions
+
+**Date:** 2026-03-06  
+**Author:** Vasquez (DevOps)  
+**Status:** ✅ Implemented
+
+**Decision:** Make NuGet publishing optional and conditional on non-pre-release tags
+
+**Rationale:**
+- Not all users will configure `NUGET_API_KEY` secret
+- Pre-release tags (e.g., `v1.0.0-beta`) should not publish to NuGet.org
+- Binary releases are primary distribution method; `dotnet tool` is secondary
+
+**Conditions:**
+- Only runs if `NUGET_API_KEY` secret is set
+- Skipped for pre-release tags (tags containing `-`)
+- Fails silently if secret is missing
+
+**Tool Configuration:**
+```bash
+dotnet pack -p:PackAsTool=true -p:PackageId=oras -p:ToolCommandName=oras
+```
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
