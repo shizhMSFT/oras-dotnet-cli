@@ -1,5 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Spectre.Console;
 
 namespace Oras.Output;
@@ -16,7 +17,7 @@ internal sealed class TextFormatter : IOutputFormatter
         _console = console ?? AnsiConsole.Console;
     }
 
-    public bool SupportsInteractivity => !_console.Profile.Capabilities.Interactive;
+    public bool SupportsInteractivity => _console.Profile.Capabilities.Interactive;
 
     public void WriteStatus(string message)
     {
@@ -50,14 +51,9 @@ internal sealed class TextFormatter : IOutputFormatter
         }
     }
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    public void WriteDescriptor(object descriptor)
+    public void WriteDescriptor(DescriptorResult descriptor)
     {
-        var json = JsonSerializer.Serialize(descriptor, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+        var json = JsonSerializer.Serialize(descriptor, OutputJsonContext.Default.DescriptorResult);
         WriteJson(json, pretty: true);
     }
 
@@ -103,10 +99,24 @@ internal sealed class TextFormatter : IOutputFormatter
         }
     }
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
     public void WriteJson(string json, bool pretty = false)
     {
+        if (pretty)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var formatted = FormatJson(doc, indented: true);
+                _console.WriteLine(formatted);
+                return;
+            }
+            catch
+            {
+                _console.WriteLine(json);
+                return;
+            }
+        }
+
         if (_console.Profile.Capabilities.Ansi)
         {
             // Use Spectre.Console's JSON syntax highlighting
@@ -117,32 +127,23 @@ internal sealed class TextFormatter : IOutputFormatter
         }
         else
         {
-            // Plain JSON output
-            if (pretty)
-            {
-                try
-                {
-                    var doc = JsonDocument.Parse(json);
-                    var formatted = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
-                    _console.WriteLine(formatted);
-                }
-                catch
-                {
-                    _console.WriteLine(json);
-                }
-            }
-            else
-            {
-                _console.WriteLine(json);
-            }
+            _console.WriteLine(json);
         }
     }
 
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    public void WriteObject(object obj)
+    public void WriteObject<T>(T value, JsonTypeInfo<T> jsonTypeInfo)
     {
-        var json = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(value, jsonTypeInfo);
         WriteJson(json, pretty: true);
+    }
+
+    private static string FormatJson(JsonDocument document, bool indented)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = indented });
+        JsonSerializer.Serialize(writer, document, OutputJsonContext.Default.JsonDocument);
+        writer.Flush();
+        return Encoding.UTF8.GetString(stream.ToArray());
     }
 
     private Tree BuildSpectreTree(TreeNode node)

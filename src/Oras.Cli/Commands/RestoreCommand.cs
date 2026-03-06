@@ -132,18 +132,16 @@ internal static class RestoreCommand
                         await Task.Delay(100).ConfigureAwait(false);
                     }).ConfigureAwait(false);
 
-                var summary = new
-                {
-                    source = path,
-                    destination = reference,
+                var summary = new RestoreResult(
+                    path,
+                    reference,
                     recursive,
                     concurrency,
-                    status = "simulated"
-                };
+                    "simulated");
 
                 if (format == "json")
                 {
-                    formatter.WriteObject(summary);
+                    formatter.WriteObject(summary, OutputJsonContext.Default.RestoreResult);
                 }
                 else
                 {

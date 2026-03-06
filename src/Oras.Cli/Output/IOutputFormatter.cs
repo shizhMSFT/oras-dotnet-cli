@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization.Metadata;
+
 namespace Oras.Output;
 
 /// <summary>
@@ -18,7 +20,7 @@ internal interface IOutputFormatter
     /// <summary>
     /// Write a descriptor object (used by resolve, blob fetch --descriptor, etc.)
     /// </summary>
-    void WriteDescriptor(object descriptor);
+    void WriteDescriptor(DescriptorResult descriptor);
 
     /// <summary>
     /// Write a list of items in table format (e.g., repo ls, repo tags)
@@ -38,7 +40,7 @@ internal interface IOutputFormatter
     /// <summary>
     /// Write arbitrary structured data as JSON
     /// </summary>
-    void WriteObject(object obj);
+    void WriteObject<T>(T value, JsonTypeInfo<T> jsonTypeInfo);
 
     /// <summary>
     /// Check if the formatter supports interactive features (progress bars, prompts)

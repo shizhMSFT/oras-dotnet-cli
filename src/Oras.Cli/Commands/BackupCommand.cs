@@ -149,20 +149,18 @@ internal static class BackupCommand
                         """{"imageLayoutVersion":"1.0.0"}""").ConfigureAwait(false);
                 }
 
-                var summary = new
-                {
+                var summary = new BackupResult(
                     reference,
                     output,
-                    layers = simulatedLayerCount,
-                    totalSize = FormatSize(simulatedTotalSize),
+                    simulatedLayerCount,
+                    FormatSize(simulatedTotalSize),
                     recursive,
-                    platform = platform ?? "(all)",
-                    status = "simulated"
-                };
+                    platform ?? "(all)",
+                    "simulated");
 
                 if (format == "json")
                 {
-                    formatter.WriteObject(summary);
+                    formatter.WriteObject(summary, OutputJsonContext.Default.BackupResult);
                 }
                 else
                 {

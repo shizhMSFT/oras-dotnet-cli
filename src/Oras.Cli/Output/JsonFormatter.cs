@@ -1,5 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Spectre.Console;
 
 namespace Oras.Output;
@@ -11,42 +11,29 @@ namespace Oras.Output;
 internal sealed class JsonFormatter : IOutputFormatter
 {
     private readonly IAnsiConsole _console;
-    private readonly JsonSerializerOptions _options;
 
     public JsonFormatter(IAnsiConsole? console = null)
     {
         _console = console ?? AnsiConsole.Console;
-        _options = new JsonSerializerOptions
-        {
-            WriteIndented = false,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
     }
 
     public bool SupportsInteractivity => false;
 
     public void WriteStatus(string message)
     {
-        WriteObject(new { status = "success", message });
+        var result = new StatusResult("success", message);
+        WriteObject(result, OutputJsonContext.Default.StatusResult);
     }
 
     public void WriteError(string message, string? recommendation = null)
     {
-        object obj;
-        if (recommendation != null)
-        {
-            obj = new { status = "error", error = message, recommendation };
-        }
-        else
-        {
-            obj = new { status = "error", error = message, recommendation = (string?)null };
-        }
-        WriteObject(obj);
+        var result = new ErrorResult("error", message, recommendation);
+        WriteObject(result, OutputJsonContext.Default.ErrorResult);
     }
 
-    public void WriteDescriptor(object descriptor)
+    public void WriteDescriptor(DescriptorResult descriptor)
     {
-        WriteObject(descriptor);
+        WriteObject(descriptor, OutputJsonContext.Default.DescriptorResult);
     }
 
     public void WriteTable(string[] headers, IEnumerable<string[]> rows)
@@ -61,12 +48,14 @@ internal sealed class JsonFormatter : IOutputFormatter
             return dict;
         }).ToArray();
 
-        WriteObject(new { items });
+        var result = new TableResult(items);
+        WriteObject(result, OutputJsonContext.Default.TableResult);
     }
 
     public void WriteTree(TreeNode root)
     {
-        WriteObject(ConvertTreeToJson(root));
+        var result = ConvertTree(root);
+        WriteObject(result, OutputJsonContext.Default.TreeNodeResult);
     }
 
     public void WriteJson(string json, bool pretty = false)
@@ -75,31 +64,18 @@ internal sealed class JsonFormatter : IOutputFormatter
         _console.WriteLine(json);
     }
 
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize<TValue>(TValue, JsonSerializerOptions)")]
-    public void WriteObject(object obj)
+    public void WriteObject<T>(T value, JsonTypeInfo<T> jsonTypeInfo)
     {
-        var json = JsonSerializer.Serialize(obj, _options);
+        var json = JsonSerializer.Serialize(value, jsonTypeInfo);
         _console.WriteLine(json);
     }
 
-    private object ConvertTreeToJson(TreeNode node)
+    private static TreeNodeResult ConvertTree(TreeNode node)
     {
-        var obj = new Dictionary<string, object>
-        {
-            ["label"] = node.Label
-        };
+        var children = node.Children.Count > 0
+            ? node.Children.Select(ConvertTree).ToArray()
+            : Array.Empty<TreeNodeResult>();
 
-        if (node.Metadata.Count > 0)
-        {
-            obj["metadata"] = node.Metadata;
-        }
-
-        if (node.Children.Count > 0)
-        {
-            obj["children"] = node.Children.Select(ConvertTreeToJson).ToArray();
-        }
-
-        return obj;
+        return new TreeNodeResult(node.Label, node.Metadata, children);
     }
 }

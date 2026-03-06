@@ -12,7 +12,6 @@ internal static class ErrorHandler
     /// <summary>
     /// Wrap a command action with error handling.
     /// </summary>
-    [RequiresDynamicCode("Calls Spectre.Console.AnsiConsole.WriteException(Exception, ExceptionFormats)")]
     public static async Task<int> HandleAsync(Func<Task<int>> action)
     {
         try
@@ -36,10 +35,10 @@ internal static class ErrorHandler
                 "Check your network connection and registry address. Ensure the registry is accessible.");
             return 1;
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException)
         {
             WriteError(
-                "Operation timed out or was cancelled",
+                "Operation cancelled",
                 "Try again or check your network connection.");
             return 1;
         }
@@ -57,10 +56,7 @@ internal static class ErrorHandler
                 "This may be a bug. Please report it at https://github.com/oras-project/oras-dotnet-cli/issues");
 
             // In debug mode, show stack trace
-            if (Environment.GetEnvironmentVariable("ORAS_DEBUG") == "1")
-            {
-                AnsiConsole.WriteException(ex);
-            }
+            WriteDebugException(ex);
 
             return 1;
         }
@@ -68,11 +64,20 @@ internal static class ErrorHandler
 
     private static void WriteError(string message, string? recommendation)
     {
-        AnsiConsole.MarkupLine($"[red]Error:[/] {message}");
+        AnsiConsole.MarkupLine($"[red]Error:[/] {Markup.Escape(message)}");
 
         if (!string.IsNullOrEmpty(recommendation))
         {
-            AnsiConsole.MarkupLine($"[yellow]Recommendation:[/] {recommendation}");
+            AnsiConsole.MarkupLine($"[yellow]Recommendation:[/] {Markup.Escape(recommendation)}");
+        }
+    }
+
+    [RequiresDynamicCode("Calls Spectre.Console.AnsiConsole.WriteException(Exception, ExceptionFormats)")]
+    private static void WriteDebugException(Exception ex)
+    {
+        if (Environment.GetEnvironmentVariable("ORAS_DEBUG") == "1")
+        {
+            AnsiConsole.WriteException(ex);
         }
     }
 }

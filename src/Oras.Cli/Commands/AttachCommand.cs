@@ -42,13 +42,6 @@ internal static class AttachCommand
         var formatOptions = new FormatOptions();
         formatOptions.ApplyTo(command);
 
-        // Add artifact type option (REQUIRED for attach)
-        var artifactTypeOpt = new Option<string?>("--artifact-type")
-        {
-            Description = "Artifact type (required)"
-        };
-        command.Add(artifactTypeOpt);
-
         command.SetAction(async parseResult =>
         {
             return await ErrorHandler.HandleAsync(async () =>
@@ -60,7 +53,7 @@ internal static class AttachCommand
                 var files = parseResult.GetValue(filesArg) ?? Array.Empty<string>();
                 var plainHttp = parseResult.GetValue(remoteOptions.PlainHttpOption);
                 var insecure = parseResult.GetValue(remoteOptions.InsecureOption);
-                var artifactType = parseResult.GetValue(artifactTypeOpt);
+                var artifactType = parseResult.GetValue(packerOptions.ArtifactTypeOption);
                 var format = parseResult.GetValue(formatOptions.FormatOption) ?? "text";
 
                 // Validate required artifact type

@@ -121,19 +121,17 @@ internal static class CopyCommand
                         await Task.Delay(100).ConfigureAwait(false);
                     }).ConfigureAwait(false);
 
-                var summary = new
-                {
+                var summary = new CopyResult(
                     source,
                     destination,
                     recursive,
                     concurrency,
-                    platform = platform ?? "(all)",
-                    status = "simulated"
-                };
+                    platform ?? "(all)",
+                    "simulated");
 
                 if (format == "json")
                 {
-                    formatter.WriteObject(summary);
+                    formatter.WriteObject(summary, OutputJsonContext.Default.CopyResult);
                 }
                 else
                 {

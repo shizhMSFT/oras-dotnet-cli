@@ -31,7 +31,7 @@ internal static class ManifestDeleteCommand
         formatOptions.ApplyTo(command);
 
         // Add force option (required in non-interactive mode)
-        var forceOpt = new Option<bool>("--force", "-f")
+        var forceOpt = new Option<bool>("--force")
         {
             Description = "Force deletion without confirmation",
             DefaultValueFactory = _ => false

@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using OrasProject.Oras.Registry.Remote;
 using Spectre.Console;
 
 namespace Oras.Commands;
@@ -64,14 +65,8 @@ internal static class VersionCommand
     {
         try
         {
-            var orasAssembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(a => a.GetName().Name == "OrasProject.Oras");
-
-            if (orasAssembly != null)
-            {
-                var version = orasAssembly.GetName().Version?.ToString() ?? "unknown";
-                return version;
-            }
+            var version = typeof(Repository).Assembly.GetName().Version?.ToString();
+            return version ?? "unknown";
         }
         catch
         {

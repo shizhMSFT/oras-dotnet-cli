@@ -86,7 +86,7 @@ internal static class PushCommand
                 foreach (var filePath in files)
                 {
                     var fileInfo = new FileInfo(filePath);
-                    var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                    await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
 
                     var descriptor = new Descriptor
                     {
@@ -101,7 +101,6 @@ internal static class PushCommand
 
                     // Push blob
                     await repo.Blobs.PushAsync(descriptor, fileStream).ConfigureAwait(false);
-                    fileStream.Close();
 
                     fileDescriptors.Add(descriptor);
                     AnsiConsole.MarkupLine($"[green]✓[/] Pushed {Path.GetFileName(filePath)}");

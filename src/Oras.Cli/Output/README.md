@@ -88,12 +88,11 @@ string manifestJson = await GetManifestJsonAsync();
 formatter.WriteJson(manifestJson, pretty: true);
 
 // For objects that need serialization
-var descriptor = new
-{
-    MediaType = "application/vnd.oci.image.manifest.v1+json",
-    Digest = "sha256:abc123...",
-    Size = 512
-};
+var descriptor = new DescriptorResult(
+    "application/vnd.oci.image.manifest.v1+json",
+    "sha256:abc123...",
+    512,
+    annotations: null);
 formatter.WriteDescriptor(descriptor);
 ```
 

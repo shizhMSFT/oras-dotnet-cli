@@ -15,7 +15,7 @@ internal static class Program
         // Set up dependency injection
         var services = new ServiceCollection();
         services.AddOrasServices();
-        var serviceProvider = services.BuildServiceProvider();
+        await using var serviceProvider = services.BuildServiceProvider();
 
         // S3-01: Launch TUI dashboard if no args in TTY mode
         if (Dashboard.ShouldLaunchTui(args))

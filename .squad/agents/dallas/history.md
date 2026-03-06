@@ -311,3 +311,41 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 
 **Build Status:** ✅ 0 errors, 262 warnings (all pre-existing); no new trimming warnings
 
+### Codebase Review — 2026-03-06
+
+**Scope:** Full code review of all 21 commands, 9 services, 4 credential files, 5 output files, 6 option files, and cross-cutting infrastructure.
+
+**Critical Findings:**
+1. **CancellationToken dropped everywhere:** `CommandExtensions.SetAction` wraps `Func<ParseResult, Task<int>>` but the native cancellationToken is never forwarded. All 19 non-version commands are uncancellable.
+2. **AOT-breaking reflection in formatters:** `JsonFormatter.WriteObject` and `TextFormatter.WriteObject/WriteDescriptor/WriteJson` use `JsonSerializer.Serialize(object, options)` — reflection-based, will fail under AOT. Credentials correctly use source-generated `CredentialJsonContext`.
+3. **TextFormatter.SupportsInteractivity is inverted:** Returns `!Interactive` — will show prompts in non-interactive mode and skip them in interactive mode.
+4. **`-f` alias conflict:** `FormatOptions` defines `--format -f`, and delete commands define `--force -f` — will crash at runtime when both are applied.
+5. **FileStream leak in PushCommand:** `new FileStream(...)` not wrapped in `using`/`await using`.
+
+**Architecture Patterns Observed:**
+- Commands are static classes with `Create(IServiceProvider)` factory — consistent, testable
+- Options use composable `ApplyTo(Command)` pattern — clean
+- Service resolution is manual `GetService(typeof(T)) as T` cast — should use `GetRequiredService<T>()`
+- Reference parsing logic (`NormalizeRegistry`, `ExtractTag`, `ParseReference`, `ValidateReference`) is scattered across 5 command files — needs extraction into `ReferenceHelper`
+- `FormatSize()` utility duplicated in BackupCommand and ProgressRenderer
+- `CommonOptions` (debug, verbose) defined but never wired to any command
+
+**Key File Paths for Future Reference:**
+- `CommandExtensions.cs` — the chokepoint where CancellationToken must be threaded through
+- `Output/JsonFormatter.cs:78-83` — AOT-breaking WriteObject
+- `Output/TextFormatter.cs:19` — inverted SupportsInteractivity
+- `Options/FormatOptions.cs:17` — `-f` alias that conflicts with `--force -f`
+- `Credentials/CredentialJsonContext.cs` — the correct pattern for AOT-safe JSON (use this as template for output types)
+- `Services/ServiceCollectionExtensions.cs` — DI registrations
+
+**Review delivered to:** `.squad/decisions/inbox/dallas-codebase-review.md`
+
+### 2026-03-07 — Output AOT + CLI Safety Fixes
+
+**Key Updates:**
+- Replaced anonymous JSON output with concrete records and added `OutputJsonContext` for source-generated serialization.
+- `IOutputFormatter` now uses typed `WriteObject<T>` with `JsonTypeInfo`; JSON/text formatters use the new context and descriptor model, and text interactivity detection is corrected.
+- P1 cleanup: removed `--force -f` alias conflict, fixed PushCommand stream disposal, removed duplicate artifact-type option in attach, and disposed the ServiceProvider.
+
+**Build Status:** ✅ `dotnet build src\Oras.Cli\oras.csproj --no-restore` (warnings only)
+
