@@ -325,3 +325,59 @@
 - ✅ 6 binary assets: oras-win-x64.zip, oras-win-arm64.zip, oras-osx-x64.tar.gz, oras-osx-arm64.tar.gz, oras-linux-x64.tar.gz, oras-linux-arm64.tar.gz
 - ✅ GitHub Pages docs deployed
 - ✅ No stale v0.2.0 references in user-facing docs
+
+### 2026-03-07: v0.4.0 Release — Full Command Implementation
+
+**Release Event:** Shipped v0.4.0, marking a major milestone — **all 21 commands are now fully functional with real OCI registry operations**. Previously, only 3 commands (login, logout, version) worked; v0.4.0 implements all 18 remaining commands with real OrasProject.Oras v0.5.0 API calls.
+
+**Context:**
+Since v0.3.0, Dallas implemented all previously-stub commands:
+- **Artifact Operations:** push, pull, attach, copy, discover, resolve, tag
+- **Manifest Operations:** manifest fetch, manifest push, manifest delete, manifest fetch-config
+- **Blob Operations:** blob fetch, blob push, blob delete
+- **Repository Operations:** repo ls, repo tags
+- **Backup/Restore:** backup, restore
+
+**New Infrastructure:**
+- **RegistryService** with 3-tier auth waterfall: explicit credentials → stored credentials from DockerConfigStore → anonymous
+- **7 new AOT-compatible output models:** PushResult, PullResult, AttachResult, TagResult, ListResult, DiscoverResult, DeleteResult (all use source-generated JSON serialization)
+- **New dependency:** Microsoft.Extensions.Caching.Memory v9.0.0 for OCI auth token caching
+- **Files changed:** 32 files, +2674 lines added, -1800 lines removed
+
+**Documentation Updates (4 files):**
+- Directory.Build.props — Version bumped 0.3.0 → 0.4.0
+- docs/release-notes/v0.4.0.md — Created comprehensive release notes following v0.3.0 format; nav_order: 100; documented 3-tier auth waterfall, 7 new output models, Microsoft.Extensions.Caching.Memory dependency; included full changelog link to shizhMSFT repo (v0.3.0...v0.4.0); included non-breaking upgrade instructions
+- docs/index.md — Updated download URL v0.3.0 → v0.4.0; updated command count from 20 to 21; added callout section highlighting all commands now fully functional
+- README.md — Updated features line from "Full Go CLI Parity — 20+ commands" to "All 21 Commands Fully Implemented — Every command works with real OCI registry operations (v0.4.0+)"
+
+**Release Workflow:**
+- Commit 51f9e3d with message "release: v0.4.0 — full command implementation" and co-authored trailer
+- Tag 0.4.0 pushed to origin
+- GitHub Release created: https://github.com/shizhMSFT/oras-dotnet-cli/releases/tag/v0.4.0
+- Release notes applied from docs/release-notes/v0.4.0.md
+
+**Impact:**
+- **Before v0.4.0:** 3 working commands (login, logout, version), 18 stubs
+- **After v0.4.0:** All 21 commands fully functional with real OCI registry operations
+- **Milestone:** CLI transitioned from prototype to production-ready tool with complete Go ORAS CLI parity
+
+**Verification:**
+- ✅ Version bumped in Directory.Build.props (0.3.0 → 0.4.0)
+- ✅ Release notes created at docs/release-notes/v0.4.0.md with nav_order: 100
+- ✅ Download URLs updated to v0.4.0 in docs/index.md
+- ✅ Command count updated from 20 to 21 across documentation
+- ✅ Callout section added to docs/index.md highlighting full functionality
+- ✅ README.md features updated to emphasize all commands implemented
+- ✅ Commit created with co-authored footer
+- ✅ Tag v0.4.0 pushed; release workflow will trigger
+- ✅ GitHub Release created with comprehensive release notes
+- ✅ Decision documented at .squad/decisions/inbox/vasquez-v040-release.md
+
+**Key Decisions:**
+- Release notes follow v0.3.0 format for consistency with emoji section headers and detailed feature descriptions
+- Emphasized "all 21 commands" vs "20+ commands" to clearly communicate completeness
+- Highlighted 3-tier auth waterfall as a key architectural improvement
+- Documented all 7 new output models for structured JSON output
+- Changelog link uses shizhMSFT repo (correct upstream)
+- This is a non-breaking upgrade from v0.3.0
+

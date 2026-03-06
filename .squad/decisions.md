@@ -3223,3 +3223,88 @@ The architecture is well-organized with clean separation between commands, servi
 
 *Reviewed by Ripley — Lead/Architect*
 
+
+
+---
+
+# Decision: v0.4.0 Release — Full Command Implementation
+
+**Date:** 2026-03-07  
+**Status:** Implemented  
+**Owner:** Vasquez (DevOps/Docs)
+
+## Context
+
+Since v0.3.0, Dallas implemented all 18 previously-stub CLI commands with real OrasProject.Oras v0.5.0 API calls. This is a major milestone — the CLI transitioned from 3 working commands (login, logout, version) to all 21 commands fully functional with real OCI registry operations.
+
+### Commits since v0.3.0:
+- `b235e51` — docs: add CI formatting learning to Dallas history
+- `aa84e51` — style: fix whitespace formatting for CI compliance
+- `b037a5b` — squad: Merge decision inbox, archive sprint batch decisions
+- `c155f71` — feat: implement all 18 CLI commands with real OrasProject.Oras v0.5.0 API calls
+
+### Implementation Highlights:
+- **All 18 commands implemented:** push, pull, attach, copy, discover, resolve, tag, manifest (fetch/push/delete/fetch-config), blob (fetch/push/delete), repo (ls/tags), backup, restore
+- **New infrastructure:** RegistryService with 3-tier auth waterfall (explicit creds → stored creds from DockerConfigStore → anonymous)
+- **7 new output models:** PushResult, PullResult, AttachResult, TagResult, ListResult, DiscoverResult, DeleteResult (all AOT-compatible)
+- **New dependency:** Microsoft.Extensions.Caching.Memory v9.0.0 for OCI auth token caching
+- **Files changed:** 32 files, +2674, -1800 lines
+
+## Decision
+
+Released **v0.4.0** as the "Full Command Implementation" milestone release.
+
+## Changes Made
+
+### 1. Version Bump
+- Updated `Directory.Build.props` line 9: `0.3.0` → `0.4.0`
+
+### 2. Release Notes
+- Created `docs/release-notes/v0.4.0.md` following v0.3.0 format
+- nav_order: 100 (higher than v0.3.0's 99)
+- Highlighted transition from 3 working commands to all 21
+- Documented 3-tier auth waterfall
+- Documented 7 new AOT-compatible output models
+- Documented new dependency: Microsoft.Extensions.Caching.Memory v9.0.0
+- Full changelog link: `https://github.com/shizhMSFT/oras-dotnet-cli/compare/v0.3.0...v0.4.0`
+- Included upgrading instructions (non-breaking upgrade)
+
+### 3. Documentation Updates
+- **docs/index.md:**
+  - Updated download URL from v0.3.0 to v0.4.0
+  - Updated "20 commands" → "21 commands"
+  - Added callout section highlighting all commands now fully functional
+- **README.md:**
+  - Updated features line from "Full Go CLI Parity — 20+ commands" → "All 21 Commands Fully Implemented — Every command works with real OCI registry operations (v0.4.0+)"
+
+### 4. Git Operations
+```bash
+git add -A
+git commit -m "release: v0.4.0 — full command implementation" --trailer "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+git tag v0.4.0
+git push origin main --tags
+gh release create v0.4.0 --title "v0.4.0 — Full Command Implementation" --notes-file docs/release-notes/v0.4.0.md
+```
+
+Release created: https://github.com/shizhMSFT/oras-dotnet-cli/releases/tag/v0.4.0
+
+## Rationale
+
+This release marks the CLI's transition from prototype to production-ready tool. All 21 commands now work with real OCI registries, achieving full parity with the Go ORAS CLI. The 3-tier auth waterfall, AOT-compatible output models, and auth token caching make this a robust, performant tool for artifact management workflows.
+
+## Impact
+
+- **Before v0.4.0:** 3 working commands (login, logout, version), 18 stubs
+- **After v0.4.0:** All 21 commands fully functional with real registry operations
+- **Developer experience:** Users can now use the .NET CLI for all ORAS workflows
+- **Documentation:** Comprehensive release notes explain all new functionality
+- **Release automation:** Tag-triggered GitHub Actions workflow will build all 6 platform binaries
+
+## Related Files
+
+- `Directory.Build.props` (version bump)
+- `docs/release-notes/v0.4.0.md` (new release notes)
+- `docs/index.md` (download URLs, command count, callout)
+- `README.md` (features update)
+- Git tag: `v0.4.0`
+- GitHub Release: https://github.com/shizhMSFT/oras-dotnet-cli/releases/tag/v0.4.0

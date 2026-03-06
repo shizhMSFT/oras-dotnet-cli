@@ -1,0 +1,10 @@
+squad: Merge v0.4.0 release decision, create logs
+
+- Merge .squad/decisions/inbox/vasquez-v040-release.md into decisions.md
+- Delete inbox file after merge
+- Create orchestration log: orchestration-log/2026-03-06T16-30-13Z-vasquez.md
+- Create session log: log/2026-03-06T16-30-13Z-v040-release.md
+
+v0.4.0 release successfully documented. All commands now fully functional with real OCI registry operations.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
