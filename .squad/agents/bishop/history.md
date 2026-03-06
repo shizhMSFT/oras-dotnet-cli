@@ -158,4 +158,20 @@
 - Integrate command services (PullService, CopyService, TagService) for browser actions
 - Add unit tests for TUI components using Spectre.Console test infrastructure
 
+### 2026-03-06 — TUI Showcase Documentation Page
+
+**Created `docs/tui-showcase.md`:**
+- Visual showcase page for the GitHub Pages docs site (just-the-docs theme, dark mode, nav_order: 6)
+- Six feature sections with realistic terminal output blocks: Dashboard, Registry Browser, Push/Pull Progress, Manifest Inspector, Tag Management, Interactive Selection
+- Terminal output modeled directly from actual Spectre.Console widget rendering in `src/Oras.Cli/Tui/` and `src/Oras.Cli/Output/ProgressRenderer.cs`
+- Uses Unicode box-drawing characters (╔═╗, ╭─╮, ├──, └──) to reproduce Spectre.Console `Panel`, `Table`, `Tree` widgets
+- Includes color reference table mapping Spectre.Console styles (Cyan1, Green, Yellow, Red, Blue, Grey) to their TUI roles
+- Non-TTY fallback output shown alongside interactive versions for progress bars
+- Added link to TUI Showcase in `docs/index.md` Documentation section table
+
+**Documentation conventions learned:**
+- just-the-docs uses `nav_order` for sidebar ordering; existing pages use 1–5, new pages should follow sequentially
+- `{: .text-yellow-300 }` Kramdown attribute for section header styling in dark mode
+- `text` code fence (not `ansi`) is the reliable choice for terminal output in Jekyll/GitHub Pages — `ansi` fences have no standard rendering support
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->

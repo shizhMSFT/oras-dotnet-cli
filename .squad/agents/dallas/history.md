@@ -257,4 +257,24 @@ System.CommandLine 2.0.3 removed System.CommandLine.IO namespace and TestConsole
 
 **Blockers Removed:** System.CommandLine validation approach confirmed; Option.Validators usage documented
 
+### Migration Guide Documentation — 2026-03-06
+
+**Created:** `docs/migration.md` — comprehensive migration guide for Go CLI → .NET CLI switchers.
+
+**Content Coverage:**
+- Introduction with value proposition (TUI, Spectre.Console, .NET integration, single binaries)
+- Side-by-side installation instructions (Go CLI vs .NET CLI)
+- Full command comparison table (19 commands) with implementation status (✅ Full / ⚠️ Partial / 🔲 Stub)
+- Key differences: output format (`go-template` dropped per DEC-PRD-002), rich terminal output, credential compatibility
+- What's New section: TUI dashboard, native .NET integration, shell completions
+- Known limitations: stubbed commands (14), partially implemented (2), missing features (`--oci-layout`, `--distribution-spec`)
+- Quick migration checklist with coexistence strategy
+
+**Implementation Status Audit (accurate as of Sprint 2):**
+- ✅ Fully implemented: `login`, `logout`, `version` (3 commands)
+- ⚠️ Partially implemented: `push`, `pull` (2 commands — scaffolded with some working logic)
+- 🔲 Stubbed (NotImplementedException): All remaining 14 commands (tag, resolve, copy, attach, discover, repo ls/tags, manifest fetch/push/delete/fetch-config, blob fetch/push/delete)
+
+**Cross-references:** Updated `docs/index.md` documentation table to include migration guide link.
+
 

@@ -22,6 +22,7 @@ A cross-platform .NET 10 CLI for managing OCI artifacts in container registries 
 ---
 
 [![CI](https://github.com/shizhMSFT/oras-dotnet-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/shizhMSFT/oras-dotnet-cli/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/shizhMSFT/oras-dotnet-cli?include_prereleases&label=release)](https://github.com/shizhMSFT/oras-dotnet-cli/releases)
 [![License](https://img.shields.io/github/license/shizhMSFT/oras-dotnet-cli)](https://github.com/shizhMSFT/oras-dotnet-cli/blob/main/LICENSE)
 
 ---
@@ -48,13 +49,14 @@ A cross-platform .NET 10 CLI for managing OCI artifacts in container registries 
 ### Install
 
 ```bash
-# Option 1: Download pre-built binary from GitHub Releases
-# Available: oras-win-x64.exe, oras-linux-x64, oras-osx-arm64, etc.
+# Option 1: Download pre-built binary (Linux x64 example)
+curl -LO https://github.com/shizhMSFT/oras-dotnet-cli/releases/download/v0.1.0-alpha.1/oras-linux-x64.tar.gz
+tar -xzf oras-linux-x64.tar.gz && chmod +x oras-linux-x64
+sudo mv oras-linux-x64 /usr/local/bin/oras
 
 # Option 2: Build from source
 git clone https://github.com/shizhMSFT/oras-dotnet-cli.git
-cd oras-dotnet-cli
-dotnet build -c Release
+cd oras-dotnet-cli && dotnet build -c Release
 ```
 
 See the [Installation Guide](installation) for detailed instructions.
@@ -108,7 +110,9 @@ oras tui
 |:------|:------------|
 | [Command Reference](commands/) | Complete reference for all 20 commands and options |
 | [Installation Guide](installation) | Platform-specific installation instructions |
+| [Migration Guide](migration) | Switching from the Go oras CLI to the .NET CLI |
 | [TUI Guide](tui-guide) | Using the interactive terminal UI dashboard |
+| [TUI Showcase](tui-showcase) | Visual tour of every TUI screen and feature |
 | [Shell Completions](shell-completions) | Tab completion for bash, zsh, PowerShell, fish |
 
 ---

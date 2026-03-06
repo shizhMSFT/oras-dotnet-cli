@@ -129,3 +129,20 @@
 - ✅ Single-file binary: 10.45 MB (win-x64)
 - ✅ Release workflow ready for tag-triggered deployment
 - ✅ Documentation site ready for GitHub Pages deployment
+
+### 2026-03-06: First Preview Release v0.1.0-alpha.1
+
+**Release Workflow Fixes:**
+- Disabled AOT and trimming for alpha release (`-p:PublishAot=false -p:PublishTrimmed=false`) to avoid runtime issues with untested trim/AOT compatibility
+- Added explicit `--self-contained true` and `-p:PublishSingleFile=true` flags to `dotnet publish` in release.yml for deterministic builds regardless of csproj defaults
+- Used YAML `>-` folded scalar for multi-line publish command readability
+
+**Versioning:**
+- Set `<Version>0.1.0-alpha.1</Version>` in `Directory.Build.props` (applies to all projects in the solution)
+- SemVer pre-release suffix (`-alpha.1`) causes the release workflow to: (1) mark GitHub Release as pre-release, (2) skip NuGet publishing
+- Tag format: `v0.1.0-alpha.1` — the `v` prefix triggers the release workflow, the `-` triggers pre-release detection
+
+**Verification:**
+- ✅ Build passes locally with version set
+- ✅ Tag push triggered Release workflow (run #22754009025)
+- ✅ NuGet job correctly skipped (tag contains `-`)
