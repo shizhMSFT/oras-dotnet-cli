@@ -188,7 +188,7 @@ internal class RegistryBrowser
                 ? $"[green]Repositories in {Markup.Escape(registryHost)}:[/]"
                 : $"[green]Repositories in {Markup.Escape(registryHost)} (Total: {repositories.Count}):[/]";
 
-            var selectedRepo = PromptHelper.PromptSelectionWithSearch(title, repoChoices);
+            var selectedRepo = PromptHelper.PromptSelection(title, repoChoices, enableSearch: true);
 
             if (selectedRepo == backOption)
             {
@@ -383,8 +383,7 @@ internal class RegistryBrowser
             PromptHelper.ShowError($"Copy failed: {ex.Message}");
         }
 
-        AnsiConsole.WriteLine();
-        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+        PromptHelper.PressEnterToContinue();
     }
 
     private async Task HandleBackupRepositoryAsync(
@@ -455,8 +454,7 @@ internal class RegistryBrowser
             PromptHelper.ShowError($"Backup failed: {ex.Message}");
         }
 
-        AnsiConsole.WriteLine();
-        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+        PromptHelper.PressEnterToContinue();
     }
 
     /// <summary>
@@ -489,9 +487,10 @@ internal class RegistryBrowser
             tagChoices.Add(refreshOption);
             tagChoices.Add(backOption);
 
-            var selectedTag = PromptHelper.PromptSelectionWithSearch(
+            var selectedTag = PromptHelper.PromptSelection(
                 $"[green]Tags for {repository} (Total: {tags.Count}):[/]",
-                tagChoices);
+                tagChoices,
+                enableSearch: true);
 
             if (selectedTag == backOption)
             {
@@ -612,337 +611,79 @@ internal class RegistryBrowser
 
     private async Task HandlePullTagAsync(string reference, CancellationToken cancellationToken)
     {
-        try
-        {
-            var outputDir = PromptHelper.PromptText(
-                "Output directory:", defaultValue: "./");
+        var outputDir = PromptHelper.PromptText(
+            "Output directory:", defaultValue: "./");
 
-            var escapedRef = Markup.Escape(reference);
-            var escapedDir = Markup.Escape(outputDir);
-
-            AnsiConsole.MarkupLine($"\n[bold]Pulling {escapedRef} to {escapedDir}[/]");
-            AnsiConsole.WriteLine();
-
-            await AnsiConsole.Progress()
-                .AutoClear(false)
-                .HideCompleted(false)
-                .Columns(
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new SpinnerColumn())
-                .StartAsync(async ctx =>
-                {
-                    var resolveTask = ctx.AddTask("Resolving manifest");
-                    var downloadTask = ctx.AddTask("Downloading layers (0/3)", maxValue: 3);
-                    var writeTask = ctx.AddTask($"Writing to {escapedDir}");
-
-                    for (var i = 0; i <= 100; i += 20)
-                    {
-                        resolveTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    resolveTask.Value = 100;
-
-                    for (var layer = 1; layer <= 3; layer++)
-                    {
-                        downloadTask.Description = $"Downloading layers ({layer}/3)";
-                        downloadTask.Increment(1);
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    for (var i = 0; i <= 100; i += 25)
-                    {
-                        writeTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    writeTask.Value = 100;
-                }).ConfigureAwait(false);
-
-            AnsiConsole.WriteLine();
-            PromptHelper.ShowSuccess($"Pulled {reference} to {outputDir}");
-        }
-        catch (OperationCanceledException)
-        {
-            PromptHelper.ShowWarning("Pull cancelled.");
-        }
-        catch (Exception ex)
-        {
-            PromptHelper.ShowError($"Pull failed: {ex.Message}");
-        }
-
-        AnsiConsole.WriteLine();
-        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+        await ArtifactActions.RunPullAsync(
+            _serviceProvider,
+            reference,
+            outputDir,
+            includeReferrers: false,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task HandleCopyTagAsync(string reference, CancellationToken cancellationToken)
     {
-        try
+        var destination = PromptHelper.PromptText(
+            "Destination reference (e.g., [green]ghcr.io/myorg/backup:v1[/]):");
+        if (string.IsNullOrWhiteSpace(destination))
         {
-            var destination = PromptHelper.PromptText(
-                "Destination reference (e.g., [green]ghcr.io/myorg/backup:v1[/]):");
-            if (string.IsNullOrWhiteSpace(destination))
-            {
-                return;
-            }
-
-            var escapedSrc = Markup.Escape(reference);
-            var escapedDest = Markup.Escape(destination.Trim());
-
-            AnsiConsole.MarkupLine($"\n[bold]Copying {escapedSrc} => {escapedDest}[/]");
-            AnsiConsole.WriteLine();
-
-            await AnsiConsole.Progress()
-                .AutoClear(false)
-                .HideCompleted(false)
-                .Columns(
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new SpinnerColumn())
-                .StartAsync(async ctx =>
-                {
-                    var resolveTask = ctx.AddTask("Resolving source");
-                    var copyTask = ctx.AddTask("Copying layers (0/3)", maxValue: 3);
-                    var manifestTask = ctx.AddTask("Copying manifest");
-
-                    for (var i = 0; i <= 100; i += 20)
-                    {
-                        resolveTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    resolveTask.Value = 100;
-
-                    for (var layer = 1; layer <= 3; layer++)
-                    {
-                        copyTask.Description = $"Copying layers ({layer}/3)";
-                        copyTask.Increment(1);
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    for (var i = 0; i <= 100; i += 25)
-                    {
-                        manifestTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    manifestTask.Value = 100;
-                }).ConfigureAwait(false);
-
-            AnsiConsole.WriteLine();
-            PromptHelper.ShowSuccess($"Copied {reference} => {destination.Trim()}");
-        }
-        catch (OperationCanceledException)
-        {
-            PromptHelper.ShowWarning("Copy cancelled.");
-        }
-        catch (Exception ex)
-        {
-            PromptHelper.ShowError($"Copy failed: {ex.Message}");
+            return;
         }
 
-        AnsiConsole.WriteLine();
-        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+        await ArtifactActions.RunCopyAsync(
+            _serviceProvider,
+            reference,
+            destination.Trim(),
+            includeReferrers: false,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task HandleBackupTagAsync(string reference, CancellationToken cancellationToken)
     {
-        try
-        {
-            var outputPath = PromptHelper.PromptText(
-                "Backup path:", defaultValue: "./backup");
+        var outputPath = PromptHelper.PromptText(
+            "Backup path:", defaultValue: "./backup");
 
-            var escapedRef = Markup.Escape(reference);
-            var escapedPath = Markup.Escape(outputPath);
-
-            AnsiConsole.MarkupLine($"\n[bold]Backing up {escapedRef}[/]");
-            AnsiConsole.WriteLine();
-
-            await AnsiConsole.Progress()
-                .AutoClear(false)
-                .HideCompleted(false)
-                .Columns(
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new SpinnerColumn())
-                .StartAsync(async ctx =>
-                {
-                    var fetchTask = ctx.AddTask("Fetching manifest");
-                    var downloadTask = ctx.AddTask("Downloading layers (0/3)", maxValue: 3);
-                    var writeTask = ctx.AddTask($"Writing to {escapedPath}");
-
-                    for (var i = 0; i <= 100; i += 20)
-                    {
-                        fetchTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    fetchTask.Value = 100;
-
-                    for (var layer = 1; layer <= 3; layer++)
-                    {
-                        downloadTask.Description = $"Downloading layers ({layer}/3)";
-                        downloadTask.Increment(1);
-                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    for (var i = 0; i <= 100; i += 25)
-                    {
-                        writeTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    writeTask.Value = 100;
-                }).ConfigureAwait(false);
-
-            AnsiConsole.WriteLine();
-            PromptHelper.ShowSuccess($"Backed up {reference} to {outputPath}");
-        }
-        catch (OperationCanceledException)
-        {
-            PromptHelper.ShowWarning("Backup cancelled.");
-        }
-        catch (Exception ex)
-        {
-            PromptHelper.ShowError($"Backup failed: {ex.Message}");
-        }
-
-        AnsiConsole.WriteLine();
-        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+        await ArtifactActions.RunBackupAsync(
+            _serviceProvider,
+            reference,
+            outputPath,
+            includeReferrers: false,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task HandleTagWithAsync(string reference, CancellationToken cancellationToken)
     {
-        try
+        var tagsInput = PromptHelper.PromptText(
+            "New tags (space-separated, e.g., [green]latest stable[/]):");
+        if (string.IsNullOrWhiteSpace(tagsInput))
         {
-            var tagsInput = PromptHelper.PromptText(
-                "New tags (space-separated, e.g., [green]latest stable[/]):");
-            if (string.IsNullOrWhiteSpace(tagsInput))
-            {
-                return;
-            }
-
-            var tags = tagsInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (tags.Length == 0)
-            {
-                PromptHelper.ShowWarning("No tags provided.");
-                AnsiConsole.WriteLine();
-                PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
-                return;
-            }
-
-            var escapedRef = Markup.Escape(reference);
-            AnsiConsole.MarkupLine($"\n[bold]Tagging {escapedRef}[/]");
-            AnsiConsole.MarkupLine($"[dim grey]New tags: {string.Join(", ", tags.Select(Markup.Escape))}[/]");
-            AnsiConsole.WriteLine();
-
-            await AnsiConsole.Progress()
-                .AutoClear(false)
-                .HideCompleted(false)
-                .Columns(
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new SpinnerColumn())
-                .StartAsync(async ctx =>
-                {
-                    var resolveTask = ctx.AddTask("Resolving source");
-                    var tagTask = ctx.AddTask($"Creating tags (0/{tags.Length})", maxValue: tags.Length);
-
-                    for (var i = 0; i <= 100; i += 20)
-                    {
-                        resolveTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    resolveTask.Value = 100;
-
-                    for (var i = 0; i < tags.Length; i++)
-                    {
-                        tagTask.Description = $"Creating tags ({i + 1}/{tags.Length})";
-                        tagTask.Increment(1);
-                        await Task.Delay(150, cancellationToken).ConfigureAwait(false);
-                    }
-                }).ConfigureAwait(false);
-
-            AnsiConsole.WriteLine();
-            PromptHelper.ShowSuccess($"Tagged {reference} with {tags.Length} tag(s)");
-        }
-        catch (OperationCanceledException)
-        {
-            PromptHelper.ShowWarning("Tag operation cancelled.");
-        }
-        catch (Exception ex)
-        {
-            PromptHelper.ShowError($"Tag operation failed: {ex.Message}");
+            return;
         }
 
-        AnsiConsole.WriteLine();
-        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+        var tags = tagsInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        await ArtifactActions.RunTagAsync(
+            _serviceProvider,
+            reference,
+            tags,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task HandleDeleteTagAsync(string reference, CancellationToken cancellationToken)
     {
-        try
-        {
-            AnsiConsole.WriteLine();
-            PromptHelper.ShowWarning($"You are about to delete: {reference}");
-            AnsiConsole.WriteLine();
-
-            var confirmed = PromptHelper.PromptConfirmation(
-                "[red]Are you sure you want to delete this tag?[/]",
-                false);
-
-            if (!confirmed)
-            {
-                PromptHelper.ShowInfo("Delete operation cancelled.");
-                AnsiConsole.WriteLine();
-                PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
-                return;
-            }
-
-            var escapedRef = Markup.Escape(reference);
-            AnsiConsole.MarkupLine($"\n[bold red]Deleting {escapedRef}[/]");
-            AnsiConsole.WriteLine();
-
-            await AnsiConsole.Progress()
-                .AutoClear(false)
-                .HideCompleted(false)
-                .Columns(
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new SpinnerColumn())
-                .StartAsync(async ctx =>
-                {
-                    var resolveTask = ctx.AddTask("Resolving manifest");
-                    var deleteTask = ctx.AddTask("Deleting manifest");
-
-                    for (var i = 0; i <= 100; i += 20)
-                    {
-                        resolveTask.Value = i;
-                        await Task.Delay(60, cancellationToken).ConfigureAwait(false);
-                    }
-                    resolveTask.Value = 100;
-
-                    for (var i = 0; i <= 100; i += 25)
-                    {
-                        deleteTask.Value = i;
-                        await Task.Delay(80, cancellationToken).ConfigureAwait(false);
-                    }
-                    deleteTask.Value = 100;
-                }).ConfigureAwait(false);
-
-            AnsiConsole.WriteLine();
-            PromptHelper.ShowSuccess($"Deleted {reference}");
-        }
-        catch (OperationCanceledException)
-        {
-            PromptHelper.ShowWarning("Delete cancelled.");
-        }
-        catch (Exception ex)
-        {
-            PromptHelper.ShowError($"Delete failed: {ex.Message}");
-        }
-
         AnsiConsole.WriteLine();
-        PromptHelper.PromptText("Press Enter to continue...", allowEmpty: true);
+        PromptHelper.ShowWarning($"You are about to delete: {reference}");
+        AnsiConsole.WriteLine();
+
+        var confirmed = PromptHelper.PromptConfirmation(
+            "[red]Are you sure you want to delete this tag?[/]",
+            false);
+
+        await ArtifactActions.RunDeleteAsync(
+            _serviceProvider,
+            reference,
+            confirmed,
+            cancellationToken).ConfigureAwait(false);
     }
 }

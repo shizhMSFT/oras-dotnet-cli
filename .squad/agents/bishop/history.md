@@ -338,4 +338,53 @@
 
 **Future work:** Unit test coverage for `NativeCredentialHelper.ListAsync` and `DockerConfigStore.ListRegistriesAsync` (Hicks task)
 
+### 2026-03-07 — TUI ArtifactActions Refactor (Shared Action Workflows)
+
+**Refactor outcomes:**
+- Added `ArtifactActions` to centralize pull/copy/backup/restore/tag/delete workflows with shared progress patterns and error handling.
+- Dashboard, RegistryBrowser, and ManifestInspector now delegate action execution to the shared runner, keeping prompts local to each view.
+- Added `PromptHelper.PressEnterToContinue()` and merged selection prompts with an `enableSearch` flag to remove repeated boilerplate.
+
+**Safety & polish updates:**
+- Escaped user-provided markup in dashboard registry table and manifest inspector header.
+- Login validation spinner now wraps the actual async validation call.
+- Replaced `Console.Clear()` calls with `AnsiConsole.Clear()` for consistent Spectre.Console output handling.
+- Introduced const action labels in Dashboard to avoid magic string comparisons.
+
+**Files created:**
+- `src/Oras.Cli/Tui/ArtifactActions.cs`
+
+**Files modified:**
+- `src/Oras.Cli/Tui/Dashboard.cs`
+- `src/Oras.Cli/Tui/RegistryBrowser.cs`
+- `src/Oras.Cli/Tui/ManifestInspector.cs`
+- `src/Oras.Cli/Tui/PromptHelper.cs`
+
+### 2026-03-07 — Full TUI Code Review (bishop-codebase-review.md)
+
+**Architectural findings:**
+- The #1 issue is code duplication: pull, copy, backup, tag, and delete workflows are implemented 3 times across Dashboard.cs, RegistryBrowser.cs, and ManifestInspector.cs (~800 lines duplicated). Refactoring plan: extract into shared `ArtifactActions.cs`.
+- RegistryBrowser.cs is the largest file (948 lines) with 6+ responsibilities. Should be split into RegistryBrowser (connection) + RepositoryBrowser (repo/tag lists + context menus).
+- Dashboard.cs (851 lines) is a god-class: the menu dispatch is clean but ~650 lines of action handlers should live in ArtifactActions.
+- ManifestInspector model classes (`ManifestData`, `LayerData`, `ReferrerData`) are private nested classes but will need sharing when real API integration happens.
+
+**Markup injection safety:**
+- `PromptHelper.Show*` methods are safe — they all call `Markup.Escape` internally.
+- Direct `AnsiConsole` calls and `Table.AddRow`/`Rule` constructors are the risk surface.
+- Found 2 unescaped user-input injection points: `Dashboard.cs:92` (registryTable.AddRow) and `ManifestInspector.cs:34` (Rule header with `reference`).
+
+**Spectre.Console patterns to enforce:**
+- Always use `Markup.Escape()` for ANY user-supplied or external data passed to `MarkupLine`, `AddRow`, `Rule`, `PanelHeader`.
+- Use `AnsiConsole.Clear()` instead of `Console.Clear()` for Spectre.Console pipeline consistency.
+- Color palette is consistent (Cyan1=headers, Green=success/actions, Yellow=warnings, Red=errors, Grey=secondary) but should be centralized in a `TuiColors` static class.
+
+**Missing PromptHelper utilities identified:**
+- `PressEnterToContinue()` — used 15+ times as a 2-line snippet across all files.
+- `CreateProgressContext()` — the `AnsiConsole.Progress().AutoClear(false).HideCompleted(false).Columns(...)` scaffold is repeated in every handler.
+- `ShowRule(string title)` — for consistent section headers.
+
+**Bug found:** `HandleLoginAsync` in Dashboard.cs has a fire-and-forget status spinner that exits immediately without wrapping the actual `ValidateCredentialsAsync` call.
+
+**Refactoring plan written:** 3-phase plan targeting ~1,200 lines total (down from ~2,592), with estimated file sizes of ~200 lines each after extraction.
+
 <!-- Append new learnings below. Each entry is something lasting about the project. -->

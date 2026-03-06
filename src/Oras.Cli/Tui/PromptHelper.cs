@@ -33,27 +33,15 @@ internal static class PromptHelper
                 .Secret());
     }
 
-    public static T PromptSelection<T>(string title, IEnumerable<T> choices, Func<T, string>? converter = null) where T : notnull
+    public static T PromptSelection<T>(
+        string title,
+        IEnumerable<T> choices,
+        Func<T, string>? converter = null,
+        bool enableSearch = false) where T : notnull
     {
         var prompt = new SelectionPrompt<T>()
             .Title(title)
-            .PageSize(10)
-            .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-            .AddChoices(choices);
-
-        if (converter != null)
-        {
-            prompt.UseConverter(converter);
-        }
-
-        return AnsiConsole.Prompt(prompt);
-    }
-
-    public static T PromptSelectionWithSearch<T>(string title, IEnumerable<T> choices, Func<T, string>? converter = null, bool enableSearch = true) where T : notnull
-    {
-        var prompt = new SelectionPrompt<T>()
-            .Title(title)
-            .PageSize(15)
+            .PageSize(enableSearch ? 15 : 10)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
             .AddChoices(choices);
 
@@ -119,5 +107,11 @@ internal static class PromptHelper
     public static void ShowCachedIndicator()
     {
         AnsiConsole.MarkupLine("[dim grey](cached)[/]");
+    }
+
+    public static void PressEnterToContinue()
+    {
+        AnsiConsole.WriteLine();
+        PromptText("Press Enter to continue...", allowEmpty: true);
     }
 }
