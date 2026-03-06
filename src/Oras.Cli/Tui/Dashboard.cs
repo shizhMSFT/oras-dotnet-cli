@@ -62,7 +62,7 @@ internal class Dashboard
 
         // Fancy ASCII art header
         var logo = new FigletText("ORAS")
-            .Centered()
+            .LeftJustified()
             .Color(Color.Cyan1);
         AnsiConsole.Write(logo);
 
