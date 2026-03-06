@@ -90,7 +90,7 @@ internal static class DiscoverCommand
                 {
                     // Build tree for text output
                     var root = new Output.TreeNode { Label = reference };
-                    
+
                     // Group by artifact type (use MediaType for grouping)
                     var grouped = referrers.GroupBy(r => r.MediaType);
                     foreach (var group in grouped)

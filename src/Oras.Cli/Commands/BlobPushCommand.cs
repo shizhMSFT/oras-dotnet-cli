@@ -91,7 +91,7 @@ internal static class BlobPushCommand
 
                 // Read file and compute digest
                 var fileInfo = new FileInfo(file);
-                
+
                 // Validate size if provided
                 if (size.HasValue && size.Value != fileInfo.Length)
                 {

@@ -94,7 +94,7 @@ internal static class AttachCommand
 
                     var fileBytes = await File.ReadAllBytesAsync(filePath, cancellationToken).ConfigureAwait(false);
                     var digest = ComputeSha256Digest(fileBytes);
-                    
+
                     var descriptor = new Descriptor
                     {
                         MediaType = layerMediaType,
@@ -129,7 +129,7 @@ internal static class AttachCommand
                 if (format == "json")
                 {
                     formatter.WriteDescriptor(new DescriptorResult(
-                        manifestDescriptor.MediaType, manifestDescriptor.Digest, 
+                        manifestDescriptor.MediaType, manifestDescriptor.Digest,
                         manifestDescriptor.Size, manifestDescriptor.Annotations as Dictionary<string, string>));
                 }
                 else

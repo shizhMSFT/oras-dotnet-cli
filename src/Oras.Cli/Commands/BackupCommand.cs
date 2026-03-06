@@ -168,7 +168,7 @@ internal static class BackupCommand
                     var configDigest = configElement.GetProperty("digest").GetString()!;
                     var configSize = configElement.GetProperty("size").GetInt64();
                     var configMediaType = configElement.GetProperty("mediaType").GetString() ?? "application/octet-stream";
-                    
+
                     var configDescriptor = new Descriptor
                     {
                         MediaType = configMediaType,
@@ -195,7 +195,7 @@ internal static class BackupCommand
                         var layerDigest = layer.GetProperty("digest").GetString()!;
                         var layerSize = layer.GetProperty("size").GetInt64();
                         var layerMediaType = layer.GetProperty("mediaType").GetString() ?? "application/octet-stream";
-                        
+
                         var layerDescriptor = new Descriptor
                         {
                             MediaType = layerMediaType,

@@ -87,7 +87,7 @@ internal static class PushCommand
                 foreach (var filePath in files)
                 {
                     var fileInfo = new FileInfo(filePath);
-                    
+
                     // Compute digest before pushing
                     var fileBytes = await File.ReadAllBytesAsync(filePath, cancellationToken).ConfigureAwait(false);
                     var digest = ComputeSha256Digest(fileBytes);
@@ -104,7 +104,7 @@ internal static class PushCommand
                     };
 
                     await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-                    
+
                     // Push blob
                     await repo.Blobs.PushAsync(descriptor, fileStream, cancellationToken).ConfigureAwait(false);
 
@@ -125,10 +125,10 @@ internal static class PushCommand
                 }
 
                 var manifestDescriptor = await Packer.PackManifestAsync(
-                    repo, 
+                    repo,
                     Packer.ManifestVersion.Version1_1,
-                    artifactType, 
-                    packOptions, 
+                    artifactType,
+                    packOptions,
                     cancellationToken).ConfigureAwait(false);
 
                 // Tag if reference has a tag

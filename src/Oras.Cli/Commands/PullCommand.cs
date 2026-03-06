@@ -131,7 +131,7 @@ internal static class PullCommand
                     var layerDigest = layer.GetProperty("digest").GetString()!;
                     var layerMediaType = layer.GetProperty("mediaType").GetString() ?? "application/octet-stream";
                     var layerSize = layer.GetProperty("size").GetInt64();
-                    
+
                     // Get filename from annotations
                     string fileName;
                     if (layer.TryGetProperty("annotations", out var annotationsEl) &&
@@ -146,7 +146,7 @@ internal static class PullCommand
                     }
 
                     var filePath = Path.Combine(outputDir, fileName);
-                    
+
                     if (keepOldFiles && File.Exists(filePath))
                     {
                         AnsiConsole.MarkupLine($"[yellow]Skipping {Markup.Escape(fileName)} (already exists)[/]");
@@ -169,7 +169,7 @@ internal static class PullCommand
                         {
                             Directory.CreateDirectory(parentDir);
                         }
-                        
+
                         await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
                         await blobStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
                     }

@@ -195,7 +195,7 @@ internal static class RestoreCommand
                         Digest = manifestDigest,
                         Size = manifestSize
                     };
-                    
+
                     var dstTag = ReferenceHelper.ExtractTag(reference) ?? "latest";
                     await using var manifestPushStream = File.OpenRead(manifestBlobPath);
                     await repo.Manifests.PushAsync(mDescriptor, manifestPushStream, dstTag, cancellationToken).ConfigureAwait(false);

@@ -26,14 +26,14 @@ internal class RegistryService : IRegistryService
         CancellationToken cancellationToken = default)
     {
         var client = await CreateClientAsync(registryHost, username, password, cancellationToken).ConfigureAwait(false);
-        
+
         var options = new RepositoryOptions
         {
             Client = client,
             Reference = Reference.Parse(registryHost),
             PlainHttp = plainHttp
         };
-        
+
         var registry = new Registry(options);
         return registry;
     }
@@ -48,16 +48,16 @@ internal class RegistryService : IRegistryService
     {
         var parsedRef = Reference.Parse(reference);
         var registryHost = parsedRef.Registry;
-        
+
         var client = await CreateClientAsync(registryHost, username, password, cancellationToken).ConfigureAwait(false);
-        
+
         var options = new RepositoryOptions
         {
             Client = client,
             Reference = parsedRef,
             PlainHttp = plainHttp
         };
-        
+
         var repository = new Repository(options);
         return repository;
     }
@@ -75,7 +75,7 @@ internal class RegistryService : IRegistryService
             var cache = new Cache(new MemoryCache(new MemoryCacheOptions()));
             return new Client(new HttpClient(), provider, cache);
         }
-        
+
         var storedCreds = await _credentialService.GetCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
         if (storedCreds.HasValue && !string.IsNullOrEmpty(storedCreds.Value.Username))
         {
@@ -84,7 +84,7 @@ internal class RegistryService : IRegistryService
             var cache = new Cache(new MemoryCache(new MemoryCacheOptions()));
             return new Client(new HttpClient(), provider, cache);
         }
-        
+
         return new PlainClient(new HttpClient());
     }
 }
