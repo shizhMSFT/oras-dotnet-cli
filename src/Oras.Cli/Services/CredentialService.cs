@@ -56,7 +56,15 @@ internal class CredentialService : ICredentialService
         string registryHost,
         CancellationToken cancellationToken = default)
     {
-        await _configStore.RemoveCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _configStore.RemoveCredentialsAsync(registryHost, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Best-effort removal — credential helpers or config store may fail
+            // in environments without full Docker setup (e.g., CI runners).
+        }
     }
 
     public async Task<(string? Username, string? Password)?> GetCredentialsAsync(
