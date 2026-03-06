@@ -24,6 +24,8 @@ internal class Dashboard
     private const string TagArtifactAction = "Tag Artifact";
     private const string BackupArtifactAction = "Backup Artifact";
     private const string RestoreArtifactAction = "Restore Artifact";
+    private const string ArtifactsAction = "Artifacts";
+    private const string BackAction = "Back";
     private const string QuitAction = "Quit";
 
     public Dashboard(IServiceProvider serviceProvider)
@@ -127,22 +129,12 @@ internal class Dashboard
             AnsiConsole.WriteLine();
         }
 
-        // Quick actions menu with grouped artifact operations
+        // Quick actions menu
         var prompt = new SelectionPrompt<string>()
             .Title("[green]Select an action:[/]")
             .PageSize(12)
             .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-            .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction)
-            .AddChoiceGroup("Artifacts", new[]
-            {
-                PushArtifactAction,
-                PullArtifactAction,
-                CopyArtifactAction,
-                TagArtifactAction,
-                BackupArtifactAction,
-                RestoreArtifactAction,
-            })
-            .AddChoices(QuitAction);
+            .AddChoices(BrowseRegistryAction, BrowseRepositoryTagsAction, LoginAction, ArtifactsAction, QuitAction);
 
         var action = AnsiConsole.Prompt(prompt);
 
@@ -168,29 +160,8 @@ internal class Dashboard
                     await HandleLoginAsync(cancellationToken).ConfigureAwait(false);
                     return true;
 
-                case PushArtifactAction:
-                    await HandlePushArtifactAsync(cancellationToken).ConfigureAwait(false);
-                    return true;
-
-                case PullArtifactAction:
-                    await HandlePullArtifactAsync(cancellationToken).ConfigureAwait(false);
-                    return true;
-
-                case CopyArtifactAction:
-                    await HandleCopyArtifactAsync(cancellationToken).ConfigureAwait(false);
-                    return true;
-
-                case BackupArtifactAction:
-                    await HandleBackupArtifactAsync(cancellationToken).ConfigureAwait(false);
-                    return true;
-
-                case RestoreArtifactAction:
-                    await HandleRestoreArtifactAsync(cancellationToken).ConfigureAwait(false);
-                    return true;
-
-                case TagArtifactAction:
-                    await HandleTagArtifactAsync(cancellationToken).ConfigureAwait(false);
-                    return true;
+                case ArtifactsAction:
+                    return await HandleArtifactsMenuAsync(cancellationToken).ConfigureAwait(false);
 
                 case QuitAction:
                     return false;
@@ -205,6 +176,60 @@ internal class Dashboard
             PromptHelper.PressEnterToContinue();
             return true;
         }
+    }
+
+    private async Task<bool> HandleArtifactsMenuAsync(CancellationToken cancellationToken)
+    {
+        var artifactPrompt = new SelectionPrompt<string>()
+            .Title("[green]Select an artifact action:[/]")
+            .PageSize(10)
+            .AddChoices(
+                PushArtifactAction,
+                PullArtifactAction,
+                CopyArtifactAction,
+                TagArtifactAction,
+                BackupArtifactAction,
+                RestoreArtifactAction,
+                BackAction);
+
+        var artifactAction = AnsiConsole.Prompt(artifactPrompt);
+
+        if (artifactAction == BackAction)
+        {
+            return true;
+        }
+
+        try
+        {
+            switch (artifactAction)
+            {
+                case PushArtifactAction:
+                    await HandlePushArtifactAsync(cancellationToken).ConfigureAwait(false);
+                    break;
+                case PullArtifactAction:
+                    await HandlePullArtifactAsync(cancellationToken).ConfigureAwait(false);
+                    break;
+                case CopyArtifactAction:
+                    await HandleCopyArtifactAsync(cancellationToken).ConfigureAwait(false);
+                    break;
+                case TagArtifactAction:
+                    await HandleTagArtifactAsync(cancellationToken).ConfigureAwait(false);
+                    break;
+                case BackupArtifactAction:
+                    await HandleBackupArtifactAsync(cancellationToken).ConfigureAwait(false);
+                    break;
+                case RestoreArtifactAction:
+                    await HandleRestoreArtifactAsync(cancellationToken).ConfigureAwait(false);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            PromptHelper.ShowError(ex.Message);
+            PromptHelper.PressEnterToContinue();
+        }
+
+        return true;
     }
 
     private async Task HandleCopyArtifactAsync(CancellationToken cancellationToken)

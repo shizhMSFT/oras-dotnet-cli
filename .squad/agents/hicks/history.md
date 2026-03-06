@@ -213,3 +213,14 @@
 - Security review revealed credential store needs file permission hardening
 - NotImplementedException is caught as general error (exit code 1) before specific validation errors (exit code 2)
 - xUnit analyzer warns about ConfigureAwait(false) in tests (xUnit1030) - acceptable to suppress for existing pattern
+
+### Critical Unit Tests for Tier 1 + Tier 2 — 2026-03-06
+- **Status:** ✅ Complete — 54 new tests, all passing
+- **ErrorHandlerTests (10):** Exit code mapping for OrasUsageException→2, OrasException→1, OrasAuthenticationException→1, OperationCanceledException→1, HttpRequestException→1, UnauthorizedAccessException→1, unknown Exception→1. Verified catch ordering (OrasUsageException before OrasException). Success path returns 0.
+- **DockerConfigStoreTests (18):** LoadAsync with valid/missing/corrupt/empty config. SaveAsync creates nested dirs. Round-trip preserves auths, credsStore, credHelpers. StoreCredentialsAsync writes base64. GetCredentialsAsync decodes base64, handles direct username/password, handles invalid base64. RemoveCredentialsAsync removes and is idempotent. ListRegistriesAsync aggregates auths+credHelpers with deduplication.
+- **NativeCredentialHelperTests (6):** Constructor prefix logic verified. GetAsync/ListAsync/EraseAsync all handle missing helper binary gracefully (return null/empty, don't throw). Pre-cancelled CancellationToken returns null/empty.
+- **CredentialServiceTests (6):** StoreCredentialsAsync delegates to DockerConfigStore. GetCredentialsAsync round-trip. RemoveCredentialsAsync best-effort (no throw). Multi-registry independence.
+- **TuiCacheTests (13):** Set/Get round-trip. Generic types. TTL expiration. Pattern invalidation (case-insensitive). Clear. Overwrite. Custom default TTL via constructor.
+- **Pre-existing fix:** Commented out TargetOptions test — class was removed from source, leaving a build error.
+- **Test filter:** Use `FullyQualifiedName~` not `ClassName~` for dotnet test filters.
+- **Pattern:** DockerConfigStore is concrete (not interfaced), so CredentialService tests use real file-backed store with temp dirs rather than NSubstitute mocks.
